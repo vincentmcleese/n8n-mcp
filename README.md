@@ -6,6 +6,7 @@
 [![npm version](https://img.shields.io/npm/v/n8n-mcp.svg)](https://www.npmjs.com/package/n8n-mcp)
 [![n8n version](https://img.shields.io/badge/n8n-v1.100.1-orange.svg)](https://github.com/n8n-io/n8n)
 [![Docker](https://img.shields.io/badge/docker-ghcr.io%2Fczlonkowski%2Fn8n--mcp-green.svg)](https://github.com/czlonkowski/n8n-mcp/pkgs/container/n8n-mcp)
+[![smithery badge](https://smithery.ai/badge/n8n-mcp)](https://smithery.ai/server/n8n-mcp)
 
 A Model Context Protocol (MCP) server that provides AI assistants with comprehensive access to n8n node documentation, properties, and operations. Deploy in minutes to give Claude and other AI assistants deep knowledge about n8n's 525+ workflow automation nodes.
 
@@ -92,7 +93,15 @@ Add to Claude Desktop config:
 
 **Restart Claude Desktop after updating configuration** - That's it! 🎉
 
-### Option 2: Docker (Easy & Isolated) 🐳
+### Option 2: Installing via Smithery
+
+To install n8n-mcp for Claude Desktop automatically via [Smithery](https://smithery.ai/server/n8n-mcp):
+
+```bash
+npx -y @smithery/cli install n8n-mcp --client claude
+```
+
+### Option 3: Docker (Easy & Isolated) 🐳
 
 **Prerequisites:** Docker installed on your system
 
@@ -205,7 +214,7 @@ Add to Claude Desktop config:
 
 **Restart Claude Desktop after updating configuration** - That's it! 🎉
 
-### Option 3: Local Installation (For Development)
+### Option 4: Local Installation (For Development)
 
 **Prerequisites:** [Node.js](https://nodejs.org/) installed on your system
 
