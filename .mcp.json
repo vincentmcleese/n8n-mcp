@@ -1,0 +1,33 @@
+{
+    "mcpServers": {
+        "n8n-mcp": {
+            "command": "npx",
+            "args": [
+                "n8n-mcp"
+            ],
+            "env": {
+                "MCP_MODE": "stdio",
+                "LOG_LEVEL": "error",
+                "DISABLE_CONSOLE_OUTPUT": "true"
+            }
+        },
+        "supabase": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@supabase/mcp-server-supabase@latest",
+                "--project-ref=ntlxywzmwvrmdcotgpvs"
+            ],
+            "env": {
+                "SUPABASE_ACCESS_TOKEN": "sbp_2df57991d634c2341f9908d8713470b5991bd35f"
+            }
+        },
+        "context7": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@upstash/context7-mcp"
+            ]
+        }
+    }
+}
