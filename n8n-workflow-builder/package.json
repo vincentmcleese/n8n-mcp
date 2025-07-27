@@ -36,7 +36,8 @@
     "react-dom": "^18",
     "react-syntax-highlighter": "^15.6.1",
     "tailwind-merge": "^2.6.0",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@types/node": "^20",
