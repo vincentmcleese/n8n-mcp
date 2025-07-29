@@ -1,6 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import { createSmitheryUrl } from '@smithery/sdk/shared/config';
 import type { 
   ListResourcesResult, 
   ListToolsResult, 
@@ -42,18 +42,18 @@ export interface MCPToolParams {
 class MCPClient {
   private static instance: MCPClient | null = null;
   private client: Client | null = null;
-  private transport: StreamableHTTPClientTransport | SSEClientTransport | null = null;
+  private transport: StreamableHTTPClientTransport | null = null;
   private config: MCPClientConfig;
   private isConnected: boolean = false;
   private connectionAttempts: number = 0;
   private lastConnectionTime: number = 0;
-  private readonly CONNECTION_COOLDOWN = 5000; // 5 seconds between connection attempts
+  private readonly CONNECTION_COOLDOWN = process.env.NODE_ENV === 'test' ? 100 : 5000; // Reduced cooldown for tests
 
   private constructor(config: MCPClientConfig) {
     this.config = {
-      maxRetries: 3,
-      retryDelay: 1000,
-      connectionTimeout: 30000,
+      maxRetries: process.env.NODE_ENV === 'test' ? 1 : 3,
+      retryDelay: process.env.NODE_ENV === 'test' ? 100 : 1000,
+      connectionTimeout: process.env.NODE_ENV === 'test' ? 5000 : 30000,
       ...config
     };
   }
@@ -72,7 +72,7 @@ class MCPClient {
   }
 
   /**
-   * Connect to MCP server with retry logic and fallback
+   * Connect to MCP server with retry logic
    */
   public async connect(): Promise<void> {
     if (this.isConnected && this.client) {
@@ -92,20 +92,12 @@ class MCPClient {
     this.lastConnectionTime = now;
 
     try {
-      // First, try Streamable HTTP transport (modern)
       await this.connectStreamableHTTP();
     } catch (error) {
-      console.warn('Streamable HTTP connection failed, attempting SSE fallback:', error);
-      
-      // Fallback to SSE transport
-      try {
-        await this.connectSSE();
-      } catch (sseError) {
-        throw new MCPConnectionError(
-          'Failed to connect to MCP server with both Streamable HTTP and SSE transports',
-          true
-        );
-      }
+      throw new MCPConnectionError(
+        `Failed to connect to MCP server: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        true
+      );
     }
   }
 
@@ -118,16 +110,13 @@ class MCPClient {
       version: '1.0.0'
     });
 
-    const baseUrl = new URL(this.config.serverUrl);
-    
-    // Add authentication headers
-    const headers: Record<string, string> = {
-      'Authorization': `Bearer ${this.config.apiKey}`,
-      'X-MCP-Profile': this.config.profile,
-      'Content-Type': 'application/json'
-    };
+    // Use Smithery SDK to create the URL with proper authentication
+    const serverUrl = createSmitheryUrl(this.config.serverUrl, { 
+      apiKey: this.config.apiKey, 
+      profile: this.config.profile 
+    });
 
-    this.transport = new StreamableHTTPClientTransport(baseUrl, { headers });
+    this.transport = new StreamableHTTPClientTransport(serverUrl);
 
     // Set connection timeout
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -149,43 +138,6 @@ class MCPClient {
     }
   }
 
-  /**
-   * Connect using SSE transport (fallback)
-   */
-  private async connectSSE(): Promise<void> {
-    this.client = new Client({
-      name: 'n8n-workflow-builder-sse',
-      version: '1.0.0'
-    });
-
-    const baseUrl = new URL(this.config.serverUrl);
-    
-    // SSE transport requires different setup
-    const sseUrl = new URL('/sse', baseUrl);
-    sseUrl.searchParams.set('apiKey', this.config.apiKey);
-    sseUrl.searchParams.set('profile', this.config.profile);
-
-    this.transport = new SSEClientTransport(sseUrl);
-
-    // Set connection timeout
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('SSE connection timeout')), this.config.connectionTimeout);
-    });
-
-    try {
-      await Promise.race([
-        this.client.connect(this.transport),
-        timeoutPromise
-      ]);
-      
-      this.isConnected = true;
-      this.connectionAttempts = 0;
-      console.log('Connected to MCP server using SSE transport (fallback)');
-    } catch (error) {
-      this.cleanup();
-      throw error;
-    }
-  }
 
   /**
    * Disconnect and cleanup
@@ -242,8 +194,10 @@ class MCPClient {
           console.log(`Retrying in ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           
-          // Reset connection for next attempt
-          this.cleanup();
+          // Only cleanup if it's a connection error
+          if (lastError.message.includes('Connection') || lastError.message.includes('transport')) {
+            this.cleanup();
+          }
         }
       }
     }
@@ -270,23 +224,54 @@ class MCPClient {
    * Call a tool
    */
   public async callTool(name: string, params: MCPToolParams): Promise<CallToolResult> {
-    return this.executeWithRetry(
-      async () => this.client!.callTool({ name, arguments: params }),
-      `callTool(${name})`
-    );
+    const startTime = Date.now();
+    console.log(`[MCP] Calling tool: ${name} with params:`, JSON.stringify(params, null, 2));
+    
+    try {
+      const result = await this.executeWithRetry(
+        async () => this.client!.callTool({ name, arguments: params }),
+        `callTool(${name})`
+      );
+      
+      const duration = Date.now() - startTime;
+      console.log(`[MCP] Tool ${name} completed in ${duration}ms`);
+      
+      // Log summary of result if available
+      if (result && result.content && result.content.length > 0) {
+        const content = result.content[0];
+        if (content.type === 'text') {
+          try {
+            const preview = content.text.length > 200 
+              ? content.text.substring(0, 200) + '...' 
+              : content.text;
+            console.log(`[MCP] Result preview: ${preview}`);
+          } catch (e) {
+            // Ignore logging errors
+          }
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      console.error(`[MCP] Tool ${name} failed after ${duration}ms:`, error);
+      throw error;
+    }
   }
 
   /**
    * Search nodes (Discovery phase)
    */
-  public async searchNodes(query: string, limit?: number): Promise<CallToolResult> {
-    return this.callTool('search_nodes', { query, limit });
+  public async searchNodes(params: { query: string; limit?: number }): Promise<CallToolResult> {
+    console.log(`[MCP] 🔍 Searching nodes for: "${params.query}" (limit: ${params.limit || 'default'})`);
+    return this.callTool('search_nodes', params);
   }
 
   /**
    * Get node info (Discovery phase)
    */
   public async getNodeInfo(nodeType: string): Promise<CallToolResult> {
+    console.log(`[MCP] 📖 Getting info for node type: ${nodeType}`);
     return this.callTool('get_node_info', { nodeType });
   }
 
@@ -294,13 +279,31 @@ class MCPClient {
    * List node types (Discovery phase)
    */
   public async listNodeTypes(): Promise<CallToolResult> {
+    console.log(`[MCP] 📋 Listing all available node types`);
     return this.callTool('list_node_types', {});
+  }
+
+  /**
+   * List nodes by category (Discovery phase)
+   */
+  public async listNodes(params?: { category?: string; limit?: number }): Promise<CallToolResult> {
+    console.log(`[MCP] 📋 Listing nodes${params?.category ? ` in category: ${params.category}` : ''} (limit: ${params?.limit || 'default'})`);
+    return this.callTool('list_nodes', params || {});
+  }
+
+  /**
+   * List AI-capable tools (Discovery phase)
+   */
+  public async listAITools(): Promise<CallToolResult> {
+    console.log(`[MCP] 🤖 Listing AI-capable nodes`);
+    return this.callTool('list_ai_tools', {});
   }
 
   /**
    * Get node essentials (Configuration phase)
    */
   public async getNodeEssentials(nodeType: string): Promise<CallToolResult> {
+    console.log(`[MCP] 🔧 Getting essentials for configuration: ${nodeType}`);
     return this.callTool('get_node_essentials', { nodeType });
   }
 
@@ -308,6 +311,7 @@ class MCPClient {
    * Get node schema (Configuration phase)
    */
   public async getNodeSchema(nodeType: string): Promise<CallToolResult> {
+    console.log(`[MCP] 📋 Getting schema for configuration: ${nodeType}`);
     return this.callTool('get_node_schema', { nodeType });
   }
 
@@ -315,13 +319,47 @@ class MCPClient {
    * Validate params (Configuration phase)
    */
   public async validateParams(nodeType: string, params: any): Promise<CallToolResult> {
-    return this.callTool('validate_params', { nodeType, params });
+    console.log(`[MCP] ✅ Validating params for ${nodeType}:`, JSON.stringify(params, null, 2));
+    return this.callTool('validate_node_operation', { 
+      nodeType, 
+      config: params,
+      profile: 'ai-friendly'  // balanced validation for AI configuration
+    });
+  }
+
+  /**
+   * Search node properties (Configuration phase)
+   */
+  public async searchNodeProperties(nodeType: string, query: string, maxResults?: number): Promise<CallToolResult> {
+    console.log(`[MCP] 🔍 Searching properties for ${nodeType}: "${query}"`);
+    return this.callTool('search_node_properties', { 
+      nodeType, 
+      query,
+      maxResults: maxResults || 20
+    });
+  }
+
+  /**
+   * Get pre-configured node for task (Configuration phase)
+   */
+  public async getNodeForTask(task: string): Promise<CallToolResult> {
+    console.log(`[MCP] 📦 Getting pre-configured node for task: ${task}`);
+    return this.callTool('get_node_for_task', { task });
+  }
+
+  /**
+   * Get node documentation (Configuration phase)
+   */
+  public async getNodeDocumentation(nodeType: string): Promise<CallToolResult> {
+    console.log(`[MCP] 📚 Getting documentation for ${nodeType}`);
+    return this.callTool('get_node_documentation', { nodeType });
   }
 
   /**
    * Validate workflow (Validation phase)
    */
   public async validateWorkflow(workflow: any): Promise<CallToolResult> {
+    console.log(`[MCP] 🔍 Validating complete workflow with ${workflow.nodes?.length || 0} nodes`);
     return this.callTool('validate_workflow', { workflow });
   }
 
@@ -329,6 +367,7 @@ class MCPClient {
    * Check connections (Validation phase)
    */
   public async checkConnections(connections: any[]): Promise<CallToolResult> {
+    console.log(`[MCP] 🔗 Checking ${connections.length} workflow connections`);
     return this.callTool('check_connections', { connections });
   }
 
@@ -344,6 +383,26 @@ class MCPClient {
    */
   public async getOutputSchema(nodeType: string): Promise<CallToolResult> {
     return this.callTool('get_output_schema', { nodeType });
+  }
+
+  /**
+   * Validate node configuration - minimal check (Configuration phase)
+   */
+  public async validateNodeMinimal(nodeType: string, config: any): Promise<CallToolResult> {
+    console.log(`[MCP] ✅ Running minimal validation for ${nodeType}`);
+    return this.callTool('validate_node_minimal', { nodeType, config });
+  }
+
+  /**
+   * Validate node operation - full validation (Configuration phase)
+   */
+  public async validateNodeOperation(nodeType: string, config: any, profile?: string): Promise<CallToolResult> {
+    console.log(`[MCP] ✅ Running full validation for ${nodeType} with profile: ${profile || 'runtime'}`);
+    return this.callTool('validate_node_operation', { 
+      nodeType, 
+      config, 
+      profile: profile || 'runtime' 
+    });
   }
 
   /**
@@ -365,14 +424,12 @@ class MCPClient {
    */
   public getConnectionStatus(): {
     isConnected: boolean;
-    transportType: 'streamableHTTP' | 'sse' | null;
+    transportType: 'streamableHTTP' | null;
     connectionAttempts: number;
   } {
     return {
       isConnected: this.isConnected,
-      transportType: this.transport 
-        ? (this.transport instanceof StreamableHTTPClientTransport ? 'streamableHTTP' : 'sse')
-        : null,
+      transportType: this.transport ? 'streamableHTTP' : null,
       connectionAttempts: this.connectionAttempts
     };
   }
@@ -391,3 +448,4 @@ class MCPClient {
 }
 
 export default MCPClient;
+export { MCPClient };
