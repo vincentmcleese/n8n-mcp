@@ -69,6 +69,7 @@ export function createServiceClient() {
     throw new Error('SUPABASE_SERVICE_KEY is required for service client');
   }
 
+
   return createServerClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,
     serviceKey,

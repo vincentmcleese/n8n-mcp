@@ -5,6 +5,19 @@ import { Anthropic } from "@anthropic-ai/sdk";
 interface ClaudeResult {
   operations: WorkflowOperation[];
   reasoning: string[];
+  [key: string]: any; // Allow for additional properties for now
+}
+
+export interface ClaudeBuildingResult extends ClaudeResult {
+  name: string;
+  nodes: any[];
+  connections: any;
+  settings: any;
+}
+
+export interface ClaudeValidationResult extends ClaudeResult {
+  workflow: any;
+  validationReport: any;
 }
 
 export interface ClaudeAnalysis {
@@ -38,14 +51,12 @@ export class ClaudeService {
     this.anthropic = new Anthropic({ apiKey });
   }
 
-
-
   /**
    * Analyze user intent to determine what to search for in MCP
    */
   async analyzeWorkflowIntent(prompt: string): Promise<ClaudeAnalysis> {
     console.log("[Claude] Analyzing workflow intent with trust-based approach");
-    
+
     // Handle empty or whitespace-only prompts
     if (!prompt || !prompt.trim()) {
       console.log("[Claude] Empty prompt detected, returning minimal analysis");
@@ -54,7 +65,7 @@ export class ClaudeService {
         requiredCapabilities: [],
         suggestedSearchTerms: [],
         nodeRecommendations: [],
-        reasoning: ["Empty or invalid prompt provided"]
+        reasoning: ["Empty or invalid prompt provided"],
       };
     }
 
@@ -163,22 +174,50 @@ Think through what nodes would be needed to build this workflow.`;
     }
   }
 
-  async processWorkflowPhase(
+  processWorkflowPhase(
+    phase: "discovery",
+    prompt: string,
+    sessionId: string,
+    selectedNodes?: string[],
+    context?: any
+  ): Promise<ClaudeResult>;
+  processWorkflowPhase(
+    phase: "configuration",
+    prompt: string,
+    sessionId: string,
+    selectedNodes?: string[],
+    context?: any
+  ): Promise<ClaudeResult>;
+  processWorkflowPhase(
+    phase: "building",
+    prompt: string,
+    sessionId: string,
+    selectedNodes?: string[],
+    context?: any
+  ): Promise<ClaudeBuildingResult>;
+  processWorkflowPhase(
+    phase: "validation",
+    prompt: string,
+    sessionId: string,
+    selectedNodes?: string[],
+    context?: any
+  ): Promise<ClaudeValidationResult>;
+  processWorkflowPhase(
     phase: WorkflowPhase,
     prompt: string,
     sessionId: string,
     selectedNodes?: string[],
     context?: any
-  ): Promise<ClaudeResult> {
+  ): Promise<ClaudeResult | ClaudeBuildingResult | ClaudeValidationResult> {
     switch (phase) {
       case "discovery":
         return this.analyzeDiscoveryIntent(prompt, context);
       case "configuration":
         return this.generateConfiguration(prompt, selectedNodes || [], context);
       case "validation":
-        return this.generateValidationStrategy(context);
+        return this.validateWorkflow(context);
       case "building":
-        return this.optimizeWorkflowStructure(context);
+        return this.buildWorkflow(context);
       default:
         throw new Error(`Unsupported phase: ${phase}`);
     }
@@ -194,58 +233,77 @@ Think through what nodes would be needed to build this workflow.`;
     // Extract MCP discovered nodes from context
     const mcpNodes = context?.mcpDiscoveredNodes || [];
     const searchKeywords = context?.searchKeywords || [];
-    
+
     // Check if this is an incremental discovery (clarification response)
-    const isIncremental = context?.mode === 'incremental';
+    const isIncremental = context?.mode === "incremental";
     const existingNodes = context?.existingDiscoveredNodes || [];
     const existingSelectedIds = context?.existingSelectedNodeIds || [];
     const newNodes = context?.newlyDiscoveredNodes || [];
-    const clarificationResponse = context?.clarificationResponse || '';
-    
-    console.log(isIncremental ? 
-      "[Claude] Processing incremental discovery for clarification..." : 
-      "[Claude] Starting discovery intent analysis...");
+    const clarificationResponse = context?.clarificationResponse || "";
+
+    console.log(
+      isIncremental
+        ? "[Claude] Processing incremental discovery for clarification..."
+        : "[Claude] Starting discovery intent analysis..."
+    );
 
     const systemPrompt = `You are an n8n workflow expert helping users build automation workflows.
     
     Your task is to THINK DEEPLY about the user's request and generate WorkflowOperation objects for the discovery phase.
-    ${isIncremental ? `
+    ${
+      isIncremental
+        ? `
     IMPORTANT: This is an INCREMENTAL discovery based on a clarification response.
     - The user has already discovered ${existingNodes.length} nodes and selected ${existingSelectedIds.length} of them
     - The user provided this clarification: "${clarificationResponse}"
     - You should ONLY suggest NEW nodes that aren't already discovered
     - DO NOT re-discover or re-select existing nodes
     - Focus only on what the clarification adds to the workflow
-    ` : `
+    `
+        : `
     CRITICAL: Before selecting nodes, analyze:
     1. What is the user trying to achieve? (end goal)
     2. What data flow is needed? (input → processing → output)
     3. What triggers or conditions are required?
     4. Are there any implicit requirements not explicitly stated?
     5. Would this workflow need error handling or conditional logic?
-    `}
+    `
+    }
     
     IMPORTANT: You have been provided with a list of actual n8n nodes discovered from the MCP database.
-    ${isIncremental ? 
-      `Existing nodes already discovered: ${existingNodes.map((n: any) => n.type).join(", ")}
-    New nodes found based on clarification: ${newNodes.map((n: any) => n.nodeType).join(", ")}` :
-      `These nodes were found by searching for: ${searchKeywords.join(", ")}`
+    ${
+      isIncremental
+        ? `Existing nodes already discovered: ${existingNodes
+            .map((n: any) => n.type)
+            .join(", ")}
+    New nodes found based on clarification: ${newNodes
+      .map((n: any) => n.nodeType)
+      .join(", ")}`
+        : `These nodes were found by searching for: ${searchKeywords.join(
+            ", "
+          )}`
     }
     
     You should:
-    ${isIncremental ? `
+    ${
+      isIncremental
+        ? `
     1. Review the NEW nodes found based on the clarification
     2. Only generate 'discoverNode' operations for NEW nodes not already discovered
     3. Only generate 'selectNode' operations for nodes that should be added based on the clarification
-    4. DO NOT re-discover existing nodes: ${existingNodes.map((n: any) => n.id).join(", ")}
-    ` : `
+    4. DO NOT re-discover existing nodes: ${existingNodes
+      .map((n: any) => n.id)
+      .join(", ")}
+    `
+        : `
     1. Review ALL the MCP-discovered nodes carefully - read their descriptions to understand their capabilities
     2. Look beyond just the node names - many nodes have multiple features (e.g., OpenAI nodes often include Whisper transcription)
     3. Generate 'discoverNode' operations for EACH relevant node that matches the user's intent
     4. Generate 'selectNode' operations for EACH node that should be included in the workflow
     5. IMPORTANT: Always create both discoverNode AND selectNode operations for nodes you want to use
     6. If critical functionality is truly missing after reviewing all nodes, use 'requestClarification' operations
-    `}
+    `
+    }
     
     Remember: ANY node can be used as an AI tool in n8n by connecting it to an AI Agent node!
     
@@ -330,15 +388,19 @@ Think through what nodes would be needed to build this workflow.`;
       nodeListInfo = `\n\nEXISTING discovered nodes (DO NOT re-discover these):\n`;
       existingNodes.forEach((node: any, index: number) => {
         const isSelected = existingSelectedIds.includes(node.id);
-        nodeListInfo += `${index + 1}. ${node.type} - ${node.displayName} (ID: ${node.id})${isSelected ? ' [ALREADY SELECTED]' : ''}\n`;
+        nodeListInfo += `${index + 1}. ${node.type} - ${
+          node.displayName
+        } (ID: ${node.id})${isSelected ? " [ALREADY SELECTED]" : ""}\n`;
       });
-      
+
       if (newNodes.length > 0) {
         nodeListInfo += `\n\nNEW nodes found based on clarification "${clarificationResponse}":\n`;
         newNodes.forEach((node: any, index: number) => {
           // Handle both 'type' and 'nodeType' field names
           const nodeType = node.type || node.nodeType;
-          nodeListInfo += `${index + 1}. ${nodeType} - ${node.displayName}: ${node.description} (Category: ${node.category})\n`;
+          nodeListInfo += `${index + 1}. ${nodeType} - ${node.displayName}: ${
+            node.description
+          } (Category: ${node.category})\n`;
         });
       } else {
         nodeListInfo += `\n\nNo new nodes were found based on the clarification. You may need to work with existing nodes.`;
@@ -360,8 +422,8 @@ Think through what nodes would be needed to build this workflow.`;
       }
     }
 
-    const userMessage = isIncremental ? 
-      `Original request: "${prompt}"
+    const userMessage = isIncremental
+      ? `Original request: "${prompt}"
       Clarification provided: "${clarificationResponse}"
       ${nodeListInfo}
       
@@ -371,8 +433,8 @@ Think through what nodes would be needed to build this workflow.`;
       3. Use sequential node IDs starting from node_${existingNodes.length + 1}
       4. DO NOT re-discover or re-select existing nodes
       
-      Remember: Focus only on what the clarification adds to the workflow.` :
-      `User wants to: "${prompt}"
+      Remember: Focus only on what the clarification adds to the workflow.`
+      : `User wants to: "${prompt}"
       ${nodeListInfo}
       
       Generate the discovery phase operations to:
@@ -388,7 +450,7 @@ Think through what nodes would be needed to build this workflow.`;
       // Use faster model for tests
       const model =
         process.env.NODE_ENV === "test"
-          ? "claude-3-haiku-20240307"
+          ? "claude-sonnet-4-20250514"
           : "claude-sonnet-4-20250514";
 
       const response = await this.anthropic.messages.create({
@@ -424,22 +486,32 @@ Think through what nodes would be needed to build this workflow.`;
           }
         }
       } catch (e) {
-        console.log("[Claude] Failed to parse JSON:", e.message);
+        console.log(
+          "[Claude] Failed to parse JSON:",
+          e instanceof Error ? e.message : String(e)
+        );
         console.log("[Claude] Response was:", content);
-        
+
         // For empty/invalid prompts, return a clarification request
-        if (prompt.trim() === '' || content.toLowerCase().includes('empty') || content.toLowerCase().includes('no context')) {
+        if (
+          prompt.trim() === "" ||
+          content.toLowerCase().includes("empty") ||
+          content.toLowerCase().includes("no context")
+        ) {
           return {
-            operations: [{
-              type: 'requestClarification',
-              questionId: 'q1',
-              question: 'Could you please describe what workflow you would like to create?',
-              context: { reason: 'No prompt provided' }
-            }],
-            reasoning: ['No workflow prompt was provided']
+            operations: [
+              {
+                type: "requestClarification",
+                questionId: "q1",
+                question:
+                  "Could you please describe what workflow you would like to create?",
+                context: { reason: "No prompt provided" },
+              },
+            ],
+            reasoning: ["No workflow prompt was provided"],
           };
         }
-        
+
         throw new Error("Invalid response format from Claude");
       }
 
@@ -458,8 +530,12 @@ Think through what nodes would be needed to build this workflow.`;
       });
 
       if (isIncremental) {
-        const newDiscoverOps = validOperations.filter(op => op.type === 'discoverNode').length;
-        const newSelectOps = validOperations.filter(op => op.type === 'selectNode').length;
+        const newDiscoverOps = validOperations.filter(
+          (op) => op.type === "discoverNode"
+        ).length;
+        const newSelectOps = validOperations.filter(
+          (op) => op.type === "selectNode"
+        ).length;
         console.log(
           `[Claude] Incremental discovery complete: ${newDiscoverOps} new nodes discovered, ${newSelectOps} additional nodes selected`
         );
@@ -531,7 +607,7 @@ Common patterns:
 
 IMPORTANT: Focus only on configuration using the discovered properties. Validation will happen in the next phase.
 
-Respond with JSON:
+CRITICAL: Your entire response must be ONLY the JSON object below. Do not include any explanatory text, reasoning, or commentary outside the JSON:
 {
   "operations": [
     {
@@ -556,7 +632,7 @@ Respond with JSON:
         const schema = nodeSchemas[node?.type];
         const template = nodeTemplates[node?.type];
         const enriched = context?.enrichedContext;
-        
+
         let nodeInfo = `- ${nodeId}: ${node?.type || "unknown"} - ${
           node?.purpose || "no description"
         }`;
@@ -573,33 +649,44 @@ Respond with JSON:
         // Add enriched context from hybrid approach
         if (enriched) {
           // Add all property search results dynamically
-          Object.keys(enriched).forEach(key => {
-            if (key.endsWith('Properties') && enriched[key]) {
-              const propertyType = key.replace('Properties', '');
-              nodeInfo += `\n  ${propertyType.charAt(0).toUpperCase() + propertyType.slice(1)} properties found:`;
+          Object.keys(enriched).forEach((key) => {
+            if (key.endsWith("Properties") && enriched[key]) {
+              const propertyType = key.replace("Properties", "");
+              nodeInfo += `\n  ${
+                propertyType.charAt(0).toUpperCase() + propertyType.slice(1)
+              } properties found:`;
               nodeInfo += `\n    ${JSON.stringify(enriched[key], null, 4)}`;
-              
+
               // Add specific guidance for common property types
-              if (propertyType === 'channel' || propertyType === 'recipient') {
+              if (propertyType === "channel" || propertyType === "recipient") {
                 nodeInfo += `\n    Note: These properties define where/to whom the message is sent`;
-              } else if (propertyType === 'message' || propertyType === 'content' || propertyType === 'text') {
+              } else if (
+                propertyType === "message" ||
+                propertyType === "content" ||
+                propertyType === "text"
+              ) {
                 nodeInfo += `\n    Note: These properties define the message content`;
-              } else if (propertyType === 'auth') {
+              } else if (propertyType === "auth") {
                 nodeInfo += `\n    Note: Authentication is required for this node`;
               }
             }
           });
-          
+
           if (enriched.taskTemplate) {
             nodeInfo += `\n  Task template available:`;
-            nodeInfo += `\n    ${JSON.stringify(enriched.taskTemplate, null, 4)}`;
+            nodeInfo += `\n    ${JSON.stringify(
+              enriched.taskTemplate,
+              null,
+              4
+            )}`;
             nodeInfo += `\n  IMPORTANT: Use this template as a starting point - it shows the exact field names and structure needed.`;
           }
-          
+
           if (enriched.documentation) {
-            const docPreview = enriched.documentation.length > 800 
-              ? enriched.documentation.substring(0, 800) + "..."
-              : enriched.documentation;
+            const docPreview =
+              enriched.documentation.length > 800
+                ? enriched.documentation.substring(0, 800) + "..."
+                : enriched.documentation;
             nodeInfo += `\n  Documentation excerpt:\n    ${docPreview}`;
           }
         }
@@ -672,9 +759,15 @@ Respond with JSON:
           const jsonStr = jsonMatch[1] || jsonMatch[0];
           parsedResponse = JSON.parse(jsonStr);
         } else {
+          console.error(
+            "[Claude] No JSON found in response:",
+            content.substring(0, 500)
+          );
           throw new Error("No JSON found in response");
         }
       } catch (e) {
+        console.error("[Claude] Failed to parse response:", e);
+        console.error("[Claude] Content was:", content.substring(0, 500));
         throw new Error("Invalid response format from Claude");
       }
 
@@ -689,38 +782,64 @@ Respond with JSON:
   }
 
   /**
-   * Generate validation strategy
+   * Generate fixes for validation errors (delta-based approach)
    */
-  private async generateValidationStrategy(
-    context: any
-  ): Promise<ClaudeResult> {
-    console.log("[Claude] Generating validation strategy");
+  async generateValidationFixes(errors: any[], workflow: any): Promise<any[]> {
+    console.log("[Claude] Generating fixes for validation errors");
 
-    const systemPrompt = `You are validating n8n workflow configurations. Generate WorkflowOperation objects for the validation phase.
-    
-    Respond with a JSON object containing:
-    {
-      "operations": [
-        {
-          "type": "validateNode",
-          "nodeId": "node_1",
-          "result": {
-            "valid": true
-          }
-        }
-      ],
-      "reasoning": [
-        "Validated all node configurations",
-        "Checked required parameters"
-      ]
-    }`;
+    const systemPrompt = `You are an n8n workflow validation expert. Your job is to analyze validation errors and generate fix operations.
 
-    const userMessage = `Validate the configured nodes in the workflow.
-    
-    Context: ${JSON.stringify(context?.configured || {})}`;
+IMPORTANT: You must ONLY return a JSON array of fix operations. Do not return the full workflow.
+
+When you see errors about node-level properties being in the wrong location:
+- Properties like onError, retryOnFail, maxTries, waitBetweenTries MUST be at the node level, NOT inside parameters
+- The error message tells you exactly which properties need to be moved
+- Since our applyFixes function handles moving them automatically, you should generate updateField operations for these properties
+- The applyFixes function will place them at the correct level based on the property name
+
+Fix operation types:
+- addField: Add a missing field to a node
+  { type: "addField", nodeId: "node_id", field: "fieldName", value: "fieldValue" }
+  
+- updateField: Update an existing field
+  { type: "updateField", nodeId: "node_id", field: "fieldName", value: "newValue" }
+  
+- addConnection: Add a missing connection
+  { type: "addConnection", from: "sourceNodeName", to: "targetNodeName" }
+  
+- removeConnection: Remove an invalid connection
+  { type: "removeConnection", from: "sourceNodeName", to: "targetNodeName" }
+  
+- addNode: Add a missing node (like a trigger)
+  { type: "addNode", node: { id: "node_id", name: "Node Name", type: "node.type", ... } }
+  
+- updateWorkflowSettings: Update workflow settings
+  { type: "updateWorkflowSettings", settings: { executionOrder: "v1", ... } }
+  
+- setWorkflowName: Set workflow name
+  { type: "setWorkflowName", name: "Workflow Name" }
+
+CRITICAL: For each error, generate the minimal fix needed. Use the actual field names from the error messages, not display names.`;
+
+    const userMessage = `Validation errors found:
+${JSON.stringify(errors, null, 2)}
+
+Current workflow structure:
+- Nodes: ${workflow.nodes
+      ?.map((n: any) => `${n.name} (id: ${n.id}, type: ${n.type})`)
+      .join(", ")}
+- Has connections: ${Object.keys(workflow.connections || {}).length > 0}
+- Has name: ${!!workflow.name}
+
+Important context:
+- Look at the error messages carefully - they contain the exact field names needed
+- The "property" field in the error often shows the actual field name to use
+- If an error says a property is missing, use addField with that exact property name
+- For operation errors, check the valid options listed in the error message
+
+Generate fix operations for these errors. Return ONLY a JSON array of fix operations.`;
 
     try {
-      // Use faster model for tests
       const model =
         process.env.NODE_ENV === "test"
           ? "claude-sonnet-4-20250514"
@@ -728,8 +847,8 @@ Respond with JSON:
 
       const response = await this.anthropic.messages.create({
         model,
-        max_tokens: 1500,
-        temperature: 0.2,
+        max_tokens: 2000,
+        temperature: 0.1,
         messages: [{ role: "user", content: userMessage }],
         system: systemPrompt,
       });
@@ -737,28 +856,295 @@ Respond with JSON:
       const content =
         response.content[0].type === "text" ? response.content[0].text : "";
 
-      // Parse response
-      let parsedResponse: any;
+      // Parse response to extract fix operations
       try {
-        const jsonMatch =
-          content.match(/```json\s*([\s\S]*?)\s*```/) ||
-          content.match(/\{[\s\S]*\}/);
+        // Try to find JSON array in the response
+        const jsonMatch = content.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
-          const jsonStr = jsonMatch[1] || jsonMatch[0];
-          parsedResponse = JSON.parse(jsonStr);
+          const fixes = JSON.parse(jsonMatch[0]);
+          console.log(
+            `[Claude] Generated ${fixes.length} fix operations:`,
+            JSON.stringify(fixes, null, 2)
+          );
+          return fixes;
         } else {
-          throw new Error("No JSON found in response");
+          console.error("[Claude] No JSON array found in response");
+          return [];
         }
       } catch (e) {
-        throw new Error("Invalid response format from Claude");
+        console.error("[Claude] Failed to parse fix operations:", e);
+        console.error("[Claude] Response:", content);
+        return [];
+      }
+    } catch (error) {
+      console.error("[Claude] Error generating validation fixes:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Validate and fix workflow using MCP validation tools
+   */
+  private async validateWorkflow(
+    context: any
+  ): Promise<ClaudeValidationResult> {
+    console.log("[Claude] Validating workflow with MCP tools");
+
+    const draftWorkflow = context?.draftWorkflow;
+    if (!draftWorkflow) {
+      throw new Error("No draft workflow provided for validation");
+    }
+
+    const systemPrompt = `You are an n8n workflow validation expert. Your job is to validate and fix workflows by calling MCP tools and reasoning through solutions.
+
+You have:
+1. A draft workflow that needs validation and fixing
+2. Access to ALL n8n MCP tools to discover how to fix issues
+
+PROCESS:
+1. FIRST, call tools_documentation() to understand all available MCP tools and their purposes
+
+2. Then run the three validation tools to find all issues:
+   - validate_workflow() - for overall validation
+   - validate_workflow_connections() - for connection structure
+   - validate_workflow_expressions() - for expression syntax
+
+3. For EACH error found, use MCP tools to discover the correct fix:
+   - If a node is missing required fields: 
+     * Call get_node_essentials(nodeType) to see all available properties
+     * Call get_node_for_task() to get a working example configuration
+     * Call validate_node_operation() with your proposed fix to verify it's correct
+   - If an expression is wrong: Fix the syntax (e.g., $node["Name"].json)
+   - If connections are invalid: Fix or remove them
+   - If the workflow lacks a trigger: Call get_node_for_task("receive_webhook") to add one
+   - For Slack specifically: Call get_node_for_task("send_slack_message") to see the correct properties
+   - NEVER guess property names - always use MCP tools to find the correct ones
+
+4. Apply all fixes to create a corrected workflow
+
+5. Re-validate the fixed workflow with all three validation tools to ensure it's production-ready
+
+6. After completing ALL tool calls and analysis, return your final result
+
+RESPONSE FORMAT:
+After you've completed ALL tool calls and analysis, return your response in this exact format:
+
+=== BEGIN RESULT ===
+{
+  "workflow": { 
+    "name": "string",
+    "nodes": [...],
+    "connections": {...},
+    "settings": {...},
+    "valid": true
+  },
+  "validationReport": {...},
+  "reasoning": [...]
+}
+=== END RESULT ===
+
+The JSON must be between the === markers. This ensures we can parse it correctly.`;
+
+    const userMessage = `Here is the draft workflow to validate:
+
+${JSON.stringify(draftWorkflow, null, 2)}
+
+Please:
+1. Run all three validation tools on this workflow
+2. Fix any issues found
+3. Re-validate after fixes
+4. Return the final validated workflow with a complete report`;
+
+    try {
+      const model =
+        process.env.NODE_ENV === "test"
+          ? "claude-sonnet-4-20250514"
+          : "claude-sonnet-4-20250514";
+
+      const response = await this.anthropic.messages.create({
+        model,
+        max_tokens: 8000,
+        temperature: 0.1,
+        system: systemPrompt,
+        messages: [
+          {
+            role: "user",
+            content: userMessage,
+          },
+        ],
+      });
+
+      const responseText = response.content[0];
+      if (responseText.type !== "text") {
+        throw new Error("Expected text response from Claude");
       }
 
-      return {
-        operations: parsedResponse.operations || [],
-        reasoning: parsedResponse.reasoning || [],
-      };
+      console.log(
+        "[Claude] Validation response length:",
+        responseText.text.length
+      );
+
+      // Log where tool invocations end
+      const lastInvokeIndex = responseText.text.lastIndexOf("</invoke>");
+      if (lastInvokeIndex !== -1) {
+        const afterTools = responseText.text.substring(
+          lastInvokeIndex + "</invoke>".length
+        );
+        console.log(
+          "[Claude] Content after last tool invocation:",
+          afterTools.substring(0, 500)
+        );
+      }
+
+      // Check if markers exist
+      const hasBeginMarker = responseText.text.includes("=== BEGIN RESULT ===");
+      const hasEndMarker = responseText.text.includes("=== END RESULT ===");
+      console.log(
+        "[Claude] Has BEGIN marker:",
+        hasBeginMarker,
+        "Has END marker:",
+        hasEndMarker
+      );
+
+      // Parse the response
+      try {
+        const text = responseText.text.trim();
+
+        // Try to parse as clean JSON first
+        let result = null;
+
+        // Strategy 1: Look for JSON between === markers
+        const markerMatch = text.match(
+          /=== BEGIN RESULT ===\s*([\s\S]*?)\s*=== END RESULT ===/
+        );
+        if (markerMatch) {
+          try {
+            const jsonStr = markerMatch[1].trim();
+            console.log(
+              "[Claude] Found JSON between markers, length:",
+              jsonStr.length
+            );
+            console.log("[Claude] JSON preview:", jsonStr.substring(0, 100));
+            result = JSON.parse(jsonStr);
+            console.log(
+              "[Claude] Successfully parsed result with markers strategy"
+            );
+          } catch (e) {
+            console.error("[Claude] Failed to parse JSON between markers:", e);
+            console.error(
+              "[Claude] JSON that failed:",
+              markerMatch[1].substring(0, 200)
+            );
+          }
+        }
+
+        // Strategy 2: Look for JSON after all tool invocations
+        if (!result) {
+          const lastInvokeIndex = text.lastIndexOf("</invoke>");
+          if (lastInvokeIndex !== -1) {
+            const afterTools = text
+              .substring(lastInvokeIndex + "</invoke>".length)
+              .trim();
+            // Try to parse what comes after tools
+            try {
+              // Look for JSON in the remaining text
+              const jsonMatch = afterTools.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                result = JSON.parse(jsonMatch[0]);
+              }
+            } catch (e) {
+              // Continue to next strategy
+            }
+          }
+        }
+
+        // Strategy 3: Look for JSON in code blocks
+        if (!result) {
+          const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+          if (codeBlockMatch) {
+            try {
+              result = JSON.parse(codeBlockMatch[1]);
+            } catch (e) {
+              // Continue to next strategy
+            }
+          }
+        }
+
+        // Strategy 4: Find the largest JSON object that contains workflow
+        if (!result) {
+          // Use a more sophisticated regex to find complete JSON objects
+          const jsonRegex =
+            /\{(?:[^{}]|(?:\{[^{}]*\}))*"workflow"(?:[^{}]|(?:\{[^{}]*\}))*\}/g;
+          const matches = text.match(jsonRegex);
+          if (matches) {
+            // Try each match, prefer the largest one
+            let largestMatch = null;
+            let largestSize = 0;
+            for (const match of matches) {
+              try {
+                const parsed = JSON.parse(match);
+                if (parsed.workflow && match.length > largestSize) {
+                  result = parsed;
+                  largestSize = match.length;
+                }
+              } catch (e) {
+                // Continue to next match
+              }
+            }
+          }
+        }
+
+        // Strategy 5: Try direct parsing as last resort
+        if (!result) {
+          try {
+            result = JSON.parse(text);
+          } catch (e) {
+            throw new Error("No valid workflow JSON found in response");
+          }
+        }
+
+        if (!result || !result.workflow) {
+          throw new Error("Claude response missing workflow");
+        }
+
+        // Ensure the workflow has a valid flag
+        if (result.workflow && typeof result.workflow.valid === "undefined") {
+          result.workflow.valid = true; // Default to valid if all validations passed
+        }
+
+        // Return the result in the expected format
+        return {
+          operations: [], // Validation phase doesn't use operations
+          reasoning: result.reasoning || ["Workflow validated and fixed"],
+          workflow: result.workflow,
+          validationReport: result.validationReport,
+        };
+      } catch (parseError) {
+        console.error(
+          "[Claude] Failed to parse validation response:",
+          parseError
+        );
+        console.error(
+          "[Claude] Raw response (first 1000 chars):",
+          responseText.text.substring(0, 1000)
+        );
+
+        // Return a minimal valid response to avoid breaking the flow
+        return {
+          operations: [],
+          reasoning: [
+            "Failed to parse validation response - workflow unchanged",
+          ],
+          workflow: draftWorkflow,
+          validationReport: {
+            initial: { workflow: { errors: ["Failed to validate"] } },
+            fixesApplied: [],
+            final: { workflow: { errors: ["Failed to validate"] } },
+          },
+        };
+      }
     } catch (error) {
-      console.error("[Claude] Error in validation generation:", error);
+      console.error("[Claude] Validation error:", error);
       throw error;
     }
   }
@@ -772,7 +1158,7 @@ Respond with JSON:
     nodeEssentials: any
   ): Promise<NodeInfoRequirements> {
     console.log(`[Claude] Analyzing information requirements for ${node.type}`);
-    
+
     const systemPrompt = `You are an n8n workflow configuration expert analyzing what information is needed to properly configure a node.
 
 Given:
@@ -810,7 +1196,7 @@ Example property searches:
 - For HTTP nodes: "url", "method", "headers", "body"
 - For file nodes: "path", "filename", "content", "encoding"
 
-Respond with JSON:
+CRITICAL: Respond with ONLY this JSON structure, no other text:
 {
   "needsAuth": true/false,
   "needsProperties": ["channel", "message", "recipient"], // ALL relevant properties
@@ -829,9 +1215,10 @@ ${JSON.stringify(nodeEssentials, null, 2)}
 What additional MCP information would help configure this node properly?`;
 
     try {
-      const model = process.env.NODE_ENV === "test" 
-        ? "claude-3-haiku-20240307"
-        : "claude-3-5-sonnet-20241022";
+      const model =
+        process.env.NODE_ENV === "test"
+          ? "claude-sonnet-4-20250514"
+          : "claude-sonnet-4-20250514";
 
       const response = await this.anthropic.messages.create({
         model,
@@ -841,13 +1228,15 @@ What additional MCP information would help configure this node properly?`;
         system: systemPrompt,
       });
 
-      const content = response.content[0].type === "text" ? response.content[0].text : "";
-      
+      const content =
+        response.content[0].type === "text" ? response.content[0].text : "";
+
       // Parse the requirements
       try {
-        const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || 
-                         content.match(/\{[\s\S]*\}/);
-        
+        const jsonMatch =
+          content.match(/```json\s*([\s\S]*?)\s*```/) ||
+          content.match(/\{[\s\S]*\}/);
+
         if (jsonMatch) {
           const jsonStr = jsonMatch[1] || jsonMatch[0];
           return JSON.parse(jsonStr);
@@ -861,7 +1250,7 @@ What additional MCP information would help configure this node properly?`;
           needsAuth: false,
           needsProperties: [],
           needsDocumentation: false,
-          reasoning: ["Failed to analyze requirements"]
+          reasoning: ["Failed to analyze requirements"],
         };
       }
     } catch (error) {
@@ -870,7 +1259,7 @@ What additional MCP information would help configure this node properly?`;
         needsAuth: false,
         needsProperties: [],
         needsDocumentation: false,
-        reasoning: ["Error occurred during analysis"]
+        reasoning: ["Error occurred during analysis"],
       };
     }
   }
@@ -884,8 +1273,10 @@ What additional MCP information would help configure this node properly?`;
     validationErrors: string[],
     nodeContext: any
   ): Promise<any> {
-    console.log(`[Claude] Fixing configuration for ${node.type} with ${validationErrors.length} errors`);
-    
+    console.log(
+      `[Claude] Fixing configuration for ${node.type} with ${validationErrors.length} errors`
+    );
+
     const systemPrompt = `You are an n8n workflow configuration expert.
 
 A node configuration has validation errors that need to be fixed.
@@ -921,24 +1312,37 @@ Example for Slack message:
 IMPORTANT: Return ONLY the fixed configuration object, no explanations.`;
 
     // Build context information
-    let contextInfo = '';
-    
+    let contextInfo = "";
+
     if (nodeContext.essentials) {
-      contextInfo += `Node essentials (available options):\n${JSON.stringify(nodeContext.essentials, null, 2)}\n\n`;
+      contextInfo += `Node essentials (available options):\n${JSON.stringify(
+        nodeContext.essentials,
+        null,
+        2
+      )}\n\n`;
     }
-    
+
     if (nodeContext.authProperties) {
-      contextInfo += `Authentication properties:\n${JSON.stringify(nodeContext.authProperties, null, 2)}\n\n`;
+      contextInfo += `Authentication properties:\n${JSON.stringify(
+        nodeContext.authProperties,
+        null,
+        2
+      )}\n\n`;
     }
-    
+
     if (nodeContext.taskTemplate) {
-      contextInfo += `Task template (reference):\n${JSON.stringify(nodeContext.taskTemplate, null, 2)}\n\n`;
+      contextInfo += `Task template (reference):\n${JSON.stringify(
+        nodeContext.taskTemplate,
+        null,
+        2
+      )}\n\n`;
     }
-    
+
     if (nodeContext.documentation) {
-      const docPreview = nodeContext.documentation.length > 1000 
-        ? nodeContext.documentation.substring(0, 1000) + "..."
-        : nodeContext.documentation;
+      const docPreview =
+        nodeContext.documentation.length > 1000
+          ? nodeContext.documentation.substring(0, 1000) + "..."
+          : nodeContext.documentation;
       contextInfo += `Documentation excerpt:\n${docPreview}\n\n`;
     }
 
@@ -949,16 +1353,17 @@ Current configuration that failed:
 ${JSON.stringify(config, null, 2)}
 
 Validation errors:
-${validationErrors.map((err, idx) => `${idx + 1}. ${err}`).join('\n')}
+${validationErrors.map((err, idx) => `${idx + 1}. ${err}`).join("\n")}
 
 ${contextInfo}
 
 Generate the fixed configuration:`;
 
     try {
-      const model = process.env.NODE_ENV === "test" 
-        ? "claude-3-haiku-20240307"
-        : "claude-3-5-sonnet-20241022";
+      const model =
+        process.env.NODE_ENV === "test"
+          ? "claude-sonnet-4-20250514"
+          : "claude-sonnet-4-20250514";
 
       const response = await this.anthropic.messages.create({
         model,
@@ -968,15 +1373,17 @@ Generate the fixed configuration:`;
         system: systemPrompt,
       });
 
-      const content = response.content[0].type === "text" ? response.content[0].text : "";
-      
+      const content =
+        response.content[0].type === "text" ? response.content[0].text : "";
+
       // Parse the fixed configuration
       try {
         // Look for JSON in various formats
-        const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || 
-                         content.match(/```\s*([\s\S]*?)\s*```/) ||
-                         content.match(/\{[\s\S]*\}/);
-        
+        const jsonMatch =
+          content.match(/```json\s*([\s\S]*?)\s*```/) ||
+          content.match(/```\s*([\s\S]*?)\s*```/) ||
+          content.match(/\{[\s\S]*\}/);
+
         if (jsonMatch) {
           const jsonStr = jsonMatch[1] || jsonMatch[0];
           return JSON.parse(jsonStr);
@@ -996,45 +1403,111 @@ Generate the fixed configuration:`;
   }
 
   /**
-   * Optimize workflow structure
+   * Build workflow structure from configured nodes
    */
-  private async optimizeWorkflowStructure(context: any): Promise<ClaudeResult> {
-    console.log("[Claude] Optimizing workflow structure");
+  private async buildWorkflow(context: any): Promise<ClaudeBuildingResult> {
+    console.log("[Claude] Building workflow structure from configured nodes");
 
-    const systemPrompt = `You are building the final n8n workflow. Generate WorkflowOperation objects for the building phase.
-    
-    Respond with a JSON object containing:
+    const configuredNodes = context?.configuredNodes || [];
+    const userIntent = context?.userIntent || "";
+
+    const systemPrompt = `You are an n8n workflow building expert. Your task is to BUILD a workflow structure from configured nodes.
+
+You have:
+1. Validated, configured nodes with all parameters set
+2. The user's original intent/request
+3. Each node's purpose in the workflow
+
+Your task:
+- Connect the nodes in logical flow based on their purposes
+- Add appropriate error handling (continueOnFail, onError settings)
+- Use n8n expressions where needed ($json, $node["NodeName"].json)
+- Position nodes for clear visual layout
+- Create a workflow that fulfills the user's intent
+
+IMPORTANT: This is the BUILDING phase only. DO NOT validate the workflow - just build the structure.
+
+Node positioning guidelines:
+- Start triggers/webhooks on the left (x=250)
+- Space nodes 300px apart horizontally
+- Align nodes vertically for clarity
+- Keep related nodes close together
+
+Connection guidelines:
+- Connect nodes based on data flow logic
+- Triggers/webhooks connect to processing nodes
+- Processing nodes connect to output/action nodes
+- Consider the purpose of each node when connecting
+- CRITICAL: Connection format uses node IDs as keys but node NAMES as targets:
+  connections: {
+    "node_1": { main: [[{ node: "Send to Slack", type: "main", index: 0 }]] },
+    "node_2": { main: [[{ node: "Respond to Webhook", type: "main", index: 0 }]] }
+  }
+  Where node_1 has name "Webhook Trigger" and node_2 has name "Send to Slack"
+
+Error handling:
+- Webhooks/triggers: continueOnFail=false, stop on error
+- Data processing: continueOnFail=true, continue on error
+- External APIs: continueOnFail=true, handle errors gracefully
+- Critical operations: continueOnFail=false, stop workflow
+
+Return a complete n8n workflow JSON following this EXACT format:
+{
+  "name": "Descriptive Workflow Name",
+  "nodes": [
     {
-      "operations": [
-        {
-          "type": "addToWorkflow",
-          "nodeId": "node_1",
-          "position": [100, 100]
-        },
-        {
-          "type": "addConnection",
-          "source": "node_1",
-          "target": "node_2"
-        },
-        {
-          "type": "updateWorkflowSettings",
-          "settings": {
-            "name": "My Workflow"
-          }
-        }
-      ],
-      "reasoning": [
-        "Positioned nodes for clear flow",
-        "Connected nodes in logical sequence"
-      ]
-    }`;
+      "id": "node_1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook-endpoint"
+      },
+      "continueOnFail": false
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Send to Slack", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "reasoning": ["Connected webhook to Slack for message sending", "..."]
+}
 
-    const userMessage = `Build the final workflow structure.
+CRITICAL FORMAT RULES:
+- Node types MUST have "n8n-nodes-base." prefix (e.g., "n8n-nodes-base.webhook" not "nodes-base.webhook")
+- Connections MUST use node NAMES as keys (e.g., "Webhook" not "node_1")
+- saveDataSuccessExecution and saveDataErrorExecution MUST be "all" (string) not true (boolean)
+- Each node MUST have a typeVersion field (usually 1 or 2)
+- The workflow MUST have a descriptive "name" field at the top level`;
+
+    const userMessage = `User's intent: "${userIntent}"
     
-    Validated nodes: ${JSON.stringify(context?.validated || [])}`;
+Validated nodes to connect:
+${configuredNodes
+  .map(
+    (node: any, index: number) =>
+      `${index + 1}. ${node.type} (${node.id})
+   Purpose: ${node.purpose}
+   Configuration: ${JSON.stringify(node.config, null, 2)}`
+  )
+  .join("\n\n")}
+
+Build a complete n8n workflow that:
+1. Connects these nodes in logical order
+2. Fulfills the user's original intent
+3. Includes proper error handling
+4. Uses clear node positioning`;
 
     try {
-      // Use faster model for tests
       const model =
         process.env.NODE_ENV === "test"
           ? "claude-sonnet-4-20250514"
@@ -1042,7 +1515,7 @@ Generate the fixed configuration:`;
 
       const response = await this.anthropic.messages.create({
         model,
-        max_tokens: 1500,
+        max_tokens: 3000,
         temperature: 0.2,
         messages: [{ role: "user", content: userMessage }],
         system: systemPrompt,
@@ -1057,6 +1530,7 @@ Generate the fixed configuration:`;
         const jsonMatch =
           content.match(/```json\s*([\s\S]*?)\s*```/) ||
           content.match(/\{[\s\S]*\}/);
+
         if (jsonMatch) {
           const jsonStr = jsonMatch[1] || jsonMatch[0];
           parsedResponse = JSON.parse(jsonStr);
@@ -1064,11 +1538,22 @@ Generate the fixed configuration:`;
           throw new Error("No JSON found in response");
         }
       } catch (e) {
+        console.error("[Claude] Failed to parse building response:", e);
         throw new Error("Invalid response format from Claude");
       }
 
+      // Return the complete workflow
       return {
-        operations: parsedResponse.operations || [],
+        name: parsedResponse.name || "n8n Workflow",
+        nodes: parsedResponse.nodes || [],
+        connections: parsedResponse.connections || {},
+        settings: parsedResponse.settings || {
+          executionOrder: "v1",
+          saveDataSuccessExecution: "all",
+          saveDataErrorExecution: "all",
+          saveManualExecutions: true,
+        },
+        operations: [], // No operations needed - we return the complete workflow
         reasoning: parsedResponse.reasoning || [],
       };
     } catch (error) {
@@ -1102,7 +1587,7 @@ export function createClaudeService() {
         selectedNodes,
         context
       ),
-    generateValidationStrategy: (context: any) =>
+    validateWorkflow: (context: any) =>
       service.processWorkflowPhase(
         "validation",
         "",
@@ -1110,7 +1595,7 @@ export function createClaudeService() {
         undefined,
         context
       ),
-    optimizeWorkflowStructure: (context: any) =>
+    buildWorkflow: (context: any) =>
       service.processWorkflowPhase(
         "building",
         "",

@@ -36,8 +36,13 @@ export async function POST(request: NextRequest) {
 
     const { prompt, metadata } = validationResult.data;
 
-    // Create the session
-    const session = await createWorkflowSession(prompt, metadata);
+    // Create the session with prompt stored in metadata
+    const sessionMetadata = {
+      ...metadata,
+      initialPrompt: prompt
+    };
+    
+    const session = await createWorkflowSession(prompt, sessionMetadata);
 
     // Return success response
     return NextResponse.json({

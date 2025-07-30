@@ -248,6 +248,12 @@ export interface GetStateResponse {
     configured: number;
     validated: number;
   };
+  metadata?: {
+    name?: string;
+    description?: string;
+    initialPrompt?: string;
+    [key: string]: any;
+  };
 }
 
 /**

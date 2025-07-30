@@ -26,7 +26,10 @@ CREATE TABLE workflow_sessions (
     
     -- Basic fields
     user_prompt TEXT,
-    is_active BOOLEAN DEFAULT true
+    is_active BOOLEAN DEFAULT true,
+    
+    -- Version field for optimistic locking
+    version INTEGER DEFAULT 1 NOT NULL
 );
 
 -- Create indexes for optimal performance
