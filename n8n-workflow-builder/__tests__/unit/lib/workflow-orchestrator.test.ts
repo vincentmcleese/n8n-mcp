@@ -2,6 +2,7 @@
 
 import { WorkflowOrchestrator } from '@/lib/workflow-orchestrator'
 import { createMockSession, createMockOperations } from '@/__tests__/test-utils'
+import { loggers } from '@/lib/utils/logger'
 
 // For integration tests, we only mock the database
 // Real Claude and MCP services will be used
@@ -74,7 +75,7 @@ describe('WorkflowOrchestrator - Integration Tests', () => {
     it('should handle clarification responses and continue discovery', async () => {
       // Skip this test if no clarification method exists
       if (!orchestrator.handleClarificationResponse) {
-        console.log('Skipping clarification response test - method not implemented')
+        loggers.test.debug('Skipping clarification response test - method not implemented')
         return
       }
       
@@ -122,7 +123,7 @@ describe('WorkflowOrchestrator - Integration Tests', () => {
 
     it('should validate discovered nodes exist in MCP', async () => {
       // Skip this test - real Claude won't suggest non-existent nodes
-      console.log('Skipping MCP validation test - real Claude uses valid nodes')
+      loggers.test.debug('Skipping MCP validation test - real Claude uses valid nodes')
     })
 
     it('should deduplicate discovered nodes', async () => {
@@ -191,7 +192,7 @@ describe('WorkflowOrchestrator - Integration Tests', () => {
     it('should check phase transition requirements', async () => {
       // Skip if checkPhaseTransition method doesn't exist
       if (!orchestrator.checkPhaseTransition) {
-        console.log('Skipping phase transition test - method not implemented')
+        loggers.test.debug('Skipping phase transition test - method not implemented')
         return
       }
       
@@ -216,7 +217,7 @@ describe('WorkflowOrchestrator - Integration Tests', () => {
     it('should validate phase transition requirements', async () => {
       // Skip if checkPhaseTransition method doesn't exist
       if (!orchestrator.checkPhaseTransition) {
-        console.log('Skipping transition validation test - method not implemented')
+        loggers.test.debug('Skipping transition validation test - method not implemented')
         return
       }
       

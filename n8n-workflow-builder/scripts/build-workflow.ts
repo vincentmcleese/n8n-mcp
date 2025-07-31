@@ -9,11 +9,20 @@ const args = process.argv.slice(2);
 const promptArg = args.find(arg => !arg.startsWith('--'));
 const outputFile = args.find(arg => arg.startsWith('--output='))?.split('=')[1];
 const isProduction = args.includes('--production');
+const isVerbose = args.includes('--verbose') || args.includes('-v');
 const showHelp = args.includes('--help') || args.includes('-h');
 
 // Set NODE_ENV based on production flag
 if (!isProduction) {
   process.env.NODE_ENV = 'test';
+  process.env.BUILD_WORKFLOW = 'true';
+  // Set log level based on verbose flag
+  if (!isVerbose) {
+    process.env.LOG_LEVEL = 'info';
+  } else {
+    process.env.LOG_LEVEL = 'debug';
+    process.env.TEST_VERBOSE = 'true';
+  }
 }
 
 // Load environment variables
@@ -52,6 +61,7 @@ Usage: npx tsx scripts/build-workflow.ts [prompt] [options]
 Options:
   --output=<file>    Save workflow to file (e.g., --output=workflow.json)
   --production       Use production models (better quality, slower)
+  --verbose, -v      Show detailed debug logs
   --help, -h         Show this help message
 
 Examples:

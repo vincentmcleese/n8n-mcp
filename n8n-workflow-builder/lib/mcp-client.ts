@@ -10,6 +10,7 @@ import type {
   ListPromptsResult
 } from '@modelcontextprotocol/sdk/types.js';
 import { MCPConnectionError } from './mcp-error-handler';
+import { loggers } from './utils/logger';
 
 /**
  * MCP Client configuration
@@ -131,7 +132,7 @@ class MCPClient {
       
       this.isConnected = true;
       this.connectionAttempts = 0;
-      console.log('Connected to MCP server using Streamable HTTP transport');
+      loggers.mcp.info('Connected to MCP server using Streamable HTTP transport');
     } catch (error) {
       this.cleanup();
       throw error;
@@ -154,7 +155,7 @@ class MCPClient {
       try {
         this.transport.close();
       } catch (error) {
-        console.error('Error closing transport:', error);
+        loggers.mcp.error('Error closing transport:', error);
       }
       this.transport = null;
     }
@@ -186,16 +187,18 @@ class MCPClient {
         return await operation();
       } catch (error) {
         lastError = error as Error;
-        console.error(`${operationName} failed (attempt ${attempt + 1}):`, error);
+        loggers.mcp.debug(`${operationName} failed (attempt ${attempt + 1}):`, error);
         
         if (attempt < this.config.maxRetries!) {
           // Exponential backoff
           const delay = this.config.retryDelay! * Math.pow(2, attempt);
-          console.log(`Retrying in ${delay}ms...`);
+          loggers.mcp.debug(`Retrying in ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           
           // Only cleanup if it's a connection error
-          if (lastError.message.includes('Connection') || lastError.message.includes('transport')) {
+          if (lastError.message.includes('Connection') || 
+              lastError.message.toLowerCase().includes('transport') ||
+              lastError.message.includes('closed')) {
             this.cleanup();
           }
         }
@@ -225,7 +228,7 @@ class MCPClient {
    */
   public async callTool(name: string, params: MCPToolParams): Promise<CallToolResult> {
     const startTime = Date.now();
-    console.log(`[MCP] Calling tool: ${name} with params:`, JSON.stringify(params, null, 2));
+    loggers.mcp.verbose(`Calling tool: ${name} with params:`, params);
     
     try {
       const result = await this.executeWithRetry(
@@ -234,7 +237,7 @@ class MCPClient {
       );
       
       const duration = Date.now() - startTime;
-      console.log(`[MCP] Tool ${name} completed in ${duration}ms`);
+      loggers.mcp.info(`Tool ${name} completed in ${duration}ms`);
       
       // Log summary of result if available
       if (result && result.content && result.content.length > 0) {
@@ -244,7 +247,7 @@ class MCPClient {
             const preview = content.text.length > 200 
               ? content.text.substring(0, 200) + '...' 
               : content.text;
-            console.log(`[MCP] Result preview: ${preview}`);
+            loggers.mcp.verbose(`Result preview: ${preview}`);
           } catch (e) {
             // Ignore logging errors
           }
@@ -254,7 +257,7 @@ class MCPClient {
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
-      console.error(`[MCP] Tool ${name} failed after ${duration}ms:`, error);
+      loggers.mcp.error(`Tool ${name} failed after ${duration}ms:`, error);
       throw error;
     }
   }
@@ -263,7 +266,7 @@ class MCPClient {
    * Search nodes (Discovery phase)
    */
   public async searchNodes(params: { query: string; limit?: number }): Promise<CallToolResult> {
-    console.log(`[MCP] 🔍 Searching nodes for: "${params.query}" (limit: ${params.limit || 'default'})`);
+    loggers.mcp.debug(`🔍 Searching nodes for: "${params.query}" (limit: ${params.limit || 'default'})`);
     return this.callTool('search_nodes', params);
   }
 
@@ -271,7 +274,7 @@ class MCPClient {
    * Get node info (Discovery phase)
    */
   public async getNodeInfo(nodeType: string): Promise<CallToolResult> {
-    console.log(`[MCP] 📖 Getting info for node type: ${nodeType}`);
+    loggers.mcp.debug(`📖 Getting info for node type: ${nodeType}`);
     return this.callTool('get_node_info', { nodeType });
   }
 
@@ -279,7 +282,7 @@ class MCPClient {
    * List node types (Discovery phase)
    */
   public async listNodeTypes(): Promise<CallToolResult> {
-    console.log(`[MCP] 📋 Listing all available node types`);
+    loggers.mcp.debug(`📋 Listing all available node types`);
     return this.callTool('list_node_types', {});
   }
 
@@ -287,7 +290,7 @@ class MCPClient {
    * List nodes by category (Discovery phase)
    */
   public async listNodes(params?: { category?: string; limit?: number }): Promise<CallToolResult> {
-    console.log(`[MCP] 📋 Listing nodes${params?.category ? ` in category: ${params.category}` : ''} (limit: ${params?.limit || 'default'})`);
+    loggers.mcp.debug(`📋 Listing nodes${params?.category ? ` in category: ${params.category}` : ''} (limit: ${params?.limit || 'default'})`);
     return this.callTool('list_nodes', params || {});
   }
 
@@ -295,7 +298,7 @@ class MCPClient {
    * List AI-capable tools (Discovery phase)
    */
   public async listAITools(): Promise<CallToolResult> {
-    console.log(`[MCP] 🤖 Listing AI-capable nodes`);
+    loggers.mcp.debug(`🤖 Listing AI-capable nodes`);
     return this.callTool('list_ai_tools', {});
   }
 
@@ -303,7 +306,7 @@ class MCPClient {
    * Get node essentials (Configuration phase)
    */
   public async getNodeEssentials(nodeType: string): Promise<CallToolResult> {
-    console.log(`[MCP] 🔧 Getting essentials for configuration: ${nodeType}`);
+    loggers.mcp.debug(`🔧 Getting essentials for configuration: ${nodeType}`);
     return this.callTool('get_node_essentials', { nodeType });
   }
 
@@ -311,7 +314,7 @@ class MCPClient {
    * Get node schema (Configuration phase)
    */
   public async getNodeSchema(nodeType: string): Promise<CallToolResult> {
-    console.log(`[MCP] 📋 Getting schema for configuration: ${nodeType}`);
+    loggers.mcp.debug(`📋 Getting schema for configuration: ${nodeType}`);
     return this.callTool('get_node_schema', { nodeType });
   }
 
@@ -319,7 +322,7 @@ class MCPClient {
    * Validate params (Configuration phase)
    */
   public async validateParams(nodeType: string, params: any): Promise<CallToolResult> {
-    console.log(`[MCP] ✅ Validating params for ${nodeType}:`, JSON.stringify(params, null, 2));
+    loggers.mcp.verbose(`✅ Validating params for ${nodeType}:`, params);
     return this.callTool('validate_node_operation', { 
       nodeType, 
       config: params,
@@ -331,7 +334,7 @@ class MCPClient {
    * Search node properties (Configuration phase)
    */
   public async searchNodeProperties(nodeType: string, query: string, maxResults?: number): Promise<CallToolResult> {
-    console.log(`[MCP] 🔍 Searching properties for ${nodeType}: "${query}"`);
+    loggers.mcp.debug(`🔍 Searching properties for ${nodeType}: "${query}"`);
     return this.callTool('search_node_properties', { 
       nodeType, 
       query,
@@ -343,7 +346,7 @@ class MCPClient {
    * Get pre-configured node for task (Configuration phase)
    */
   public async getNodeForTask(task: string): Promise<CallToolResult> {
-    console.log(`[MCP] 📦 Getting pre-configured node for task: ${task}`);
+    loggers.mcp.debug(`📦 Getting pre-configured node for task: ${task}`);
     return this.callTool('get_node_for_task', { task });
   }
 
@@ -351,7 +354,7 @@ class MCPClient {
    * Get node documentation (Configuration phase)
    */
   public async getNodeDocumentation(nodeType: string): Promise<CallToolResult> {
-    console.log(`[MCP] 📚 Getting documentation for ${nodeType}`);
+    loggers.mcp.debug(`📚 Getting documentation for ${nodeType}`);
     return this.callTool('get_node_documentation', { nodeType });
   }
 
@@ -359,7 +362,7 @@ class MCPClient {
    * Validate workflow (Validation phase)
    */
   public async validateWorkflow(workflow: any): Promise<CallToolResult> {
-    console.log(`[MCP] 🔍 Validating complete workflow with ${workflow.nodes?.length || 0} nodes`);
+    loggers.mcp.debug(`🔍 Validating complete workflow with ${workflow.nodes?.length || 0} nodes`);
     return this.callTool('validate_workflow', { workflow });
   }
 
@@ -367,7 +370,7 @@ class MCPClient {
    * Check connections (Validation phase)
    */
   public async checkConnections(connections: any[]): Promise<CallToolResult> {
-    console.log(`[MCP] 🔗 Checking ${connections.length} workflow connections`);
+    loggers.mcp.debug(`🔗 Checking ${connections.length} workflow connections`);
     return this.callTool('check_connections', { connections });
   }
 
@@ -389,7 +392,7 @@ class MCPClient {
    * Validate node configuration - minimal check (Configuration phase)
    */
   public async validateNodeMinimal(nodeType: string, config: any): Promise<CallToolResult> {
-    console.log(`[MCP] ✅ Running minimal validation for ${nodeType}`);
+    loggers.mcp.debug(`✅ Running minimal validation for ${nodeType}`);
     return this.callTool('validate_node_minimal', { nodeType, config });
   }
 
@@ -397,7 +400,7 @@ class MCPClient {
    * Validate node operation - full validation (Configuration phase)
    */
   public async validateNodeOperation(nodeType: string, config: any, profile?: string): Promise<CallToolResult> {
-    console.log(`[MCP] ✅ Running full validation for ${nodeType} with profile: ${profile || 'runtime'}`);
+    loggers.mcp.debug(`✅ Running full validation for ${nodeType} with profile: ${profile || 'runtime'}`);
     return this.callTool('validate_node_operation', { 
       nodeType, 
       config, 

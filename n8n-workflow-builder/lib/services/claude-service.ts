@@ -1,44 +1,38 @@
 import { createAnthropicClient } from "@/lib/config/anthropic";
 import type { WorkflowOperation, WorkflowPhase } from "@/types/workflow";
 import { Anthropic } from "@anthropic-ai/sdk";
+import type {
+  ClaudeAnalysisResponse,
+  DiscoveryOperationsResponse,
+  NodeRequirementsResponse,
+  ConfigurationOperationsResponse,
+  WorkflowBuildResponse,
+  ValidatedWorkflowResponse,
+  ValidationFixesResponse,
+  ClaudeOperationsResponse,
+  ClaudeBuildingResponse,
+  ClaudeValidationResponse
+} from "@/lib/types/claude-response-types";
+import { loggers } from "@/lib/utils/logger";
 
-interface ClaudeResult {
-  operations: WorkflowOperation[];
-  reasoning: string[];
-  [key: string]: any; // Allow for additional properties for now
-}
+// Re-export types for backward compatibility
+export type ClaudeAnalysis = ClaudeAnalysisResponse;
+export type NodeInfoRequirements = NodeRequirementsResponse;
+export type ClaudeResult = ClaudeOperationsResponse;
+export type ClaudeBuildingResult = ClaudeBuildingResponse;
+export type ClaudeValidationResult = ClaudeValidationResponse;
 
-export interface ClaudeBuildingResult extends ClaudeResult {
-  name: string;
-  nodes: any[];
-  connections: any;
-  settings: any;
-}
-
-export interface ClaudeValidationResult extends ClaudeResult {
-  workflow: any;
-  validationReport: any;
-}
-
-export interface ClaudeAnalysis {
-  intent: string;
-  requiredCapabilities: string[];
-  suggestedSearchTerms: string[];
-  nodeRecommendations: Array<{
-    type: string;
-    purpose: string;
-    priority: "essential" | "recommended" | "optional";
-  }>;
-  reasoning: string[];
-}
-
-export interface NodeInfoRequirements {
-  needsAuth: boolean;
-  needsProperties: string[];
-  suggestedTask?: string;
-  needsDocumentation: boolean;
-  reasoning: string[];
-}
+// Prefill constants for consistent JSON output
+const PREFILLS = {
+  DISCOVERY: '{"operations":[',
+  CONFIGURATION: '{"operations":[',
+  BUILDING: '{"name":"',
+  VALIDATION: '[{"type":"',  // For validation fixes array
+  // New prefills for methods currently using regex
+  INTENT_ANALYSIS: '{"intent":"',      // For analyzeWorkflowIntent
+  NODE_REQUIREMENTS: '{"needsAuth":',  // For analyzeNodeRequirements
+  NODE_CONFIG: '{'                     // For fixNodeConfig
+} as const;
 
 export class ClaudeService {
   private anthropic: Anthropic;
@@ -52,14 +46,29 @@ export class ClaudeService {
   }
 
   /**
+   * Shared error handler for prefill-based JSON parsing
+   */
+  private handlePrefillParseError(
+    error: any,
+    prefill: string,
+    fullContent: string,
+    methodName: string
+  ): never {
+    loggers.claude.error(`Failed to parse ${methodName} response:`, error);
+    loggers.claude.error("Prefill was:", prefill);
+    loggers.claude.error("Full content preview:", fullContent.substring(0, 500));
+    throw new Error(`Invalid JSON response from Claude in ${methodName}`);
+  }
+
+  /**
    * Analyze user intent to determine what to search for in MCP
    */
-  async analyzeWorkflowIntent(prompt: string): Promise<ClaudeAnalysis> {
-    console.log("[Claude] Analyzing workflow intent with trust-based approach");
+  async analyzeWorkflowIntent(prompt: string): Promise<ClaudeAnalysisResponse> {
+    loggers.claude.debug("Analyzing workflow intent with trust-based approach");
 
     // Handle empty or whitespace-only prompts
     if (!prompt || !prompt.trim()) {
-      console.log("[Claude] Empty prompt detected, returning minimal analysis");
+      loggers.claude.debug("Empty prompt detected, returning minimal analysis");
       return {
         intent: "No workflow intent provided",
         requiredCapabilities: [],
@@ -94,18 +103,13 @@ Examples:
 - search_nodes({query: "postgres"}) - For database operations
 - list_nodes({category: "communication"}) - List by category
 
-Respond with JSON:
-{
-  "intent": "What the user wants to achieve",
-  "requiredCapabilities": ["capabilities needed"],
-  "suggestedSearchTerms": ["terms to search for - BE SPECIFIC with tool names"],
-  "nodeRecommendations": [{
-    "type": "node-type",
-    "purpose": "why this node is needed",
-    "priority": "essential|recommended|optional"
-  }],
-  "reasoning": ["Your step-by-step reasoning"]
-}`;
+You need to complete the JSON structure that has been started for you.
+The JSON should contain:
+- intent: What the user wants to achieve
+- requiredCapabilities: Array of capabilities needed
+- suggestedSearchTerms: Array of terms to search for - BE SPECIFIC with tool names
+- nodeRecommendations: Array of recommended nodes with type, purpose, and priority
+- reasoning: Array of your step-by-step reasoning`;
 
     const userMessage = `User request: "${prompt}"
 
@@ -117,49 +121,39 @@ Think through what nodes would be needed to build this workflow.`;
           ? "claude-sonnet-4-20250514"
           : "claude-sonnet-4-20250514";
 
+      // Use the prefill constant for intent analysis
+      const prefill = PREFILLS.INTENT_ANALYSIS;
+
       const response = await this.anthropic.messages.create({
         model,
         max_tokens: 1000,
-        temperature: 0.2,
-        messages: [{ role: "user", content: userMessage }],
+        temperature: 0,  // Use 0 for maximum consistency
+        messages: [
+          { role: "user", content: userMessage },
+          { role: "assistant", content: prefill }  // Start Claude's response with the prefill
+        ],
         system: systemPrompt,
       });
 
-      const content =
+      // Parse Claude's response
+      const claudeResponse =
         response.content[0].type === "text" ? response.content[0].text : "";
+      
+      // Combine prefill with Claude's response to get complete JSON
+      const fullContent = prefill + claudeResponse;
+      loggers.claude.verbose("Intent analysis response with prefill");
 
-      // Parse response
-      let analysis: ClaudeAnalysis;
+      // Try to parse JSON response
       try {
-        const jsonMatch =
-          content.match(/```json\s*([\s\S]*?)\s*```/) ||
-          content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const jsonStr = jsonMatch[1] || jsonMatch[0];
-          analysis = JSON.parse(jsonStr);
-        } else {
-          throw new Error("No JSON found in response");
-        }
+        // Since we're using prefill, the response should be valid JSON
+        const analysis = JSON.parse(fullContent);
+        loggers.claude.verbose("Successfully parsed intent analysis response");
+        return analysis as ClaudeAnalysisResponse;
       } catch (e) {
-        console.error(
-          "[Claude] Failed to parse analysis response, using fallback"
-        );
-        // Fallback
-        analysis = {
-          intent: "Process workflow",
-          requiredCapabilities: ["data-processing"],
-          suggestedSearchTerms: prompt
-            .toLowerCase()
-            .split(" ")
-            .filter((w) => w.length > 3),
-          nodeRecommendations: [],
-          reasoning: ["Failed to parse Claude response"],
-        };
+        this.handlePrefillParseError(e, prefill, fullContent, "analyzeWorkflowIntent");
       }
-
-      return analysis;
     } catch (error) {
-      console.error("[Claude] Error analyzing intent:", error);
+      loggers.claude.error("Error analyzing intent:", error);
       // Return basic analysis as fallback
       return {
         intent: "Process workflow",
@@ -180,35 +174,35 @@ Think through what nodes would be needed to build this workflow.`;
     sessionId: string,
     selectedNodes?: string[],
     context?: any
-  ): Promise<ClaudeResult>;
+  ): Promise<DiscoveryOperationsResponse>;
   processWorkflowPhase(
     phase: "configuration",
     prompt: string,
     sessionId: string,
     selectedNodes?: string[],
     context?: any
-  ): Promise<ClaudeResult>;
+  ): Promise<ConfigurationOperationsResponse>;
   processWorkflowPhase(
     phase: "building",
     prompt: string,
     sessionId: string,
     selectedNodes?: string[],
     context?: any
-  ): Promise<ClaudeBuildingResult>;
+  ): Promise<ClaudeBuildingResponse>;
   processWorkflowPhase(
     phase: "validation",
     prompt: string,
     sessionId: string,
     selectedNodes?: string[],
     context?: any
-  ): Promise<ClaudeValidationResult>;
+  ): Promise<ClaudeValidationResponse>;
   processWorkflowPhase(
     phase: WorkflowPhase,
     prompt: string,
     sessionId: string,
     selectedNodes?: string[],
     context?: any
-  ): Promise<ClaudeResult | ClaudeBuildingResult | ClaudeValidationResult> {
+  ): Promise<DiscoveryOperationsResponse | ConfigurationOperationsResponse | ClaudeBuildingResponse | ClaudeValidationResponse> {
     switch (phase) {
       case "discovery":
         return this.analyzeDiscoveryIntent(prompt, context);
@@ -229,7 +223,7 @@ Think through what nodes would be needed to build this workflow.`;
   private async analyzeDiscoveryIntent(
     prompt: string,
     context?: any
-  ): Promise<ClaudeResult> {
+  ): Promise<DiscoveryOperationsResponse> {
     // Extract MCP discovered nodes from context
     const mcpNodes = context?.mcpDiscoveredNodes || [];
     const searchKeywords = context?.searchKeywords || [];
@@ -241,13 +235,21 @@ Think through what nodes would be needed to build this workflow.`;
     const newNodes = context?.newlyDiscoveredNodes || [];
     const clarificationResponse = context?.clarificationResponse || "";
 
-    console.log(
+    loggers.claude.debug(
       isIncremental
-        ? "[Claude] Processing incremental discovery for clarification..."
-        : "[Claude] Starting discovery intent analysis..."
+        ? "Processing incremental discovery for clarification..."
+        : "Starting discovery intent analysis..."
     );
 
     const systemPrompt = `You are an n8n workflow expert helping users build automation workflows.
+    
+    CRITICAL: You must continue the JSON that has already been started. The response begins with: {"operations":[
+    
+    You need to:
+    1. Add operation objects to the array (each must be valid JSON)
+    2. Close the operations array with ]
+    3. Add a comma and the "reasoning" field: ,"reasoning":["step1","step2"]
+    4. Close the JSON object with }
     
     Your task is to THINK DEEPLY about the user's request and generate WorkflowOperation objects for the discovery phase.
     ${
@@ -307,11 +309,10 @@ Think through what nodes would be needed to build this workflow.`;
     
     Remember: ANY node can be used as an AI tool in n8n by connecting it to an AI Agent node!
     
-    Available operation types for discovery phase:
-    - discoverNode: Suggest a node from the MCP-discovered list
-    - selectNode: Select a discovered node for the workflow
-    - deselectNode: Remove a previously selected node
-    - requestClarification: Ask the user for more information when details are unclear
+    VALID OPERATION TYPES (use exact format):
+    - discoverNode: {"type":"discoverNode","node":{"id":"node_X","type":"nodes-base.nodeName","purpose":"description"}}
+    - selectNode: {"type":"selectNode","nodeId":"node_X"}
+    - requestClarification: {"type":"requestClarification","questionId":"qX","question":"your question","context":{"reason":"why asking"}}
     
     When to request clarification (ONLY ABOUT INTENT, NOT TOOL CHOICE):
     - User's workflow intent/outcome is unclear (e.g., "process some data" - what data? what processing?)
@@ -326,60 +327,11 @@ Think through what nodes would be needed to build this workflow.`;
     - The intent is clear but specific tools aren't mentioned → Make reasonable assumptions
     - Multiple valid tool options exist → Pick the most common/reasonable one
     
-    Example response with clarification:
-    {
-      "operations": [
-        {
-          "type": "requestClarification",
-          "questionId": "q1",
-          "question": "What kind of data do you want to process and what should be done with it?",
-          "context": {
-            "reason": "The workflow intent is unclear - need to understand what data and what processing is required"
-          }
-        }
-      ],
-      "reasoning": [
-        "User said 'process some data' but didn't specify what data",
-        "The processing requirements and end goal are unclear",
-        "Need to understand the workflow's purpose before selecting nodes"
-      ]
-    }
+    Example of how to continue from {"operations":[ when requesting clarification:
+    {"type":"requestClarification","questionId":"q1","question":"What kind of data do you want to process?","context":{"reason":"Need to understand data processing requirements"}}],"reasoning":["User intent is unclear","Need more information before selecting nodes"]}
     
-    Example response without clarification (making tool assumptions):
-    {
-      "operations": [
-        {
-          "type": "discoverNode",
-          "node": {
-            "id": "node_1",
-            "type": "nodes-base.httpRequest",
-            "purpose": "Fetch data from API endpoint"
-          }
-        },
-        {
-          "type": "discoverNode",
-          "node": {
-            "id": "node_2",
-            "type": "nodes-base.postgres",
-            "purpose": "Store the fetched data in PostgreSQL database"
-          }
-        },
-        {
-          "type": "selectNode",
-          "nodeId": "node_1"
-        },
-        {
-          "type": "selectNode",
-          "nodeId": "node_2"
-        }
-      ],
-      "reasoning": [
-        "User wants to fetch data from API and store in database",
-        "Intent is clear: get data from external source and persist it",
-        "Made assumption: PostgreSQL for database (common choice)",
-        "Selected HTTP Request node for API calls and Postgres node for storage"
-      ]
-    }`;
+    Example of how to continue from {"operations":[ when selecting nodes:
+    {"type":"discoverNode","node":{"id":"node_1","type":"nodes-base.webhook","purpose":"Receive incoming webhooks"}},{"type":"selectNode","nodeId":"node_1"}],"reasoning":["User needs webhook to receive data","Selected webhook node for the workflow"]}`;
 
     // Build node list information for Claude
     let nodeListInfo = "";
@@ -453,51 +405,44 @@ Think through what nodes would be needed to build this workflow.`;
           ? "claude-sonnet-4-20250514"
           : "claude-sonnet-4-20250514";
 
+      // Use the prefill constant for discovery phase
+      const prefill = PREFILLS.DISCOVERY;
+
       const response = await this.anthropic.messages.create({
         model,
-        max_tokens: 1500,
-        temperature: 0.2,
-        messages: [{ role: "user", content: userMessage }],
+        max_tokens: 8000,
+        temperature: 0,  // Use 0 for maximum consistency
+        messages: [
+          { role: "user", content: userMessage },
+          { role: "assistant", content: prefill }  // Start Claude's response with the prefill
+        ],
         system: systemPrompt,
       });
 
       // Parse Claude's response
-      const content =
+      const claudeResponse =
         response.content[0].type === "text" ? response.content[0].text : "";
-      console.log("[Claude] Raw response:", content);
+      
+      // Combine prefill with Claude's response to get complete JSON
+      const fullContent = prefill + claudeResponse;
+      loggers.claude.verbose("Full response with prefill:", fullContent);
 
       // Try to parse JSON response
       let parsedResponse: any;
       try {
-        // Look for JSON in markdown code block first
-        const codeBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
-        if (codeBlockMatch) {
-          const jsonStr = codeBlockMatch[1].trim();
-          parsedResponse = JSON.parse(jsonStr);
-          console.log("[Claude] Parsed JSON from code block");
-        } else {
-          // Try to find raw JSON
-          const jsonMatch = content.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            parsedResponse = JSON.parse(jsonMatch[0]);
-            console.log("[Claude] Parsed raw JSON");
-          } else {
-            throw new Error("No JSON found in response");
-          }
-        }
+        // Since we're using prefill, the response should be valid JSON
+        parsedResponse = JSON.parse(fullContent);
+        loggers.claude.verbose("Successfully parsed prefilled JSON response");
       } catch (e) {
-        console.log(
-          "[Claude] Failed to parse JSON:",
+        loggers.claude.error(
+          "Failed to parse JSON:",
           e instanceof Error ? e.message : String(e)
         );
-        console.log("[Claude] Response was:", content);
+        loggers.claude.verbose("Full content was:", fullContent);
+        loggers.claude.verbose("Claude's continuation was:", claudeResponse);
 
         // For empty/invalid prompts, return a clarification request
-        if (
-          prompt.trim() === "" ||
-          content.toLowerCase().includes("empty") ||
-          content.toLowerCase().includes("no context")
-        ) {
+        if (prompt.trim() === "") {
           return {
             operations: [
               {
@@ -512,7 +457,8 @@ Think through what nodes would be needed to build this workflow.`;
           };
         }
 
-        throw new Error("Invalid response format from Claude");
+        // If parsing failed, it means Claude didn't complete the JSON properly
+        throw new Error(`Invalid JSON response from Claude. The response was incomplete or malformed: ${e instanceof Error ? e.message : 'Unknown error'}`);
       }
 
       // Handle the new standard response format
@@ -551,7 +497,7 @@ Think through what nodes would be needed to build this workflow.`;
 
       return { operations: validOperations, reasoning };
     } catch (error) {
-      console.error("[Claude] Error in discovery analysis:", error);
+      loggers.claude.error("Error in discovery analysis:", error);
       throw error;
     }
   }
@@ -563,11 +509,9 @@ Think through what nodes would be needed to build this workflow.`;
     prompt: string,
     selectedNodes: string[],
     context: any
-  ): Promise<ClaudeResult> {
-    console.log(
-      "[Claude] Starting configuration generation for",
-      selectedNodes.length,
-      "nodes"
+  ): Promise<ConfigurationOperationsResponse> {
+    loggers.claude.debug(
+      `Starting configuration generation for ${selectedNodes.length} nodes`
     );
 
     // Node schemas, templates, properties, and documentation will be passed in context if available
@@ -582,30 +526,42 @@ Your task: Configure the selected nodes based on the user's requirements.
 
 You have:
 1. The user's original request with their specific requirements
-2. Node essentials showing available configuration options
-3. Property search results showing EXACT field names and structures
-4. Task templates (when available) showing pre-configured examples
+2. Node essentials showing the CORE properties and their structure
+3. Task templates (when available) showing COMPLETE WORKING configurations
+4. Property search results for any additional properties
 5. The purpose of each selected node
 
+CONFIGURATION PRIORITY ORDER:
+1. If a task template is provided → Use it as your BASE configuration
+2. If no template → Use the structure from node essentials
+3. Only use property search results for properties NOT in template/essentials
+
 CRITICAL RULES:
-- NEVER guess field names - use ONLY the properties shown in the search results
-- If a task template is provided, use it as your base and modify for the user's needs
-- Pay attention to the exact field names and structures in the property search results
-- For any "display name" shown, look for the corresponding actual field name in the properties
+- Task templates are WORKING CONFIGURATIONS - trust their structure completely
+- Node essentials show the REAL property names and nesting - follow them exactly
+- NEVER invent or guess property names
+- NEVER search for properties already shown in essentials or templates
+- If essentials show nested structure (e.g., conditions.conditions), use that exact nesting
+- You must complete the JSON structure that has been started for you
 
-Configure each node by:
-- Using the EXACT field names from the property search results
-- Following the structure shown in task templates (if available)
-- Extracting specific values from the user's request
-- Using the discovered properties to build a valid configuration
-- NEVER inventing field names or structures
+Configuration Strategy:
+1. START with task template if provided (it's already correct!)
+2. Or START with essentials structure if no template
+3. Fill in user-specific values (channels, messages, URLs, etc.)
+4. Only add additional properties if explicitly needed and found in searches
 
-Common patterns:
-- Display names like "Send Message To" often map to different field structures
-- Always check the property search results for the actual field names
-- Task templates show the exact working configuration structure
+Common Patterns to Follow:
+- Task templates already have error handling (onError, retryOnFail) configured
+- Essentials show if properties are nested (rules.values, conditions.conditions)
+- Resource/operation pattern determines available sub-properties
+- Some nodes use "text", others use "message" - check the template/essentials
 
-IMPORTANT: Focus only on configuration using the discovered properties. Validation will happen in the next phase.
+Examples:
+- Slack template shows: resource:"message", operation:"post", text:"" → Use "text" not "message"
+- If essentials shows conditions.conditions[] → Put condition properties in that array
+- HTTP template has complete auth/header structure → Don't recreate it
+
+IMPORTANT: Trust the templates and essentials - they show WORKING configurations.
 
 CRITICAL: Your entire response must be ONLY the JSON object below. Do not include any explanatory text, reasoning, or commentary outside the JSON:
 {
@@ -614,11 +570,11 @@ CRITICAL: Your entire response must be ONLY the JSON object below. Do not includ
       "type": "configureNode",
       "nodeId": "node_1",
       "config": {
-        // Configuration using EXACT field names from property searches
+        // Use EXACT structure from template/essentials, fill in user values
       }
     }
   ],
-  "reasoning": ["Your configuration decisions based on discovered properties"]
+  "reasoning": ["Used task template as base", "Filled in user's channel: #general", "Template already had retry logic"]
 }`;
 
     const userMessage = `User intent: "${prompt}"
@@ -738,36 +694,37 @@ CRITICAL: Your entire response must be ONLY the JSON object below. Do not includ
           ? "claude-sonnet-4-20250514"
           : "claude-sonnet-4-20250514";
 
+      // Use the prefill constant for configuration phase
+      const prefill = PREFILLS.CONFIGURATION;
+
       const response = await this.anthropic.messages.create({
         model,
         max_tokens: 2000,
-        temperature: 0.2,
-        messages: [{ role: "user", content: userMessage }],
+        temperature: 0,  // Use 0 for maximum consistency
+        messages: [
+          { role: "user", content: userMessage },
+          { role: "assistant", content: prefill }  // Start Claude's response with the prefill
+        ],
         system: systemPrompt,
       });
 
-      const content =
+      // Parse Claude's response
+      const claudeResponse =
         response.content[0].type === "text" ? response.content[0].text : "";
+      
+      // Combine prefill with Claude's response to get complete JSON
+      const fullContent = prefill + claudeResponse;
+      loggers.claude.verbose("Configuration response with prefill");
 
-      // Parse response
+      // Try to parse JSON response
       let parsedResponse: any;
       try {
-        const jsonMatch =
-          content.match(/```json\s*([\s\S]*?)\s*```/) ||
-          content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const jsonStr = jsonMatch[1] || jsonMatch[0];
-          parsedResponse = JSON.parse(jsonStr);
-        } else {
-          console.error(
-            "[Claude] No JSON found in response:",
-            content.substring(0, 500)
-          );
-          throw new Error("No JSON found in response");
-        }
+        // Since we're using prefill, the response should be valid JSON
+        parsedResponse = JSON.parse(fullContent);
+        loggers.claude.verbose("Successfully parsed prefilled JSON response");
       } catch (e) {
-        console.error("[Claude] Failed to parse response:", e);
-        console.error("[Claude] Content was:", content.substring(0, 500));
+        loggers.claude.error("Failed to parse response:", e);
+        loggers.claude.error("Full content was:", fullContent.substring(0, 500));
         throw new Error("Invalid response format from Claude");
       }
 
@@ -776,7 +733,7 @@ CRITICAL: Your entire response must be ONLY the JSON object below. Do not includ
         reasoning: parsedResponse.reasoning || [],
       };
     } catch (error) {
-      console.error("[Claude] Error in configuration generation:", error);
+      loggers.claude.error("Error in configuration generation:", error);
       throw error;
     }
   }
@@ -784,8 +741,8 @@ CRITICAL: Your entire response must be ONLY the JSON object below. Do not includ
   /**
    * Generate fixes for validation errors (delta-based approach)
    */
-  async generateValidationFixes(errors: any[], workflow: any): Promise<any[]> {
-    console.log("[Claude] Generating fixes for validation errors");
+  async generateValidationFixes(errors: any[], workflow: any): Promise<ValidationFixesResponse> {
+    loggers.claude.verbose("Generating fixes for validation errors");
 
     const systemPrompt = `You are an n8n workflow validation expert. Your job is to analyze validation errors and generate fix operations.
 
@@ -797,12 +754,26 @@ When you see errors about node-level properties being in the wrong location:
 - Since our applyFixes function handles moving them automatically, you should generate updateField operations for these properties
 - The applyFixes function will place them at the correct level based on the property name
 
+Example: If error says "Node-level properties onError, retryOnFail are in the wrong location", generate:
+[
+  { "type": "updateField", "nodeId": "node_id", "field": "onError", "value": "continueErrorOutput" },
+  { "type": "updateField", "nodeId": "node_id", "field": "retryOnFail", "value": true }
+]
+
+Example: If error says "Cannot use both continueOnFail and onError", generate:
+[
+  { "type": "removeField", "nodeId": "node_id", "field": "continueOnFail" }
+]
+
 Fix operation types:
 - addField: Add a missing field to a node
   { type: "addField", nodeId: "node_id", field: "fieldName", value: "fieldValue" }
   
 - updateField: Update an existing field
   { type: "updateField", nodeId: "node_id", field: "fieldName", value: "newValue" }
+  
+- removeField: Remove a field from a node
+  { type: "removeField", nodeId: "node_id", field: "fieldName" }
   
 - addConnection: Add a missing connection
   { type: "addConnection", from: "sourceNodeName", to: "targetNodeName" }
@@ -845,39 +816,44 @@ Generate fix operations for these errors. Return ONLY a JSON array of fix operat
           ? "claude-sonnet-4-20250514"
           : "claude-sonnet-4-20250514";
 
+      // Use the prefill constant for validation fixes
+      const prefill = PREFILLS.VALIDATION;
+
       const response = await this.anthropic.messages.create({
         model,
         max_tokens: 2000,
-        temperature: 0.1,
-        messages: [{ role: "user", content: userMessage }],
+        temperature: 0,  // Use 0 for maximum consistency
+        messages: [
+          { role: "user", content: userMessage },
+          { role: "assistant", content: prefill }  // Start Claude's response with the prefill
+        ],
         system: systemPrompt,
       });
 
-      const content =
+      // Parse Claude's response
+      const claudeResponse =
         response.content[0].type === "text" ? response.content[0].text : "";
+      
+      // Combine prefill with Claude's response to get complete JSON
+      const fullContent = prefill + claudeResponse;
+      loggers.claude.verbose("Validation fixes response with prefill");
 
-      // Parse response to extract fix operations
+      // Try to parse JSON response
       try {
-        // Try to find JSON array in the response
-        const jsonMatch = content.match(/\[[\s\S]*\]/);
-        if (jsonMatch) {
-          const fixes = JSON.parse(jsonMatch[0]);
-          console.log(
-            `[Claude] Generated ${fixes.length} fix operations:`,
-            JSON.stringify(fixes, null, 2)
-          );
-          return fixes;
-        } else {
-          console.error("[Claude] No JSON array found in response");
-          return [];
-        }
+        // Since we're using prefill, the response should be valid JSON
+        const fixes = JSON.parse(fullContent);
+        loggers.claude.info(
+          `Generated ${fixes.length} fix operations:`,
+          fixes
+        );
+        return fixes;
       } catch (e) {
-        console.error("[Claude] Failed to parse fix operations:", e);
-        console.error("[Claude] Response:", content);
+        loggers.claude.error("Failed to parse fix operations:", e);
+        loggers.claude.error("Full content was:", fullContent.substring(0, 500));
         return [];
       }
     } catch (error) {
-      console.error("[Claude] Error generating validation fixes:", error);
+      loggers.claude.error("Error generating validation fixes:", error);
       return [];
     }
   }
@@ -887,8 +863,8 @@ Generate fix operations for these errors. Return ONLY a JSON array of fix operat
    */
   private async validateWorkflow(
     context: any
-  ): Promise<ClaudeValidationResult> {
-    console.log("[Claude] Validating workflow with MCP tools");
+  ): Promise<ClaudeValidationResponse> {
+    loggers.claude.verbose("Validating workflow with MCP tools");
 
     const draftWorkflow = context?.draftWorkflow;
     if (!draftWorkflow) {
@@ -1010,115 +986,52 @@ Please:
       try {
         const text = responseText.text.trim();
 
-        // Try to parse as clean JSON first
-        let result = null;
-
-        // Strategy 1: Look for JSON between === markers
+        // Look for JSON between === markers (documented format)
         const markerMatch = text.match(
           /=== BEGIN RESULT ===\s*([\s\S]*?)\s*=== END RESULT ===/
         );
-        if (markerMatch) {
-          try {
-            const jsonStr = markerMatch[1].trim();
-            console.log(
-              "[Claude] Found JSON between markers, length:",
-              jsonStr.length
-            );
-            console.log("[Claude] JSON preview:", jsonStr.substring(0, 100));
-            result = JSON.parse(jsonStr);
-            console.log(
-              "[Claude] Successfully parsed result with markers strategy"
-            );
-          } catch (e) {
-            console.error("[Claude] Failed to parse JSON between markers:", e);
-            console.error(
-              "[Claude] JSON that failed:",
-              markerMatch[1].substring(0, 200)
-            );
+        
+        if (!markerMatch) {
+          loggers.claude.error("No result markers found in response");
+          throw new Error("Invalid response format - missing result markers");
+        }
+
+        try {
+          const jsonStr = markerMatch[1].trim();
+          loggers.claude.verbose(
+            `Found JSON between markers, length: ${jsonStr.length}`
+          );
+          loggers.claude.verbose("JSON preview:", jsonStr.substring(0, 100));
+          const result = JSON.parse(jsonStr);
+          loggers.claude.debug(
+            "Successfully parsed result with markers strategy"
+          );
+
+          // Validate the parsed result
+          if (!result || !result.workflow) {
+            throw new Error("Claude response missing workflow");
           }
-        }
 
-        // Strategy 2: Look for JSON after all tool invocations
-        if (!result) {
-          const lastInvokeIndex = text.lastIndexOf("</invoke>");
-          if (lastInvokeIndex !== -1) {
-            const afterTools = text
-              .substring(lastInvokeIndex + "</invoke>".length)
-              .trim();
-            // Try to parse what comes after tools
-            try {
-              // Look for JSON in the remaining text
-              const jsonMatch = afterTools.match(/\{[\s\S]*\}/);
-              if (jsonMatch) {
-                result = JSON.parse(jsonMatch[0]);
-              }
-            } catch (e) {
-              // Continue to next strategy
-            }
+          // Ensure the workflow has a valid flag
+          if (result.workflow && typeof result.workflow.valid === "undefined") {
+            result.workflow.valid = true; // Default to valid if all validations passed
           }
-        }
 
-        // Strategy 3: Look for JSON in code blocks
-        if (!result) {
-          const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-          if (codeBlockMatch) {
-            try {
-              result = JSON.parse(codeBlockMatch[1]);
-            } catch (e) {
-              // Continue to next strategy
-            }
-          }
+          // Return the result in the expected format
+          return {
+            operations: [], // Validation phase doesn't use operations
+            reasoning: result.reasoning || ["Workflow validated and fixed"],
+            workflow: result.workflow,
+            validationReport: result.validationReport,
+          };
+        } catch (e) {
+          loggers.claude.error("Failed to parse JSON between markers:", e);
+          loggers.claude.error(
+            "JSON that failed:",
+            markerMatch[1].substring(0, 200)
+          );
+          throw new Error("Failed to parse validation result JSON");
         }
-
-        // Strategy 4: Find the largest JSON object that contains workflow
-        if (!result) {
-          // Use a more sophisticated regex to find complete JSON objects
-          const jsonRegex =
-            /\{(?:[^{}]|(?:\{[^{}]*\}))*"workflow"(?:[^{}]|(?:\{[^{}]*\}))*\}/g;
-          const matches = text.match(jsonRegex);
-          if (matches) {
-            // Try each match, prefer the largest one
-            let largestMatch = null;
-            let largestSize = 0;
-            for (const match of matches) {
-              try {
-                const parsed = JSON.parse(match);
-                if (parsed.workflow && match.length > largestSize) {
-                  result = parsed;
-                  largestSize = match.length;
-                }
-              } catch (e) {
-                // Continue to next match
-              }
-            }
-          }
-        }
-
-        // Strategy 5: Try direct parsing as last resort
-        if (!result) {
-          try {
-            result = JSON.parse(text);
-          } catch (e) {
-            throw new Error("No valid workflow JSON found in response");
-          }
-        }
-
-        if (!result || !result.workflow) {
-          throw new Error("Claude response missing workflow");
-        }
-
-        // Ensure the workflow has a valid flag
-        if (result.workflow && typeof result.workflow.valid === "undefined") {
-          result.workflow.valid = true; // Default to valid if all validations passed
-        }
-
-        // Return the result in the expected format
-        return {
-          operations: [], // Validation phase doesn't use operations
-          reasoning: result.reasoning || ["Workflow validated and fixed"],
-          workflow: result.workflow,
-          validationReport: result.validationReport,
-        };
       } catch (parseError) {
         console.error(
           "[Claude] Failed to parse validation response:",
@@ -1144,7 +1057,7 @@ Please:
         };
       }
     } catch (error) {
-      console.error("[Claude] Validation error:", error);
+      loggers.claude.error("Validation error:", error);
       throw error;
     }
   }
@@ -1156,8 +1069,8 @@ Please:
     node: any,
     userPrompt: string,
     nodeEssentials: any
-  ): Promise<NodeInfoRequirements> {
-    console.log(`[Claude] Analyzing information requirements for ${node.type}`);
+  ): Promise<NodeRequirementsResponse> {
+    loggers.claude.debug(`Analyzing information requirements for ${node.type}`);
 
     const systemPrompt = `You are an n8n workflow configuration expert analyzing what information is needed to properly configure a node.
 
@@ -1166,44 +1079,54 @@ Given:
 2. The user's original request
 3. The node essentials (basic properties)
 
-Determine what additional MCP information would be helpful. BE COMPREHENSIVE - search for ALL properties needed to fulfill the node's purpose, not just authentication.
+CRITICAL RULES:
+- CAREFULLY READ the node essentials to understand the ACTUAL property structure
+- NEVER guess property names - use ONLY properties shown in essentials
+- Look for nested structures (e.g., conditions.conditions, rules.values)
+- If a property has options/choices, note the exact option values
+- Task templates show WORKING configurations - suggest them when appropriate
+
+Analyze the essentials to determine:
+1. What properties are already available in essentials (DON'T search for these)
+2. What SPECIFIC additional properties might be needed (based on essentials structure)
+3. Whether a task template would provide a good starting configuration
 
 Key Analysis Points:
-1. Authentication: Does this node need credentials? (OAuth, API keys, etc.)
-2. Core Operation Properties: What are the MAIN properties for the node's purpose?
-   - For Slack: channel/recipient selection, message content, attachments
-   - For HTTP: URL, method, headers, body
-   - For Database: query/operation, table, fields
-   - For Email: recipient, subject, body
-3. Configuration Properties: Settings that control how the node operates
-4. Optional Enhancements: Additional features that might be useful
+1. Authentication: Does this node need credentials? (check essentials for auth indicators)
+2. Required Properties: What properties are marked as required in essentials?
+3. Operation Structure: Does the node use resource/operation pattern? What are the options?
+4. Nested Properties: Are there nested structures like conditions, rules, filters?
+5. Task Templates: Is there a pre-configured template that matches the use case?
 
 IMPORTANT: 
-- For the node's stated purpose, identify ALL properties that need to be configured
-- Don't just focus on auth - think about what fields are needed to accomplish the task
-- If sending a message, search for message/content/text properties
-- If selecting a destination, search for channel/recipient/target properties
-- Consider the node's category and typical use cases
+- If essentials show nested properties (e.g., conditions.conditions), that's the structure
+- If essentials show a property with options, use those exact option values
+- DON'T search for properties that are already in essentials
+- DON'T invent property names that aren't referenced in essentials
+- DO suggest task templates when they match the user's intent
 
 Available MCP tools:
-- search_node_properties(nodeType, query) - Find specific properties
-- get_node_for_task(taskName) - Get pre-configured templates
-- get_node_documentation(nodeType) - Get detailed usage documentation
+- search_node_properties(nodeType, query) - ONLY for properties NOT in essentials
+- get_node_for_task(taskName) - Get complete working configurations
+- get_node_documentation(nodeType) - For complex nodes needing usage examples
 
-Example property searches:
-- For messaging nodes: "message", "channel", "recipient", "content", "text"
-- For database nodes: "query", "table", "operation", "fields"
-- For HTTP nodes: "url", "method", "headers", "body"
-- For file nodes: "path", "filename", "content", "encoding"
+Example good analysis:
+- Essentials shows "conditions" with nested "conditions" array → use that structure
+- Essentials shows "resource" with options ["message", "channel"] → use those values
+- User wants to send Slack message → suggest "send_slack_message" task
 
-CRITICAL: Respond with ONLY this JSON structure, no other text:
-{
-  "needsAuth": true/false,
-  "needsProperties": ["channel", "message", "recipient"], // ALL relevant properties
-  "suggestedTask": "send_slack_message", // optional, if a task template matches
-  "needsDocumentation": true/false,
-  "reasoning": ["Why each piece of info is needed"]
-}`;
+Example bad analysis:
+- Searching for "operator" when essentials shows it's inside conditions.conditions[].operator
+- Searching for "message" when essentials already shows a "text" property
+- Guessing property names like "leftValue" without checking essentials structure
+
+You need to complete the JSON structure that has been started for you.
+The JSON should contain:
+- needsAuth: boolean indicating if node needs authentication
+- needsProperties: Array of properties NOT in essentials that need to be searched
+- suggestedTask: Task name if a template matches the use case, or null
+- needsDocumentation: boolean, only true for very complex nodes
+- reasoning: Array of analysis reasoning`;
 
     const userMessage = `Node: ${node.type} (${node.id})
 Purpose: ${node.purpose}
@@ -1220,41 +1143,39 @@ What additional MCP information would help configure this node properly?`;
           ? "claude-sonnet-4-20250514"
           : "claude-sonnet-4-20250514";
 
+      // Use the prefill constant for node requirements
+      const prefill = PREFILLS.NODE_REQUIREMENTS;
+
       const response = await this.anthropic.messages.create({
         model,
         max_tokens: 500,
-        temperature: 0.2,
-        messages: [{ role: "user", content: userMessage }],
+        temperature: 0,  // Use 0 for maximum consistency
+        messages: [
+          { role: "user", content: userMessage },
+          { role: "assistant", content: prefill }  // Start Claude's response with the prefill
+        ],
         system: systemPrompt,
       });
 
-      const content =
+      // Parse Claude's response
+      const claudeResponse =
         response.content[0].type === "text" ? response.content[0].text : "";
+      
+      // Combine prefill with Claude's response to get complete JSON
+      const fullContent = prefill + claudeResponse;
+      loggers.claude.verbose("Node requirements response with prefill");
 
-      // Parse the requirements
+      // Try to parse JSON response
       try {
-        const jsonMatch =
-          content.match(/```json\s*([\s\S]*?)\s*```/) ||
-          content.match(/\{[\s\S]*\}/);
-
-        if (jsonMatch) {
-          const jsonStr = jsonMatch[1] || jsonMatch[0];
-          return JSON.parse(jsonStr);
-        } else {
-          throw new Error("No JSON found in response");
-        }
+        // Since we're using prefill, the response should be valid JSON
+        const requirements = JSON.parse(fullContent);
+        loggers.claude.verbose("Successfully parsed node requirements response");
+        return requirements as NodeRequirementsResponse;
       } catch (e) {
-        console.error("[Claude] Failed to parse requirements analysis:", e);
-        // Return minimal requirements on error
-        return {
-          needsAuth: false,
-          needsProperties: [],
-          needsDocumentation: false,
-          reasoning: ["Failed to analyze requirements"],
-        };
+        this.handlePrefillParseError(e, prefill, fullContent, "analyzeNodeRequirements");
       }
     } catch (error) {
-      console.error("[Claude] Error analyzing node requirements:", error);
+      loggers.claude.error("Error analyzing node requirements:", error);
       return {
         needsAuth: false,
         needsProperties: [],
@@ -1309,7 +1230,7 @@ Example for Slack message:
   "text": "Your message here"
 }
 
-IMPORTANT: Return ONLY the fixed configuration object, no explanations.`;
+IMPORTANT: You must complete the JSON configuration object that has been started for you. Return ONLY the fixed configuration object, no explanations.`;
 
     // Build context information
     let contextInfo = "";
@@ -1365,38 +1286,44 @@ Generate the fixed configuration:`;
           ? "claude-sonnet-4-20250514"
           : "claude-sonnet-4-20250514";
 
+      // Use the prefill constant for node config
+      const prefill = PREFILLS.NODE_CONFIG;
+
       const response = await this.anthropic.messages.create({
         model,
         max_tokens: 1000,
-        temperature: 0.2,
-        messages: [{ role: "user", content: userMessage }],
+        temperature: 0,  // Use 0 for maximum consistency
+        messages: [
+          { role: "user", content: userMessage },
+          { role: "assistant", content: prefill }  // Start Claude's response with the prefill
+        ],
         system: systemPrompt,
       });
 
-      const content =
+      // Parse Claude's response
+      const claudeResponse =
         response.content[0].type === "text" ? response.content[0].text : "";
+      
+      // Combine prefill with Claude's response to get complete JSON
+      const fullContent = prefill + claudeResponse;
+      loggers.claude.verbose("Fixed configuration response with prefill");
 
-      // Parse the fixed configuration
+      // Try to parse JSON response
       try {
-        // Look for JSON in various formats
-        const jsonMatch =
-          content.match(/```json\s*([\s\S]*?)\s*```/) ||
-          content.match(/```\s*([\s\S]*?)\s*```/) ||
-          content.match(/\{[\s\S]*\}/);
-
-        if (jsonMatch) {
-          const jsonStr = jsonMatch[1] || jsonMatch[0];
-          return JSON.parse(jsonStr);
-        } else {
-          throw new Error("No JSON configuration found in response");
-        }
+        // Since we're using prefill, the response should be valid JSON
+        const fixedConfig = JSON.parse(fullContent);
+        loggers.claude.verbose("Successfully parsed fixed configuration");
+        return fixedConfig;
       } catch (e) {
-        console.error("[Claude] Failed to parse fixed configuration:", e);
+        // For fixNodeConfig, we want to return the original config on error
+        // rather than throwing, so we don't use the shared handler
+        loggers.claude.error("Failed to parse fixed configuration:", e);
+        loggers.claude.error("Full content was:", fullContent.substring(0, 500));
         // Return original config if we can't parse the fix
         return config;
       }
     } catch (error) {
-      console.error("[Claude] Error fixing node configuration:", error);
+      loggers.claude.error("Error fixing node configuration:", error);
       // Return original config on error
       return config;
     }
@@ -1405,8 +1332,8 @@ Generate the fixed configuration:`;
   /**
    * Build workflow structure from configured nodes
    */
-  private async buildWorkflow(context: any): Promise<ClaudeBuildingResult> {
-    console.log("[Claude] Building workflow structure from configured nodes");
+  private async buildWorkflow(context: any): Promise<ClaudeBuildingResponse> {
+    loggers.claude.verbose("Building workflow structure from configured nodes");
 
     const configuredNodes = context?.configuredNodes || [];
     const userIntent = context?.userIntent || "";
@@ -1420,10 +1347,11 @@ You have:
 
 Your task:
 - Connect the nodes in logical flow based on their purposes
-- Add appropriate error handling (continueOnFail, onError settings)
+- Add appropriate error handling using onError property (NOT continueOnFail)
 - Use n8n expressions where needed ($json, $node["NodeName"].json)
 - Position nodes for clear visual layout
 - Create a workflow that fulfills the user's intent
+- You must complete the JSON structure that has been started for you (workflow name)
 
 IMPORTANT: This is the BUILDING phase only. DO NOT validate the workflow - just build the structure.
 
@@ -1445,11 +1373,12 @@ Connection guidelines:
   }
   Where node_1 has name "Webhook Trigger" and node_2 has name "Send to Slack"
 
-Error handling:
-- Webhooks/triggers: continueOnFail=false, stop on error
-- Data processing: continueOnFail=true, continue on error
-- External APIs: continueOnFail=true, handle errors gracefully
-- Critical operations: continueOnFail=false, stop workflow
+Error handling (use onError property, NOT continueOnFail):
+- Webhooks/triggers: onError="stopWorkflow" (stop on error)
+- Data processing: onError="continueRegularOutput" (continue on error)
+- External APIs: onError="continueErrorOutput" with retryOnFail=true
+- Critical operations: onError="stopWorkflow" (stop workflow)
+- NEVER use both continueOnFail and onError together!
 
 Return a complete n8n workflow JSON following this EXACT format:
 {
@@ -1465,12 +1394,23 @@ Return a complete n8n workflow JSON following this EXACT format:
         "httpMethod": "POST",
         "path": "webhook-endpoint"
       },
-      "continueOnFail": false
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "node_2",
+      "name": "AI Chat",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [550, 300],
+      "parameters": {
+        "model": "gpt-4",
+        "options": {}
+      }
     }
   ],
   "connections": {
     "Webhook": {
-      "main": [[{"node": "Send to Slack", "type": "main", "index": 0}]]
+      "main": [[{"node": "AI Chat", "type": "main", "index": 0}]]
     }
   },
   "settings": {
@@ -1479,11 +1419,14 @@ Return a complete n8n workflow JSON following this EXACT format:
     "saveDataErrorExecution": "all",
     "saveManualExecutions": true
   },
-  "reasoning": ["Connected webhook to Slack for message sending", "..."]
+  "reasoning": ["Connected webhook to AI for processing", "..."]
 }
 
 CRITICAL FORMAT RULES:
-- Node types MUST have "n8n-nodes-base." prefix (e.g., "n8n-nodes-base.webhook" not "nodes-base.webhook")
+- Node types MUST use the EXACT type from the configured nodes - DO NOT modify the type!
+- The configured nodes already have the correct prefixes:
+  * Regular nodes: "n8n-nodes-base." (e.g., "n8n-nodes-base.webhook", "n8n-nodes-base.slack")
+  * Langchain nodes: "@n8n/n8n-nodes-langchain." (e.g., "@n8n/n8n-nodes-langchain.lmChatOpenAi")
 - Connections MUST use node NAMES as keys (e.g., "Webhook" not "node_1")
 - saveDataSuccessExecution and saveDataErrorExecution MUST be "all" (string) not true (boolean)
 - Each node MUST have a typeVersion field (usually 1 or 2)
@@ -1513,32 +1456,37 @@ Build a complete n8n workflow that:
           ? "claude-sonnet-4-20250514"
           : "claude-sonnet-4-20250514";
 
+      // Use the prefill constant for building phase
+      const prefill = PREFILLS.BUILDING;
+
       const response = await this.anthropic.messages.create({
         model,
-        max_tokens: 3000,
-        temperature: 0.2,
-        messages: [{ role: "user", content: userMessage }],
+        max_tokens: 8000,
+        temperature: 0,  // Use 0 for maximum consistency
+        messages: [
+          { role: "user", content: userMessage },
+          { role: "assistant", content: prefill }  // Start Claude's response with the prefill
+        ],
         system: systemPrompt,
       });
 
-      const content =
+      // Parse Claude's response
+      const claudeResponse =
         response.content[0].type === "text" ? response.content[0].text : "";
+      
+      // Combine prefill with Claude's response to get complete JSON
+      const fullContent = prefill + claudeResponse;
+      loggers.claude.verbose("Building response with prefill");
 
-      // Parse response
+      // Try to parse JSON response
       let parsedResponse: any;
       try {
-        const jsonMatch =
-          content.match(/```json\s*([\s\S]*?)\s*```/) ||
-          content.match(/\{[\s\S]*\}/);
-
-        if (jsonMatch) {
-          const jsonStr = jsonMatch[1] || jsonMatch[0];
-          parsedResponse = JSON.parse(jsonStr);
-        } else {
-          throw new Error("No JSON found in response");
-        }
+        // Since we're using prefill, the response should be valid JSON
+        parsedResponse = JSON.parse(fullContent);
+        loggers.claude.verbose("Successfully parsed prefilled JSON response");
       } catch (e) {
-        console.error("[Claude] Failed to parse building response:", e);
+        loggers.claude.error("Failed to parse building response:", e);
+        loggers.claude.error("Full content was:", fullContent.substring(0, 500));
         throw new Error("Invalid response format from Claude");
       }
 
@@ -1557,7 +1505,7 @@ Build a complete n8n workflow that:
         reasoning: parsedResponse.reasoning || [],
       };
     } catch (error) {
-      console.error("[Claude] Error in workflow building:", error);
+      loggers.claude.error("Error in workflow building:", error);
       throw error;
     }
   }

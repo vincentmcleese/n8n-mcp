@@ -11,6 +11,7 @@ import { ClaudeService } from "@/lib/services/claude-service";
 import { MCPClient } from "@/lib/mcp-client";
 import { supabase } from "@/lib/supabase";
 import { PhaseManager } from "@/lib/phase-manager";
+import { loggers } from "@/lib/utils/logger";
 
 export interface DiscoveryResult {
   success: boolean;
@@ -118,8 +119,8 @@ export class WorkflowOrchestrator {
     prompt: string
   ): Promise<DiscoveryResult> {
     try {
-      console.log(
-        "[WorkflowOrchestrator] Starting simplified discovery phase - trusting AI agent decisions"
+      loggers.orchestrator.debug(
+        "Starting simplified discovery phase - trusting AI agent decisions"
       );
 
       // Step 1: Have Claude analyze the prompt and suggest what to search for
@@ -127,12 +128,12 @@ export class WorkflowOrchestrator {
         prompt
       );
 
-      console.log(
-        "[WorkflowOrchestrator] Claude suggests searching for:",
+      loggers.orchestrator.debug(
+        "Claude suggests searching for:",
         analysisResponse.suggestedSearchTerms
       );
-      console.log(
-        "[WorkflowOrchestrator] Node recommendations:",
+      loggers.orchestrator.debug(
+        "Node recommendations:",
         analysisResponse.nodeRecommendations.map((r) => r.type)
       );
 
@@ -141,15 +142,15 @@ export class WorkflowOrchestrator {
 
       // Handle empty search terms
       if (analysisResponse.suggestedSearchTerms.length === 0) {
-        console.log(
-          "[WorkflowOrchestrator] No search terms suggested - likely invalid prompt"
+        loggers.orchestrator.debug(
+          "No search terms suggested - likely invalid prompt"
         );
       }
 
       // Search for each term Claude suggested
       for (const searchTerm of analysisResponse.suggestedSearchTerms) {
         try {
-          console.log(`[WorkflowOrchestrator] Searching for: "${searchTerm}"`);
+          loggers.orchestrator.debug(`Searching for: "${searchTerm}"`);
           const searchResult = await this.mcpClient.searchNodes({
             query: searchTerm,
             limit: 3, // Small limit - trust that good search terms yield good results
@@ -175,27 +176,27 @@ export class WorkflowOrchestrator {
                   });
                 }
               } catch (e) {
-                console.log(
-                  `[WorkflowOrchestrator] Could not parse search results`
+                loggers.orchestrator.debug(
+                  `Could not parse search results`
                 );
               }
             }
           }
         } catch (error) {
-          console.error(`[WorkflowOrchestrator] Error searching nodes:`, error);
+          loggers.orchestrator.error(`Error searching nodes:`, error);
         }
       }
 
-      console.log(
-        `[WorkflowOrchestrator] Found ${searchResults.length} nodes from search`
+      loggers.orchestrator.debug(
+        `Found ${searchResults.length} nodes from search`
       );
 
       // Step 3: Get node details for ALL search results - trust Claude to make intelligent decisions
       const nodeDetails: any[] = [];
       const nodesToDetail = searchResults; // Send ALL nodes to Claude, no filtering!
 
-      console.log(
-        `[WorkflowOrchestrator] Getting details for all ${nodesToDetail.length} discovered nodes (trusting Claude to filter)`
+      loggers.orchestrator.debug(
+        `Getting details for all ${nodesToDetail.length} discovered nodes (trusting Claude to filter)`
       );
 
       for (const node of nodesToDetail) {
@@ -229,8 +230,8 @@ export class WorkflowOrchestrator {
             }
           }
         } catch (error) {
-          console.error(
-            `[WorkflowOrchestrator] Error getting info for ${node.nodeType}:`,
+          loggers.orchestrator.error(
+            `Error getting info for ${node.nodeType}:`,
             error
           );
           // Still include basic info
@@ -244,8 +245,8 @@ export class WorkflowOrchestrator {
       }
 
       // Step 4: Have Claude select and design the workflow with discovered nodes
-      console.log(
-        `[WorkflowOrchestrator] Sending ${nodeDetails.length} nodes to Claude for workflow design`
+      loggers.orchestrator.debug(
+        `Sending ${nodeDetails.length} nodes to Claude for workflow design`
       );
 
       const claudeResponse = await this.claudeService.processWorkflowPhase(
@@ -311,8 +312,8 @@ export class WorkflowOrchestrator {
           question: combinedQuestion,
         };
 
-        console.log(
-          `[WorkflowOrchestrator] Combined ${clarificationQuestions.length} clarification questions`
+        loggers.orchestrator.debug(
+          `Combined ${clarificationQuestions.length} clarification questions`
         );
       }
 
@@ -351,10 +352,10 @@ export class WorkflowOrchestrator {
     questionId: string,
     response: string
   ): Promise<DiscoveryResult> {
-    console.log(
-      `[Clarification] Processing answer for question: ${questionId}`
+    loggers.orchestrator.debug(
+      `Processing answer for question: ${questionId}`
     );
-    console.log(`[Clarification] User response: "${response}"`);
+    loggers.orchestrator.debug(`User response: "${response}"`);
 
     // Try to get session from database to preserve existing state
     let session = null;
@@ -377,19 +378,19 @@ export class WorkflowOrchestrator {
         clarificationHistory = session.state.clarificationHistory || [];
         originalPrompt = session.initial_prompt || "";
 
-        console.log(
-          `[Clarification] Found existing session with ${existingDiscoveredNodes.length} discovered nodes`
+        loggers.orchestrator.debug(
+          `Found existing session with ${existingDiscoveredNodes.length} discovered nodes`
         );
-        console.log(
-          `[Clarification] Existing selected nodes: ${existingSelectedNodeIds.join(
+        loggers.orchestrator.debug(
+          `Existing selected nodes: ${existingSelectedNodeIds.join(
             ", "
           )}`
         );
       }
     } catch (error) {
       // Session not found - for interactive test, use mock data from the first discovery
-      console.log(
-        `[Clarification] Session ${sessionId} not found, checking for test context`
+      loggers.orchestrator.debug(
+        `Session ${sessionId} not found, checking for test context`
       );
 
       // For test purposes, check if we have stored test state
@@ -402,24 +403,24 @@ export class WorkflowOrchestrator {
         existingSelectedNodeIds = testState.selected || [];
         originalPrompt = testState.initial_prompt || "";
 
-        console.log(
-          `[Clarification] Using test session state with ${existingDiscoveredNodes.length} discovered nodes`
+        loggers.orchestrator.debug(
+          `Using test session state with ${existingDiscoveredNodes.length} discovered nodes`
         );
-        console.log(
-          `[Clarification] Test selected nodes: ${existingSelectedNodeIds.join(
+        loggers.orchestrator.debug(
+          `Test selected nodes: ${existingSelectedNodeIds.join(
             ", "
           )}`
         );
         // Log node structure for debugging
         if (existingDiscoveredNodes.length > 0) {
-          console.log(
-            `[Clarification] First discovered node structure:`,
+          loggers.orchestrator.debug(
+            `First discovered node structure:`,
             JSON.stringify(existingDiscoveredNodes[0], null, 2)
           );
         }
       } else {
-        console.log(
-          `[Clarification] No test state available - using empty context`
+        loggers.orchestrator.debug(
+          `No test state available - using empty context`
         );
       }
     }
@@ -431,8 +432,8 @@ export class WorkflowOrchestrator {
       response,
     };
 
-    console.log(
-      `[Clarification] Only searching for additional nodes based on: "${response}"`
+    loggers.orchestrator.debug(
+      `Only searching for additional nodes based on: "${response}"`
     );
 
     // Step 1: Extract new search terms from clarification response
@@ -441,8 +442,8 @@ export class WorkflowOrchestrator {
         `Based on this clarification: "${response}", what additional nodes should we search for? Context: ${originalPrompt}`
       );
 
-    console.log(
-      `[Clarification] Claude suggests searching for additional terms: ${clarificationAnalysis.suggestedSearchTerms.join(
+    loggers.orchestrator.debug(
+      `Claude suggests searching for additional terms: ${clarificationAnalysis.suggestedSearchTerms.join(
         ", "
       )}`
     );
@@ -460,14 +461,14 @@ export class WorkflowOrchestrator {
       );
 
       if (alreadyHaveType) {
-        console.log(
-          `[Clarification] Skipping search for "${searchTerm}" - already have nodes of this type`
+        loggers.orchestrator.debug(
+          `Skipping search for "${searchTerm}" - already have nodes of this type`
         );
         continue;
       }
 
       try {
-        console.log(`[Clarification] Searching for new nodes: "${searchTerm}"`);
+        loggers.orchestrator.debug(`Searching for new nodes: "${searchTerm}"`);
         const searchResult = await this.mcpClient.searchNodes({
           query: searchTerm,
           limit: 3,
@@ -491,28 +492,28 @@ export class WorkflowOrchestrator {
                     )
                 );
 
-                console.log(
-                  `[Clarification] Found ${newNodes.length} new nodes for "${searchTerm}"`
+                loggers.orchestrator.debug(
+                  `Found ${newNodes.length} new nodes for "${searchTerm}"`
                 );
                 newSearchResults.push(...newNodes);
               }
             } catch (e) {
-              console.log(
-                `[Clarification] Could not parse search results for "${searchTerm}"`
+              loggers.orchestrator.debug(
+                `Could not parse search results for "${searchTerm}"`
               );
             }
           }
         }
       } catch (error) {
-        console.error(
-          `[Clarification] Error searching for "${searchTerm}":`,
+        loggers.orchestrator.error(
+          `Error searching for "${searchTerm}":`,
           error
         );
       }
     }
 
-    console.log(
-      `[Clarification] Total new nodes found: ${newSearchResults.length}`
+    loggers.orchestrator.debug(
+      `Total new nodes found: ${newSearchResults.length}`
     );
 
     // Step 3: Process clarification with existing context
@@ -560,16 +561,16 @@ export class WorkflowOrchestrator {
             displayName: operation.node.displayName || operation.node.type,
           };
           newDiscoveredNodes.push(enrichedNode);
-          console.log(
-            `[Clarification] Added new node: ${operation.node.type} (${operation.node.id})`
+          loggers.orchestrator.debug(
+            `Added new node: ${operation.node.type} (${operation.node.id})`
           );
         }
       } else if (operation.type === "selectNode") {
         // Only add if not already selected
         if (!existingSelectedNodeIds.includes(operation.nodeId)) {
           newSelectedNodeIds.push(operation.nodeId);
-          console.log(
-            `[Clarification] Selected additional node: ${operation.nodeId}`
+          loggers.orchestrator.debug(
+            `Selected additional node: ${operation.nodeId}`
           );
         }
       } else if (operation.type === "requestClarification") {
@@ -595,20 +596,20 @@ export class WorkflowOrchestrator {
         question: combinedQuestion,
       };
 
-      console.log(
-        `[Clarification] ${followUpClarifications.length} follow-up clarification(s) needed`
+      loggers.orchestrator.debug(
+        `${followUpClarifications.length} follow-up clarification(s) needed`
       );
     }
 
-    console.log(`[Clarification] Incremental update complete:`);
-    console.log(
-      `[Clarification]   - New nodes discovered: ${newDiscoveredNodes.length}`
+    loggers.orchestrator.debug(`Incremental update complete:`);
+    loggers.orchestrator.debug(
+      `  - New nodes discovered: ${newDiscoveredNodes.length}`
     );
-    console.log(
-      `[Clarification]   - Additional nodes selected: ${newSelectedNodeIds.length}`
+    loggers.orchestrator.debug(
+      `  - Additional nodes selected: ${newSelectedNodeIds.length}`
     );
-    console.log(
-      `[Clarification]   - Total nodes now: ${
+    loggers.orchestrator.debug(
+      `  - Total nodes now: ${
         existingDiscoveredNodes.length + newDiscoveredNodes.length
       }`
     );
@@ -655,8 +656,8 @@ export class WorkflowOrchestrator {
         };
       }
 
-      console.log(
-        "[WorkflowOrchestrator] Starting configuration phase with hybrid approach (configure + pre-validate)..."
+      loggers.orchestrator.debug(
+        "Starting configuration phase with hybrid approach (configure + pre-validate)..."
       );
 
       const configured: ConfiguredNode[] = [];
@@ -667,14 +668,14 @@ export class WorkflowOrchestrator {
       for (const nodeId of selectedNodeIds) {
         const node = discoveredNodes.find((n) => n.id === nodeId);
         if (!node) {
-          console.warn(
-            `[WorkflowOrchestrator] Node ${nodeId} not found in discovered nodes`
+          loggers.orchestrator.warn(
+            `Node ${nodeId} not found in discovered nodes`
           );
           continue;
         }
 
-        console.log(
-          `[WorkflowOrchestrator] Configuring ${node.type} (${node.id}) with hybrid approach`
+        loggers.orchestrator.debug(
+          `Configuring ${node.type} (${node.id}) with hybrid approach`
         );
 
         const {
@@ -713,13 +714,13 @@ export class WorkflowOrchestrator {
         });
 
         if (isValid) {
-          console.log(
-            `[WorkflowOrchestrator] ✅ ${node.type} configured and validated successfully`
+          loggers.orchestrator.debug(
+            `✅ ${node.type} configured and validated successfully`
           );
           reasoning.push(`${node.type} configured and validated successfully`);
         } else {
-          console.log(
-            `[WorkflowOrchestrator] ⚠️  ${node.type} configured but validation failed`
+          loggers.orchestrator.debug(
+            `⚠️  ${node.type} configured but validation failed`
           );
           reasoning.push(
             `${
@@ -733,13 +734,13 @@ export class WorkflowOrchestrator {
       const allValid = configured.every((n) => n.validated);
       const validCount = configured.filter((n) => n.validated).length;
 
-      console.log(`[WorkflowOrchestrator] Configuration phase completed:`);
-      console.log(
-        `[WorkflowOrchestrator]   - Total nodes: ${configured.length}`
+      loggers.orchestrator.debug(`Configuration phase completed:`);
+      loggers.orchestrator.debug(
+        `  - Total nodes: ${configured.length}`
       );
-      console.log(`[WorkflowOrchestrator]   - Valid nodes: ${validCount}`);
-      console.log(
-        `[WorkflowOrchestrator]   - Invalid nodes: ${
+      loggers.orchestrator.debug(`  - Valid nodes: ${validCount}`);
+      loggers.orchestrator.debug(
+        `  - Invalid nodes: ${
           configured.length - validCount
         }`
       );
@@ -790,8 +791,8 @@ export class WorkflowOrchestrator {
     if (discoveryResult) {
       discoveredNodes = discoveryResult.discoveredNodes;
       selectedNodeIds = discoveryResult.selectedNodeIds;
-      console.log(
-        `[WorkflowOrchestrator] Using provided discovery result: ${selectedNodeIds.length} nodes selected`
+      loggers.orchestrator.debug(
+        `Using provided discovery result: ${selectedNodeIds.length} nodes selected`
       );
     } else {
       try {
@@ -807,8 +808,8 @@ export class WorkflowOrchestrator {
           userPrompt = session.initial_prompt || userPrompt;
         }
       } catch (error) {
-        console.log(
-          `[WorkflowOrchestrator] Session ${sessionId} not found in database, continuing with empty context`
+        loggers.orchestrator.debug(
+          `Session ${sessionId} not found in database, continuing with empty context`
         );
       }
     }
@@ -831,7 +832,7 @@ export class WorkflowOrchestrator {
       nodeEssentials
     );
 
-    console.log(`[WorkflowOrchestrator] Claude analysis for ${node.type}:`, {
+    loggers.orchestrator.debug(`Claude analysis for ${node.type}:`, {
       needsAuth: analysisResult.needsAuth,
       needsProperties: analysisResult.needsProperties,
       suggestedTask: analysisResult.suggestedTask,
@@ -920,8 +921,8 @@ export class WorkflowOrchestrator {
 
       if (isValid) break;
 
-      console.log(
-        `[WorkflowOrchestrator] Fixing configuration for ${
+      loggers.orchestrator.debug(
+        `Fixing configuration for ${
           node.type
         } (attempt ${attempts + 1}/${maxAttempts})`
       );
@@ -953,22 +954,22 @@ export class WorkflowOrchestrator {
 
   private async _getNodeEssentials(nodeType: string): Promise<any> {
     try {
-      console.log(`[WorkflowOrchestrator] Getting essentials for ${nodeType}`);
+      loggers.orchestrator.debug(`Getting essentials for ${nodeType}`);
       const essentialsResult = await this.mcpClient.getNodeEssentials(nodeType);
 
       if (essentialsResult?.content?.[0]?.type === "text") {
         try {
           return JSON.parse(essentialsResult.content[0].text);
         } catch (e) {
-          console.log(
-            `[WorkflowOrchestrator] Could not parse essentials for ${nodeType}`
+          loggers.orchestrator.debug(
+            `Could not parse essentials for ${nodeType}`
           );
           return { raw: essentialsResult.content[0].text };
         }
       }
     } catch (error) {
-      console.error(
-        `[WorkflowOrchestrator] Failed to get essentials for ${nodeType}:`,
+      loggers.orchestrator.error(
+        `Failed to get essentials for ${nodeType}:`,
         error
       );
     }
@@ -982,10 +983,13 @@ export class WorkflowOrchestrator {
     const context: any = {};
     const propertyFetches: Promise<void>[] = [];
 
+    // OPTIMIZATION: If we have a task template, we likely don't need property searches
+    const hasTaskTemplate = !!analysis.suggestedTask;
+    
     const fetchProperty = async (property: string) => {
       try {
-        console.log(
-          `[WorkflowOrchestrator] Searching for ${property} properties in ${nodeType}`
+        loggers.orchestrator.debug(
+          `Searching for ${property} properties in ${nodeType}`
         );
         const result = await this.mcpClient.searchNodeProperties(
           nodeType,
@@ -993,35 +997,54 @@ export class WorkflowOrchestrator {
         );
         if (result?.content?.[0]?.type === "text") {
           try {
-            context[`${property}Properties`] = JSON.parse(
-              result.content[0].text
-            );
+            const parsed = JSON.parse(result.content[0].text);
+            // Only store if we found actual matches
+            if (parsed.matches && parsed.matches.length > 0) {
+              context[`${property}Properties`] = parsed;
+              loggers.orchestrator.debug(`Found ${parsed.matches.length} matches for ${property}`);
+            } else {
+              loggers.orchestrator.debug(`No matches found for ${property} - skipping`);
+            }
           } catch (e) {
             context[`${property}Properties`] = { raw: result.content[0].text };
           }
         }
       } catch (error) {
-        console.error(
-          `[WorkflowOrchestrator] Failed to search ${property} properties:`,
+        loggers.orchestrator.error(
+          `Failed to search ${property} properties:`,
           error
         );
       }
     };
 
-    if (analysis.needsAuth) {
-      analysis.needsProperties.push("auth");
-    }
-
-    for (const property of [...new Set(analysis.needsProperties)]) {
-      propertyFetches.push(fetchProperty(property));
+    // Only search for properties if:
+    // 1. We don't have a task template (task templates are complete)
+    // 2. The property was explicitly requested by Claude
+    // 3. We're not searching for things already in essentials
+    if (!hasTaskTemplate && analysis.needsProperties.length > 0) {
+      // Remove duplicates and filter out common properties that are usually in essentials
+      const propertiesToSearch = [...new Set(analysis.needsProperties)]
+        .filter(prop => {
+          // Skip common properties that are typically in essentials
+          const skipProperties = ['resource', 'operation', 'method', 'type'];
+          return !skipProperties.includes(prop.toLowerCase());
+        });
+      
+      loggers.orchestrator.debug(`Will search for ${propertiesToSearch.length} properties: ${propertiesToSearch.join(', ')}`);
+      
+      for (const property of propertiesToSearch) {
+        propertyFetches.push(fetchProperty(property));
+      }
+    } else if (hasTaskTemplate) {
+      loggers.orchestrator.debug(`Skipping property searches - task template provides complete configuration`);
     }
 
     if (analysis.suggestedTask) {
       propertyFetches.push(
         (async () => {
           try {
-            console.log(
-              `[WorkflowOrchestrator] Getting task template: ${analysis.suggestedTask}`
+            loggers.orchestrator.debug(
+              `Getting task template: ${analysis.suggestedTask}`
             );
             const result = await this.mcpClient.getNodeForTask(
               analysis.suggestedTask!
@@ -1034,8 +1057,8 @@ export class WorkflowOrchestrator {
               }
             }
           } catch (error) {
-            console.error(
-              `[WorkflowOrchestrator] Failed to get task template:`,
+            loggers.orchestrator.error(
+              `Failed to get task template:`,
               error
             );
           }
@@ -1047,16 +1070,16 @@ export class WorkflowOrchestrator {
       propertyFetches.push(
         (async () => {
           try {
-            console.log(
-              `[WorkflowOrchestrator] Getting documentation for ${nodeType}`
+            loggers.orchestrator.debug(
+              `Getting documentation for ${nodeType}`
             );
             const result = await this.mcpClient.getNodeDocumentation(nodeType);
             if (result?.content?.[0]?.type === "text") {
               context.documentation = result.content[0].text;
             }
           } catch (error) {
-            console.error(
-              `[WorkflowOrchestrator] Failed to get documentation:`,
+            loggers.orchestrator.error(
+              `Failed to get documentation:`,
               error
             );
           }
@@ -1073,8 +1096,8 @@ export class WorkflowOrchestrator {
     let isValid = false;
 
     try {
-      console.log(
-        `[WorkflowOrchestrator] Validating configuration for ${nodeType}`
+      loggers.orchestrator.debug(
+        `Validating configuration for ${nodeType}`
       );
       const validationResult = await this.mcpClient.validateNodeMinimal(
         nodeType,
@@ -1102,15 +1125,15 @@ export class WorkflowOrchestrator {
             }
           }
         } catch (e) {
-          console.log(
-            `[WorkflowOrchestrator] Could not parse validation result`
+          loggers.orchestrator.debug(
+            `Could not parse validation result`
           );
           isValid = true; // Assume valid if we can't parse
         }
       }
     } catch (error) {
-      console.error(
-        `[WorkflowOrchestrator] Validation failed for ${nodeType}:`,
+      loggers.orchestrator.error(
+        `Validation failed for ${nodeType}:`,
         error
       );
       isValid = true; // Assume valid if validation service fails
@@ -1134,8 +1157,8 @@ export class WorkflowOrchestrator {
       // If configuration result is provided (for tests), use it directly
       if (configurationResult) {
         configuredNodes = configurationResult.configured;
-        console.log(
-          `[WorkflowOrchestrator] Using provided configuration result: ${configuredNodes.length} nodes`
+        loggers.orchestrator.debug(
+          `Using provided configuration result: ${configuredNodes.length} nodes`
         );
       } else {
         // Get from database session
@@ -1151,8 +1174,8 @@ export class WorkflowOrchestrator {
             userPrompt = session.initial_prompt || "";
           }
         } catch (error) {
-          console.log(
-            `[WorkflowOrchestrator] Session ${sessionId} not found in database`
+          loggers.orchestrator.debug(
+            `Session ${sessionId} not found in database`
           );
         }
       }
@@ -1190,9 +1213,9 @@ export class WorkflowOrchestrator {
         };
       }
 
-      console.log("[WorkflowOrchestrator] Starting building phase...");
-      console.log(
-        `[WorkflowOrchestrator] Building workflow with ${validatedNodes.length} validated nodes`
+      loggers.orchestrator.debug("Starting building phase...");
+      loggers.orchestrator.debug(
+        `Building workflow with ${validatedNodes.length} validated nodes`
       );
 
       // Have Claude build the complete workflow
@@ -1220,8 +1243,8 @@ export class WorkflowOrchestrator {
         },
       };
 
-      console.log(
-        `[WorkflowOrchestrator] Built workflow with ${workflow.nodes.length} nodes`
+      loggers.orchestrator.debug(
+        `Built workflow with ${workflow.nodes.length} nodes`
       );
 
       // Save draft workflow to session state for validation phase
@@ -1245,13 +1268,13 @@ export class WorkflowOrchestrator {
               .update({ state: updatedState })
               .eq("session_id", sessionId);
 
-            console.log(
-              `[WorkflowOrchestrator] Saved draft workflow to session`
+            loggers.orchestrator.debug(
+              `Saved draft workflow to session`
             );
           }
         } catch (error) {
-          console.error(
-            "[WorkflowOrchestrator] Failed to save draft workflow:",
+          loggers.orchestrator.error(
+            "Failed to save draft workflow:",
             error
           );
           // Continue anyway - validation can still work with the result
@@ -1295,8 +1318,8 @@ export class WorkflowOrchestrator {
     };
 
     try {
-      console.log(
-        "[WorkflowOrchestrator] Running comprehensive workflow validation..."
+      loggers.orchestrator.debug(
+        "Running comprehensive workflow validation..."
       );
 
       // The MCP validate_workflow tool performs all three types of validation
@@ -1316,7 +1339,7 @@ export class WorkflowOrchestrator {
       if (validationResult?.content?.[0]?.type === "text") {
         const fullValidation = JSON.parse(validationResult.content[0].text);
 
-        console.log("[WorkflowOrchestrator] Validation result structure:", {
+        loggers.orchestrator.debug("Validation result structure:", {
           valid: fullValidation.valid,
           errorCount: fullValidation.errors?.length || 0,
           warningCount: fullValidation.warnings?.length || 0,
@@ -1351,8 +1374,8 @@ export class WorkflowOrchestrator {
         };
       }
     } catch (error) {
-      console.error(
-        "[WorkflowOrchestrator] Workflow validation failed:",
+      loggers.orchestrator.error(
+        "Workflow validation failed:",
         error
       );
       // Return empty results on error
@@ -1371,26 +1394,30 @@ export class WorkflowOrchestrator {
     // Deep clone workflow to avoid mutations
     const updatedWorkflow = JSON.parse(JSON.stringify(workflow));
 
-    console.log(`[WorkflowOrchestrator] Applying ${fixes.length} fixes`);
+    loggers.orchestrator.debug(`Applying ${fixes.length} fixes`);
 
     // Define node-level properties that should not go into parameters
     const NODE_LEVEL_PROPERTIES = [
-      "onError",
+      "type",  // Critical: node type must be at node level
+      "typeVersion",  // Also important for node versioning
+      "name",
+      "position",
+      "disabled",
+      "notes",
       "retryOnFail",
       "maxTries",
       "waitBetweenTries",
-      "executeOnce",
-      "disabled",
       "continueOnFail",
-      "notes",
-      "color",
+      "executeOnce",
       "alwaysOutputData",
+      "onError",
+      "color",
       "timezone",
       "notesInFlow",
     ];
 
     for (const fix of fixes) {
-      console.log(`[WorkflowOrchestrator] Applying fix:`, fix);
+      loggers.orchestrator.debug(`Applying fix:`, fix);
 
       switch (fix.type) {
         case "addField":
@@ -1399,24 +1426,33 @@ export class WorkflowOrchestrator {
             (n: any) => n.id === fix.nodeId || n.name === fix.nodeId
           );
           if (nodeToUpdate) {
-            // Check if this is a node-level property
-            if (NODE_LEVEL_PROPERTIES.includes(fix.field)) {
+            // Special case: adding the entire parameters object
+            if (fix.field === "parameters" && typeof fix.value === "object") {
+              // Merge with existing parameters to preserve other fields
+              nodeToUpdate.parameters = {
+                ...nodeToUpdate.parameters,
+                ...fix.value
+              };
+              loggers.orchestrator.debug(
+                `Merged parameters in node ${nodeToUpdate.id} (${nodeToUpdate.name})`
+              );
+            } else if (NODE_LEVEL_PROPERTIES.includes(fix.field)) {
               // Place at node level
               nodeToUpdate[fix.field] = fix.value;
-              console.log(
-                `[WorkflowOrchestrator] Added node-level field ${fix.field} to node ${nodeToUpdate.id} (${nodeToUpdate.name})`
+              loggers.orchestrator.debug(
+                `Added node-level field ${fix.field} to node ${nodeToUpdate.id} (${nodeToUpdate.name})`
               );
             } else {
               // Place in parameters
               if (!nodeToUpdate.parameters) nodeToUpdate.parameters = {};
               nodeToUpdate.parameters[fix.field] = fix.value;
-              console.log(
-                `[WorkflowOrchestrator] Added parameter field ${fix.field} to node ${nodeToUpdate.id} (${nodeToUpdate.name})`
+              loggers.orchestrator.debug(
+                `Added parameter field ${fix.field} to node ${nodeToUpdate.id} (${nodeToUpdate.name})`
               );
             }
           } else {
-            console.log(
-              `[WorkflowOrchestrator] Node ${fix.nodeId} not found for addField`
+            loggers.orchestrator.debug(
+              `Node ${fix.nodeId} not found for addField`
             );
           }
           break;
@@ -1427,24 +1463,62 @@ export class WorkflowOrchestrator {
             (n: any) => n.id === fix.nodeId || n.name === fix.nodeId
           );
           if (nodeToModify) {
-            // Check if this is a node-level property
-            if (NODE_LEVEL_PROPERTIES.includes(fix.field)) {
+            // Special case: updating the entire parameters object
+            if (fix.field === "parameters" && typeof fix.value === "object") {
+              // Merge with existing parameters to preserve other fields
+              nodeToModify.parameters = {
+                ...nodeToModify.parameters,
+                ...fix.value
+              };
+              loggers.orchestrator.debug(
+                `Merged parameters in node ${nodeToModify.id} (${nodeToModify.name})`
+              );
+            } else if (NODE_LEVEL_PROPERTIES.includes(fix.field)) {
               // Place at node level
               nodeToModify[fix.field] = fix.value;
-              console.log(
-                `[WorkflowOrchestrator] Updated node-level field ${fix.field} in node ${nodeToModify.id} (${nodeToModify.name})`
+              loggers.orchestrator.debug(
+                `Updated node-level field ${fix.field} in node ${nodeToModify.id} (${nodeToModify.name})`
               );
+              // Special handling for type field to ensure it's correctly updated
+              if (fix.field === 'type' && nodeToModify.type !== fix.value) {
+                loggers.orchestrator.warn(`Type field was not properly updated. Expected: ${fix.value}, Actual: ${nodeToModify.type}`);
+              }
             } else {
               // Place in parameters
               if (!nodeToModify.parameters) nodeToModify.parameters = {};
               nodeToModify.parameters[fix.field] = fix.value;
-              console.log(
-                `[WorkflowOrchestrator] Updated parameter field ${fix.field} in node ${nodeToModify.id} (${nodeToModify.name})`
+              loggers.orchestrator.debug(
+                `Updated parameter field ${fix.field} in node ${nodeToModify.id} (${nodeToModify.name})`
               );
             }
           } else {
-            console.log(
-              `[WorkflowOrchestrator] Node ${fix.nodeId} not found for updateField`
+            loggers.orchestrator.debug(
+              `Node ${fix.nodeId} not found for updateField`
+            );
+          }
+          break;
+
+        case "removeField":
+          // Find node by ID or name and remove field
+          const nodeToRemoveFrom = updatedWorkflow.nodes.find(
+            (n: any) => n.id === fix.nodeId || n.name === fix.nodeId
+          );
+          if (nodeToRemoveFrom) {
+            // Check if field is at node level or in parameters
+            if (fix.field in nodeToRemoveFrom) {
+              delete nodeToRemoveFrom[fix.field];
+              loggers.orchestrator.debug(
+                `Removed field ${fix.field} from node ${nodeToRemoveFrom.id} (${nodeToRemoveFrom.name})`
+              );
+            } else if (nodeToRemoveFrom.parameters && fix.field in nodeToRemoveFrom.parameters) {
+              delete nodeToRemoveFrom.parameters[fix.field];
+              loggers.orchestrator.debug(
+                `Removed field ${fix.field} from parameters of node ${nodeToRemoveFrom.id} (${nodeToRemoveFrom.name})`
+              );
+            }
+          } else {
+            loggers.orchestrator.debug(
+              `Node ${fix.nodeId} not found for removeField`
             );
           }
           break;
@@ -1466,12 +1540,12 @@ export class WorkflowOrchestrator {
               type: "main",
               index: 0,
             });
-            console.log(
-              `[WorkflowOrchestrator] Added connection from ${fix.from} to ${fix.to}`
+            loggers.orchestrator.debug(
+              `Added connection from ${fix.from} to ${fix.to}`
             );
           } else {
-            console.log(
-              `[WorkflowOrchestrator] Connection from ${fix.from} to ${fix.to} already exists, skipping`
+            loggers.orchestrator.debug(
+              `Connection from ${fix.from} to ${fix.to} already exists, skipping`
             );
           }
           break;
@@ -1507,8 +1581,8 @@ export class WorkflowOrchestrator {
     for (const nodeId in updatedWorkflow.connections) {
       if (updatedWorkflow.connections[nodeId].main[0].length === 0) {
         delete updatedWorkflow.connections[nodeId];
-        console.log(
-          `[WorkflowOrchestrator] Removed empty connection for ${nodeId}`
+        loggers.orchestrator.debug(
+          `Removed empty connection for ${nodeId}`
         );
       }
     }
@@ -1524,8 +1598,8 @@ export class WorkflowOrchestrator {
             }
             // Remove from parameters
             delete node.parameters[prop];
-            console.log(
-              `[WorkflowOrchestrator] Cleaned up ${prop} from parameters of node ${node.id} (${node.name})`
+            loggers.orchestrator.debug(
+              `Cleaned up ${prop} from parameters of node ${node.id} (${node.name})`
             );
           }
         }
@@ -1549,7 +1623,7 @@ export class WorkflowOrchestrator {
       // If building result is provided (for tests), use it directly
       if (buildingResult?.workflow) {
         draftWorkflow = buildingResult.workflow;
-        console.log(`[WorkflowOrchestrator] Using provided draft workflow`);
+        loggers.orchestrator.debug(`Using provided draft workflow`);
       } else {
         // Get from database session
         try {
@@ -1563,8 +1637,8 @@ export class WorkflowOrchestrator {
             draftWorkflow = session.state.draftWorkflow;
           }
         } catch (error) {
-          console.log(
-            `[WorkflowOrchestrator] Session ${sessionId} not found in database`
+          loggers.orchestrator.debug(
+            `Session ${sessionId} not found in database`
           );
         }
       }
@@ -1586,11 +1660,11 @@ export class WorkflowOrchestrator {
         };
       }
 
-      console.log(
-        "[WorkflowOrchestrator] Starting delta-based validation phase..."
+      loggers.orchestrator.debug(
+        "Starting delta-based validation phase..."
       );
-      console.log(
-        `[WorkflowOrchestrator] Validating workflow with ${
+      loggers.orchestrator.debug(
+        `Validating workflow with ${
           draftWorkflow.nodes?.length || 0
         } nodes`
       );
@@ -1609,8 +1683,8 @@ export class WorkflowOrchestrator {
 
       while (attempts < MAX_ATTEMPTS && !allValid) {
         attempts++;
-        console.log(
-          `[WorkflowOrchestrator] Validation attempt ${attempts}/${MAX_ATTEMPTS}`
+        loggers.orchestrator.debug(
+          `Validation attempt ${attempts}/${MAX_ATTEMPTS}`
         );
 
         // Step 1: Run all MCP validations
@@ -1628,8 +1702,8 @@ export class WorkflowOrchestrator {
           ...(validationResults.expressions?.errors || []),
         ];
 
-        console.log(
-          `[WorkflowOrchestrator] Found ${allErrors.length} validation errors`
+        loggers.orchestrator.debug(
+          `Found ${allErrors.length} validation errors`
         );
 
         if (allErrors.length === 0) {
@@ -1639,8 +1713,8 @@ export class WorkflowOrchestrator {
         }
 
         // Step 2: Send only errors to Claude for fixes
-        console.log(
-          "[WorkflowOrchestrator] Sending errors to Claude for fix generation..."
+        loggers.orchestrator.debug(
+          "Sending errors to Claude for fix generation..."
         );
         const fixes = await this.claudeService.generateValidationFixes(
           allErrors,
@@ -1648,12 +1722,12 @@ export class WorkflowOrchestrator {
         );
 
         if (!fixes || fixes.length === 0) {
-          console.log("[WorkflowOrchestrator] Claude could not generate fixes");
+          loggers.orchestrator.debug("Claude could not generate fixes");
           break;
         }
 
-        console.log(
-          `[WorkflowOrchestrator] Claude generated ${fixes.length} fixes`
+        loggers.orchestrator.debug(
+          `Claude generated ${fixes.length} fixes`
         );
 
         // Step 3: Apply fixes to workflow
@@ -1679,17 +1753,17 @@ export class WorkflowOrchestrator {
       // Mark workflow as valid if all validations pass
       currentWorkflow.valid = allValid;
 
-      console.log(
-        `[WorkflowOrchestrator] Validation completed after ${attempts} attempts`
+      loggers.orchestrator.debug(
+        `Validation completed after ${attempts} attempts`
       );
-      console.log(
-        `[WorkflowOrchestrator] Workflow is ${
+      loggers.orchestrator.debug(
+        `Workflow is ${
           allValid ? "valid" : "still invalid"
         }`
       );
       if (validationReport.fixesApplied.length > 0) {
-        console.log(
-          `[WorkflowOrchestrator] Applied ${validationReport.fixesApplied.length} fixes total`
+        loggers.orchestrator.debug(
+          `Applied ${validationReport.fixesApplied.length} fixes total`
         );
       }
 

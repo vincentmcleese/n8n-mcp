@@ -3,6 +3,7 @@
 import { WorkflowOrchestrator } from '@/lib/workflow-orchestrator'
 import { ClaudeService } from '@/lib/services/claude-service'
 import { createMockSession } from '@/__tests__/test-utils'
+import { loggers } from '@/lib/utils/logger'
 
 // Only mock the database for integration tests
 jest.mock('@/lib/supabase', () => ({
@@ -66,8 +67,8 @@ describe('Discovery Phase - Real Integration Tests', () => {
       expect(result.reasoning).toBeDefined()
       expect(result.reasoning.length).toBeGreaterThan(0)
       
-      console.log('Claude reasoning:', result.reasoning)
-      console.log('Discovered nodes:', result.discoveredNodes)
+      loggers.test.info('Claude reasoning:', result.reasoning)
+      loggers.test.info('Discovered nodes:', result.discoveredNodes)
     }, 30000)
 
     it('should handle clarification requests for ambiguous prompts', async () => {
@@ -82,7 +83,7 @@ describe('Discovery Phase - Real Integration Tests', () => {
       if (result.pendingClarification) {
         expect(result.pendingClarification.question).toBeDefined()
         expect(result.pendingClarification.questionId).toBeDefined()
-        console.log('Clarification requested:', result.pendingClarification.question)
+        loggers.test.info('Clarification requested:', result.pendingClarification.question)
       } else {
         // Or it might make assumptions and discover nodes
         expect(result.discoveredNodes.length).toBeGreaterThan(0)
@@ -107,7 +108,7 @@ describe('Discovery Phase - Real Integration Tests', () => {
       
       // Should discover multiple node types
       const nodeTypes = result.discoveredNodes.map(n => n.type)
-      console.log('Discovered node types:', nodeTypes)
+      loggers.test.verbose('Discovered node types:', nodeTypes)
       
       // Should include webhook, code/transform, slack, and database nodes
       expect(nodeTypes.length).toBeGreaterThanOrEqual(4)
@@ -179,7 +180,7 @@ describe('Discovery Phase - Real Integration Tests', () => {
       expect(reasoningText).toMatch(/mysql|database/i)
       expect(reasoningText).toMatch(/schedule|hour|cron|interval/i)
       
-      console.log('Full reasoning:', result.reasoning)
+      loggers.test.verbose('Full reasoning:', result.reasoning)
     }, 30000)
   })
 
