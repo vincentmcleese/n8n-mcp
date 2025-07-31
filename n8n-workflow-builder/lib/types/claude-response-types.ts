@@ -389,6 +389,44 @@ export interface ValidatedWorkflowResponse extends BaseClaudeResponse {
 }
 
 // ==========================================
+// Documentation Phase Types
+// ==========================================
+
+/**
+ * Documentation phase operations response
+ * Used in: generateDocumentation()
+ * 
+ * @example
+ * {
+ *   "operations": [
+ *     {
+ *       "type": "addStickyNote",
+ *       "note": {
+ *         "id": "sticky_1",
+ *         "content": "This webhook receives incoming data and validates the payload",
+ *         "nodeGroupIds": ["node_1", "node_2"],
+ *         "color": 1
+ *       }
+ *     }
+ *   ],
+ *   "reasoning": ["Added documentation for webhook entry point", "Grouped validation nodes"]
+ * }
+ */
+export interface DocumentationOperationsResponse extends BaseClaudeResponse {
+  operations: AddStickyNoteOperation[];
+}
+
+export interface AddStickyNoteOperation {
+  type: "addStickyNote";
+  note: {
+    id: string;
+    content: string;
+    nodeGroupIds: string[];
+    color?: number;
+  };
+}
+
+// ==========================================
 // Combined Response Types for Claude Service
 // ==========================================
 
@@ -403,7 +441,8 @@ export type ClaudeResponse =
   | FixedNodeConfigResponse
   | WorkflowBuildResponse
   | ValidationFixesResponse
-  | ValidatedWorkflowResponse;
+  | ValidatedWorkflowResponse
+  | DocumentationOperationsResponse;
 
 /**
  * Response with operations (Discovery, Configuration phases)

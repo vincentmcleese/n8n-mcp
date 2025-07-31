@@ -33,7 +33,8 @@ import type {
   DiscoveryResult, 
   ConfigurationResult,
   BuildingResult,
-  ValidationPhaseResult
+  ValidationPhaseResult,
+  DocumentationPhaseResult
 } from '../lib/workflow-orchestrator';
 
 // Helper to prompt user for input
@@ -168,8 +169,23 @@ async function buildWorkflow(prompt: string): Promise<any> {
       }
     }
     
-    // Return the final workflow
-    return validationResult.workflow;
+    // Phase 5: Documentation (optional)
+    console.log('\n📍 Phase 5: Documentation');
+    console.log('   📝 Adding helpful sticky notes...');
+    
+    const documentationResult = await orchestrator.runDocumentationPhase(sessionId, validationResult);
+    
+    if (documentationResult.success && documentationResult.stickyNotesAdded) {
+      console.log(`   ✅ Added ${documentationResult.stickyNotesAdded} sticky notes`);
+      return documentationResult.workflow;
+    } else if (!documentationResult.success) {
+      console.log('   ⚠️  Warning: Could not add documentation notes');
+      // Continue with validation result if documentation fails
+      return validationResult.workflow;
+    }
+    
+    // Return the final workflow with documentation
+    return documentationResult.workflow;
     
   } catch (error) {
     console.error('\n❌ Error building workflow:', error instanceof Error ? error.message : error);
@@ -220,6 +236,10 @@ async function main() {
     console.log(`\n📊 Workflow Summary:`);
     console.log(`   - Name: ${workflow.name}`);
     console.log(`   - Nodes: ${workflow.nodes?.length || 0}`);
+    const stickyNotes = workflow.nodes?.filter((n: any) => n.type === 'n8n-nodes-base.stickyNote').length || 0;
+    if (stickyNotes > 0) {
+      console.log(`   - Sticky Notes: ${stickyNotes}`);
+    }
     console.log(`   - Valid: ${workflow.valid ? '✅ Yes' : '⚠️  Has warnings'}`);
     
   } catch (error) {

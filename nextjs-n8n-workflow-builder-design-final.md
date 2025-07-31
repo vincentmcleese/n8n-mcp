@@ -303,6 +303,120 @@ Session lifecycle: Creation → Active (1hr timeout) → Inactive → Cleanup (2
 | **Building**      | Connect nodes            | `generate_workflow`, `optimize_workflow`                                          | `addToWorkflow`, `addConnection`, `updateWorkflowSettings`                                    | ❌ Not allowed | ✅ Auto         |
 | **Complete**      | Export workflow          | None                                                                              | None                                                                                          | ❌ Not allowed | N/A             |
 
+### Detailed Phase Descriptions
+
+#### Discovery Phase
+The discovery phase is the initial stage where Claude analyzes the user's prompt and identifies relevant n8n nodes needed to build the workflow.
+
+**Process Flow**:
+1. **Intent Analysis**: Claude analyzes the user prompt using `analyzeWorkflowIntent()` to understand the workflow requirements
+2. **Search Term Generation**: AI suggests relevant search terms based on the prompt (e.g., "webhook", "slack", "database")
+3. **Node Search**: Uses MCP `search_nodes` with suggested terms, limiting results to 3-5 per search for efficiency
+4. **Node Details**: Fetches basic information for relevant nodes using `get_node_info`
+5. **AI-Driven Selection**: Claude generates operations to discover and select appropriate nodes
+6. **Clarification Handling**: If the prompt is ambiguous, Claude can request clarification from the user
+
+**Key Features**:
+- Trust-based AI decisions - no complex scoring algorithms
+- Minimal MCP calls (2-3 searches vs 10+)
+- Support for clarification requests when user intent is unclear
+- Deduplication of discovered nodes
+- Session state tracking with operation history
+
+**Example Operations**:
+```typescript
+{ type: "discoverNode", node: { id: "node_1", type: "nodes-base.webhook", purpose: "Receive webhook data" }}
+{ type: "selectNode", nodeId: "node_1" }
+{ type: "requestClarification", questionId: "q1", question: "What type of database would you like to use?", context: {} }
+```
+
+#### Configuration Phase
+The configuration phase sets up the parameters for each selected node based on user requirements and node schemas.
+
+**Process Flow**:
+1. **Schema Retrieval**: Fetches essential parameters for selected nodes using `get_node_essentials`
+2. **AI Configuration**: Claude extracts configuration values from the user prompt and applies them
+3. **Smart Property Search**: Only searches for additional properties if Claude determines it's necessary
+4. **Pre-Validation**: Basic validation of configurations before moving to validation phase
+5. **Batch Configuration**: All selected nodes are configured in a single Claude interaction
+
+**Key Features**:
+- Trust Claude to extract configuration from user prompts (e.g., Bearer auth, retry logic)
+- Minimal schema fetching - just essentials unless more is needed
+- Support for complex configurations like authentication, headers, and data transformations
+- Automatic detection of required vs optional parameters
+
+**Example Configurations**:
+- Webhook: HTTP method, path, authentication type
+- Slack: Channel, message format, attachments
+- Database: Connection string, query, operation type
+
+#### Validation Phase  
+The validation phase ensures all node configurations are correct and the workflow will function properly.
+
+**Process Flow**:
+1. **Configuration Validation**: Validates each node's configuration using MCP `validate_params`
+2. **Connection Validation**: Checks node connections are valid using `check_connections`
+3. **Schema Compatibility**: Verifies input/output schemas match between connected nodes
+4. **Error Collection**: Aggregates all validation errors with clear descriptions
+5. **Auto-Fix Attempt**: Claude attempts to fix validation errors automatically
+6. **Iterative Fixing**: May cycle back to configuration phase if errors need user input
+
+**Key Features**:
+- Comprehensive validation using MCP tools
+- Automatic error correction where possible
+- Clear error messages with field-level details
+- Support for both errors and warnings
+- Validation state tracking per node
+
+**Validation Checks**:
+- Required fields presence
+- Data type compatibility
+- Connection validity
+- Authentication requirements
+- Rate limits and quotas
+
+#### Building Phase
+The building phase assembles the final workflow JSON from validated configurations.
+
+**Process Flow**:
+1. **Node Positioning**: Calculates optimal positions for nodes in the workflow canvas
+2. **Connection Creation**: Establishes connections between nodes based on data flow
+3. **Workflow Generation**: Uses MCP `generate_workflow` to create the n8n JSON structure
+4. **Settings Configuration**: Adds workflow metadata (name, execution order, timezone)
+5. **Optimization**: Optional workflow optimization for performance
+
+**Key Features**:
+- Automatic node positioning algorithm
+- Smart connection routing
+- Workflow metadata generation
+- Export-ready n8n JSON format
+- Support for complex branching workflows
+
+**Generated Structure**:
+```typescript
+{
+  name: "User's Workflow Name",
+  nodes: [...],  // Positioned nodes with configurations
+  connections: {...},  // Node connection mappings
+  settings: {
+    executionOrder: "v1",
+    saveDataSuccessExecution: true,
+    timezone: "America/New_York"
+  }
+}
+```
+
+#### Complete Phase
+The final phase where the workflow is ready for export and use.
+
+**Features**:
+- Workflow JSON available for download
+- Import instructions for n8n
+- Token usage statistics
+- Operation history summary
+- No further modifications allowed
+
 ### Phase Transition Logic
 
 See [lib/phase-manager.ts] for implementation. Core logic checks required conditions before allowing transitions.

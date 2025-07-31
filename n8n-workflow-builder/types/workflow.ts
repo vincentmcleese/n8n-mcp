@@ -42,6 +42,7 @@ export type WorkflowPhase =
   | 'configuration' 
   | 'validation' 
   | 'building' 
+  | 'documentation'
   | 'complete';
 
 // ==========================================
@@ -117,6 +118,9 @@ export type WorkflowOperation =
   | { type: 'addConnection'; source: string; target: string }
   | { type: 'updateWorkflowSettings'; settings: Partial<WorkflowSettings> }
   
+  // Documentation phase operations
+  | { type: 'addStickyNote'; note: StickyNote }
+  
   // Phase transition operations
   | { type: 'setPhase'; phase: WorkflowPhase }
   | { type: 'completePhase'; phase: WorkflowPhase };
@@ -132,6 +136,16 @@ export interface DiscoveredNode {
   id: string;
   type: string;
   purpose: string;
+}
+
+/**
+ * Sticky note for workflow documentation
+ */
+export interface StickyNote {
+  id: string;
+  content: string;
+  nodeGroupIds: string[];  // IDs of nodes this note documents
+  color?: number;          // 1-7 for different colors in n8n
 }
 
 /**
