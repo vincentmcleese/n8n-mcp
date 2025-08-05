@@ -97,7 +97,16 @@ export interface ClientWorkflowState {
 /**
  * All possible workflow operations for delta-based updates
  */
-export type WorkflowOperation = 
+/**
+ * Base operation type with narrative fields
+ */
+export interface BaseOperation {
+  timestamp?: string;     // When the operation occurred
+  reasoning?: string;     // Why this operation was performed
+  operationIndex?: number; // Index in the operation sequence
+}
+
+export type WorkflowOperation = BaseOperation & (
   // Discovery phase operations
   | { type: 'discoverNode'; node: { id: string; type: string; purpose: string } }
   | { type: 'selectNode'; nodeId: string }
@@ -106,7 +115,7 @@ export type WorkflowOperation =
   | { type: 'clarificationResponse'; questionId: string; response: string }
   
   // Configuration phase operations
-  | { type: 'configureNode'; nodeId: string; config: any } // Flexible for MCP params
+  | { type: 'configureNode'; nodeId: string; nodeType: string; purpose: string; config: any } // Enhanced with metadata
   | { type: 'updateNodeConfig'; nodeId: string; path: string; value: any }
   
   // Validation phase operations
@@ -117,13 +126,15 @@ export type WorkflowOperation =
   | { type: 'addToWorkflow'; nodeId: string; position: [number, number] }
   | { type: 'addConnection'; source: string; target: string }
   | { type: 'updateWorkflowSettings'; settings: Partial<WorkflowSettings> }
+  | { type: 'setWorkflow'; workflow: { nodes: any[]; connections: any; settings: any } }
   
   // Documentation phase operations
   | { type: 'addStickyNote'; note: StickyNote }
   
   // Phase transition operations
   | { type: 'setPhase'; phase: WorkflowPhase }
-  | { type: 'completePhase'; phase: WorkflowPhase };
+  | { type: 'completePhase'; phase: WorkflowPhase }
+);
 
 // ==========================================
 // Supporting Types
@@ -136,6 +147,9 @@ export interface DiscoveredNode {
   id: string;
   type: string;
   purpose: string;
+  displayName?: string;
+  description?: string;
+  category?: string;
 }
 
 /**

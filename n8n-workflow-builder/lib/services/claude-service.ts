@@ -618,11 +618,14 @@ Think through what nodes would be needed to build this workflow.`;
         return true; // Allow other operation types
       });
 
+      // Enhance operations with reasoning for narrative
+      const enhancedOperations = this.attachReasoningToOperations(validOperations, reasoning);
+
       if (isIncremental) {
-        const newDiscoverOps = validOperations.filter(
+        const newDiscoverOps = enhancedOperations.filter(
           (op) => op.type === "discoverNode"
         ).length;
-        const newSelectOps = validOperations.filter(
+        const newSelectOps = enhancedOperations.filter(
           (op) => op.type === "selectNode"
         ).length;
         console.log(
@@ -631,14 +634,14 @@ Think through what nodes would be needed to build this workflow.`;
       } else {
         console.log(
           "[Claude] Generated",
-          validOperations.length,
+          enhancedOperations.length,
           "operations with",
           reasoning.length,
           "reasoning steps"
         );
       }
 
-      return { operations: validOperations, reasoning };
+      return { operations: enhancedOperations, reasoning };
     } catch (error) {
       loggers.claude.error("Error in discovery analysis:", error);
       throw error;
@@ -874,8 +877,14 @@ CRITICAL: Your entire response must be ONLY the JSON object below. Do not includ
         throw new Error("Invalid response format from Claude");
       }
 
+      // Enhance operations with reasoning for narrative
+      const enhancedOperations = this.attachReasoningToOperations(
+        parsedResponse.operations || [],
+        parsedResponse.reasoning || []
+      );
+
       return {
-        operations: parsedResponse.operations || [],
+        operations: enhancedOperations,
         reasoning: parsedResponse.reasoning || [],
       };
     } catch (error) {
@@ -1761,8 +1770,14 @@ Remember to return valid JSON starting with {"operations":[ and include helpful 
         );
       }
 
+      // Enhance operations with reasoning for narrative
+      const enhancedOperations = this.attachReasoningToOperations(
+        parsedResponse.operations || [],
+        parsedResponse.reasoning || ["Generated workflow documentation"]
+      );
+
       return {
-        operations: parsedResponse.operations || [],
+        operations: enhancedOperations,
         reasoning: parsedResponse.reasoning || [
           "Generated workflow documentation",
         ],
@@ -1771,6 +1786,26 @@ Remember to return valid JSON starting with {"operations":[ and include helpful 
       loggers.claude.error("Error generating documentation:", error);
       throw error;
     }
+  }
+
+  /**
+   * Attach reasoning to operations for chronological narrative
+   */
+  private attachReasoningToOperations(
+    operations: WorkflowOperation[],
+    reasoning: string[]
+  ): WorkflowOperation[] {
+    return operations.map((operation, index) => {
+      // Attach reasoning if available
+      const reasoningText = reasoning[index] || reasoning[Math.floor(index / 2)] || 
+                           reasoning[0] || "Operation performed";
+      
+      return {
+        ...operation,
+        reasoning: reasoningText,
+        operationIndex: index
+      };
+    });
   }
 }
 
