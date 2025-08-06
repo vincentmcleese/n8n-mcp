@@ -178,29 +178,77 @@ app/
 │   ├── [sessionId]/
 │   │   ├── page.tsx
 │   │   └── result/page.tsx
-│   └── components/
+│   ├── components/
+│   │   ├── PromptInput.tsx
+│   │   ├── LoadingState.tsx
+│   │   ├── WorkflowResult.tsx
+│   │   └── ErrorDisplay.tsx
+│   └── layout.tsx
 ├── api/
 │   ├── workflow/
 │   │   ├── [sessionId]/
-│   │   │   ├── apply/route.ts
+│   │   │   ├── discover/route.ts
+│   │   │   ├── configure/route.ts
+│   │   │   ├── validate/route.ts
+│   │   │   ├── build/route.ts
 │   │   │   ├── state/route.ts
-│   │   │   ├── export/route.ts
-│   │   │   └── phase-status/route.ts
+│   │   │   └── export/route.ts
 │   │   └── create/route.ts
 │   ├── claude/route.ts
+│   ├── health/route.ts
 │   └── cron/cleanup/route.ts
-├── lib/
-│   ├── mcp-client.ts
-│   ├── mcp-error-handler.ts
-│   ├── session-utils.ts
-│   ├── session-cleanup.ts
-│   ├── phase-manager.ts
-│   ├── error-handler.ts
-│   ├── delta-builder.ts
-│   ├── api-utils.ts              # Logging utilities for API routes
-│   ├── server-logger.ts          # Server-side logging infrastructure
+└── layout.tsx
+
+lib/
+├── config/
+│   ├── index.ts
+│   ├── env.ts
+│   ├── anthropic.ts
+│   ├── mcp.ts
 │   └── supabase.ts
-└── middleware.ts                 # API request interception & logging
+├── db/
+│   ├── client.ts
+│   ├── types.ts
+│   ├── transaction-utils.ts
+│   └── supabase-schema.sql
+├── orchestrator/
+│   ├── index.ts
+│   ├── createOrchestrator.ts
+│   ├── contracts/
+│   │   ├── OrchestratorDeps.ts
+│   │   ├── PhaseRunner.ts
+│   │   ├── discovery.types.ts
+│   │   ├── configuration.types.ts
+│   │   ├── validation.types.ts
+│   │   ├── building.types.ts
+│   │   └── documentation.types.ts
+│   ├── context/
+│   │   ├── SessionRepo.ts
+│   │   └── NodeContextService.ts
+│   └── runners/
+│       ├── discovery.runner.ts
+│       ├── configuration.runner.ts
+│       ├── validation.runner.ts
+│       ├── building.runner.ts
+│       └── documentation.runner.ts
+├── services/
+│   ├── claude-service.ts
+│   └── session-manager.ts
+├── types/
+│   └── claude-response-types.ts
+├── utils/
+│   ├── logger.ts
+│   └── json-validator.ts
+├── workflow-orchestrator.ts
+├── workflow-orchestrator-hooks.ts
+├── mcp-client.ts
+├── mcp-error-handler.ts
+├── session-utils.ts
+├── phase-manager.ts
+├── api-utils.ts
+├── server-logger.ts
+├── supabase.ts
+└── utils.ts
 
 hooks/
 ├── use-phase-monitor.ts
@@ -213,7 +261,8 @@ scripts/                         # Integration test scripts
 ├── run-integration-tests.ts
 ├── test-discovery-phase-integration.ts
 ├── test-clarification.ts
-└── test-clarification-complete.ts
+├── test-clarification-complete.ts
+└── (additional test scripts)
 
 __tests__/                       # Unit tests (Jest)
 ├── unit/
@@ -221,6 +270,9 @@ __tests__/                       # Unit tests (Jest)
 │   ├── lib/
 │   └── services/
 └── test-utils.ts
+
+docs/                           # Documentation
+└── supabase-integration-guide.md
 ```
 
 ---
@@ -243,15 +295,64 @@ __tests__/                       # Unit tests (Jest)
                     └─────────────┘      └─────────────┘
 ```
 
+### Orchestrator Architecture
+
+The system uses a modular orchestrator pattern with specialized phase runners:
+
+```
+WorkflowOrchestrator
+├── ClaudeService (AI integration)
+├── MCPClient (n8n node integration)
+├── PhaseManager (transition logic)
+├── SessionRepo (persistence layer)
+├── NodeContextService (MCP context)
+└── Phase Runners
+    ├── DiscoveryRunner
+    ├── ConfigurationRunner
+    ├── BuildingRunner
+    ├── ValidationRunner
+    └── DocumentationRunner
+```
+
+Each runner encapsulates phase-specific logic and returns standardized output interfaces.
+
 ### State Management
 
-Server maintains canonical state in `WorkflowSession` (see [types/workflow.ts](#10-type-definitions)).
+**Server State (Canonical)**:
+- Stored in PostgreSQL as JSONB for flexibility
+- In-memory representation uses `WorkflowSession` type with Maps
+- Database storage converts Maps to plain objects for JSON serialization
+- Session hooks system for persistence and state synchronization
 
-Client maintains minimal UI state in `ClientWorkflowState` (see [types/workflow.ts](#10-type-definitions)).
+**Client State (Minimal)**:
+- UI-specific state in `ClientWorkflowState`
+- Receives state updates through delta operations
+- No business logic, purely presentational
+
+**State Synchronization**:
+```typescript
+// In-memory state uses Maps for type safety
+state: {
+  configured: Map<string, NodeConfiguration>;
+  validated: Map<string, ValidationResult>;
+}
+
+// Database storage uses plain objects
+state: {
+  configured: { [nodeId: string]: NodeConfiguration };
+  validated: { [nodeId: string]: ValidationResult };
+}
+```
 
 ### Delta Operations
 
-Operations are atomic units of change. See [types/workflow.ts](#10-type-definitions) for `WorkflowOperation` type definition.
+Operations are atomic units of change that enable:
+- 80-90% token reduction vs full state transfers
+- Complete audit trail and undo/redo capability
+- Atomic batch transactions
+- Real-time collaborative potential
+
+See [types/workflow.ts](#10-type-definitions) for `WorkflowOperation` type definitions.
 
 ### Database Consistency Architecture
 
@@ -289,19 +390,37 @@ export function generateSessionId(): string {
 
 Session lifecycle: Creation → Active (1hr timeout) → Inactive → Cleanup (24hr)
 
+### Session Hooks System
+
+The orchestrator uses a hooks system for cross-cutting concerns:
+
+```typescript
+orchestratorHooks = {
+  initializeSession: async (sessionId, prompt) => {},
+  loadSession: async (sessionId) => {},
+  persistOperations: async (sessionId, operations) => {},
+  forceSave: async (sessionId) => {},
+  recordError: async (sessionId, error, phase) => {},
+  updateTokenUsage: async (sessionId, tokens) => {}
+}
+```
+
+This enables flexible persistence strategies and monitoring.
+
 ---
 
 ## 4. Phase System
 
 ### Phase Reference Table
 
-| Phase             | Description              | Available Tools                                                                   | Allowed Operations                                                                            | Clarifications | Auto-Transition |
-| ----------------- | ------------------------ | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | -------------- | --------------- |
-| **Discovery**     | Find relevant nodes      | `search_nodes`, `get_node_info`, `list_node_types`                                | `discoverNode`, `selectNode`, `deselectNode`, `requestClarification`, `clarificationResponse` | ✅ Allowed     | ❌ Manual       |
-| **Configuration** | Configure selected nodes | `get_node_essentials`, `get_node_schema`, `validate_params`                       | `configureNode`, `updateNodeConfig`                                                           | ❌ Not allowed | ✅ Auto         |
-| **Validation**    | Validate configurations  | `validate_workflow`, `check_connections`, `get_input_schema`, `get_output_schema` | `validateNode`, `addValidationError`                                                          | ❌ Not allowed | ✅ Auto         |
-| **Building**      | Connect nodes            | `generate_workflow`, `optimize_workflow`                                          | `addToWorkflow`, `addConnection`, `updateWorkflowSettings`                                    | ❌ Not allowed | ✅ Auto         |
-| **Complete**      | Export workflow          | None                                                                              | None                                                                                          | ❌ Not allowed | N/A             |
+| Phase              | Description              | Available Tools                                                                   | Allowed Operations                                                                            | Clarifications | Auto-Transition |
+| ------------------ | ------------------------ | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | -------------- | --------------- |
+| **Discovery**      | Find relevant nodes      | `search_nodes`, `get_node_info`, `list_node_types`                                | `discoverNode`, `selectNode`, `deselectNode`, `requestClarification`, `clarificationResponse` | ✅ Allowed     | ❌ Manual       |
+| **Configuration**  | Configure selected nodes | `get_node_essentials`, `get_node_schema`, `validate_params`                       | `configureNode`, `updateNodeConfig`                                                           | ❌ Not allowed | ✅ Auto         |
+| **Validation**     | Validate configurations  | `validate_workflow`, `check_connections`, `get_input_schema`, `get_output_schema` | `validateNode`, `addValidationError`                                                          | ❌ Not allowed | ✅ Auto         |
+| **Building**       | Connect nodes            | `generate_workflow`, `optimize_workflow`                                          | `addToWorkflow`, `addConnection`, `updateWorkflowSettings`                                    | ❌ Not allowed | ✅ Auto         |
+| **Documentation**  | Add explanatory notes    | None (uses Claude's understanding)                                                | `addStickyNote`                                                                               | ❌ Not allowed | ✅ Auto         |
+| **Complete**       | Export workflow          | None                                                                              | None                                                                                          | ❌ Not allowed | N/A             |
 
 ### Detailed Phase Descriptions
 
@@ -407,6 +526,30 @@ The building phase assembles the final workflow JSON from validated configuratio
 }
 ```
 
+#### Documentation Phase
+The documentation phase adds explanatory sticky notes to the workflow to help users understand each section.
+
+**Process Flow**:
+1. **Node Group Identification**: Analyzes workflow to identify logical groups of connected nodes
+2. **Context Understanding**: Claude understands the purpose of each node group based on types and connections
+3. **Sticky Note Generation**: Creates explanatory notes for each logical section
+4. **Smart Positioning**: Places sticky notes above related node groups for clarity
+5. **Color Coding**: Uses different colors to categorize note types (informational, warnings, tips)
+
+**Key Features**:
+- Automatic node grouping based on connections
+- Context-aware explanations that reference user's original intent
+- Strategic positioning to avoid overlapping with nodes
+- No MCP tools needed - uses Claude's understanding of the workflow
+- Enhances workflow readability and maintainability
+
+**Generated Sticky Notes Include**:
+- Section purpose explanations
+- Data flow descriptions
+- Configuration highlights
+- Best practices or warnings
+- Integration points
+
 #### Complete Phase
 The final phase where the workflow is ready for export and use.
 
@@ -423,13 +566,14 @@ See [lib/phase-manager.ts] for implementation. Core logic checks required condit
 
 ### Auto-Transition Rules
 
-| Current Phase | Condition              | Next Phase    | Auto   |
-| ------------- | ---------------------- | ------------- | ------ |
-| Discovery     | Nodes selected by user | Configuration | Manual |
-| Configuration | All nodes configured   | Validation    | Auto   |
-| Validation    | All nodes valid        | Building      | Auto   |
-| Validation    | Errors found           | Configuration | Auto   |
-| Building      | Workflow complete      | Complete      | Auto   |
+| Current Phase  | Condition              | Next Phase     | Auto   |
+| -------------- | ---------------------- | -------------- | ------ |
+| Discovery      | Nodes selected by user | Configuration  | Manual |
+| Configuration  | All nodes configured   | Validation     | Auto   |
+| Validation     | All nodes valid        | Building       | Auto   |
+| Validation     | Errors found           | Configuration  | Auto   |
+| Building       | Workflow complete      | Documentation  | Auto   |
+| Documentation  | Notes added            | Complete       | Auto   |
 
 ---
 
@@ -460,34 +604,87 @@ See [lib/phase-manager.ts] for implementation. Core logic checks required condit
   }
   ```
 
-### Workflow Operations Routes
+### Workflow Phase Routes
 
-#### Apply Operations
+#### Discovery Phase
 
-- **Path**: `/api/workflow/[sessionId]/apply`
+- **Path**: `/api/workflow/[sessionId]/discover`
 - **Method**: `POST`
 - **Request**:
   ```typescript
   {
-    operations: WorkflowOperation[];
+    prompt: string;
+    clarificationResponse?: {
+      questionId: string;
+      response: string;
+    }
   }
   ```
 - **Response**:
   ```typescript
   {
     success: boolean;
-    applied: number;
-    stateUpdate: {
-      phase: string;
-      discovered?: number;
-      configured?: number;
-      validated?: number;
-      errors?: ValidationError[];
-    };
+    operations: WorkflowOperation[];
+    phase: WorkflowPhase;
+    discoveredNodes: DiscoveredNode[];
+    selectedNodeIds: string[];
     pendingClarification?: {
       questionId: string;
       question: string;
     };
+    reasoning?: string[];
+  }
+  ```
+
+#### Configuration Phase
+
+- **Path**: `/api/workflow/[sessionId]/configure`
+- **Method**: `POST`
+- **Request**: None (uses session state)
+- **Response**:
+  ```typescript
+  {
+    success: boolean;
+    operations: WorkflowOperation[];
+    phase: WorkflowPhase;
+    configured: ConfiguredNode[];
+    reasoning?: string[];
+  }
+  ```
+
+#### Validation Phase
+
+- **Path**: `/api/workflow/[sessionId]/validate`
+- **Method**: `POST`
+- **Request**: None (uses session state)
+- **Response**:
+  ```typescript
+  {
+    success: boolean;
+    phase: WorkflowPhase;
+    workflow: any;
+    validationReport: any;
+    reasoning?: string[];
+  }
+  ```
+
+#### Building Phase
+
+- **Path**: `/api/workflow/[sessionId]/build`
+- **Method**: `POST`
+- **Request**: None (uses session state)
+- **Response**:
+  ```typescript
+  {
+    success: boolean;
+    phase: WorkflowPhase;
+    workflow: {
+      name: string;
+      nodes: any[];
+      connections: any;
+      settings: any;
+    };
+    reasoning?: string[];
   }
   ```
 
@@ -527,21 +724,6 @@ See [lib/phase-manager.ts] for implementation. Core logic checks required condit
       operationCount: number;
       tokensSaved: string;
     };
-  }
-  ```
-
-#### Phase Status
-
-- **Path**: `/api/workflow/[sessionId]/phase-status`
-- **Method**: `GET`
-- **Request**: None
-- **Response**:
-  ```typescript
-  {
-    currentPhase: WorkflowPhase;
-    canProgress: boolean;
-    autoTransition: boolean;
-    reason?: string;
   }
   ```
 
@@ -970,6 +1152,7 @@ export type WorkflowPhase =
   | "configuration"
   | "validation"
   | "building"
+  | "documentation"
   | "complete";
 
 // State Types
@@ -1009,7 +1192,13 @@ export interface ClientWorkflowState {
 }
 
 // Operation Types
-export type WorkflowOperation =
+export interface BaseOperation {
+  timestamp?: string;     // When the operation occurred
+  reasoning?: string;     // Why this operation was performed
+  operationIndex?: number; // Index in the operation sequence
+}
+
+export type WorkflowOperation = BaseOperation & (
   // Discovery operations
   | {
       type: "discoverNode";
@@ -1026,7 +1215,7 @@ export type WorkflowOperation =
   | { type: "clarificationResponse"; questionId: string; response: string }
 
   // Configuration operations
-  | { type: "configureNode"; nodeId: string; config: any }
+  | { type: "configureNode"; nodeId: string; nodeType: string; purpose: string; config: any }
   | { type: "updateNodeConfig"; nodeId: string; path: string; value: any }
 
   // Validation operations
@@ -1037,16 +1226,31 @@ export type WorkflowOperation =
   | { type: "addToWorkflow"; nodeId: string; position: [number, number] }
   | { type: "addConnection"; source: string; target: string }
   | { type: "updateWorkflowSettings"; settings: Partial<WorkflowSettings> }
+  | { type: "setWorkflow"; workflow: { nodes: any[]; connections: any; settings: any } }
+
+  // Documentation operations
+  | { type: "addStickyNote"; note: StickyNote }
 
   // Phase operations
   | { type: "setPhase"; phase: WorkflowPhase }
-  | { type: "completePhase"; phase: WorkflowPhase };
+  | { type: "completePhase"; phase: WorkflowPhase }
+);
 
 // Supporting Types
 export interface DiscoveredNode {
   id: string;
   type: string;
   purpose: string;
+  displayName?: string;
+  description?: string;
+  category?: string;
+}
+
+export interface StickyNote {
+  id: string;
+  content: string;
+  nodeGroupIds: string[];  // IDs of nodes this note documents
+  color?: number;          // 1-7 for different colors in n8n
 }
 
 export interface NodeConfiguration {

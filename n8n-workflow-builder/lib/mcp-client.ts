@@ -1,6 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { createSmitheryUrl } from '@smithery/sdk/shared/config';
+import { createSmitheryUrl } from '@smithery/sdk/shared/config.js';
 import type { 
   ListResourcesResult, 
   ListToolsResult, 
@@ -237,22 +237,67 @@ class MCPClient {
       );
       
       const duration = Date.now() - startTime;
-      loggers.mcp.info(`Tool ${name} completed in ${duration}ms`);
       
-      // Log summary of result if available
+      // Extract useful info from result for INFO level logging
+      let resultSummary = '';
       if (result && result.content && result.content.length > 0) {
         const content = result.content[0];
         if (content.type === 'text') {
           try {
-            const preview = content.text.length > 200 
-              ? content.text.substring(0, 200) + '...' 
+            const data = JSON.parse(content.text);
+            
+            // Tool-specific result summaries
+            switch (name) {
+              case 'search_nodes':
+                if (Array.isArray(data)) {
+                  resultSummary = ` - Found ${data.length} nodes`;
+                  if (data.length > 0 && data.length <= 5) {
+                    const types = data.map((n: any) => n.nodeType || n.type).join(', ');
+                    resultSummary += `: ${types}`;
+                  }
+                }
+                break;
+              case 'get_node_info':
+              case 'get_node_essentials':
+                if (data.displayName || data.name) {
+                  resultSummary = ` - ${data.displayName || data.name}`;
+                }
+                break;
+              case 'validate_node_minimal':
+              case 'validate_node_operation':
+                if (data.valid !== undefined) {
+                  resultSummary = data.valid ? ' - ✅ Valid' : ` - ❌ Invalid: ${data.errors?.length || 0} errors`;
+                }
+                break;
+              case 'get_node_for_task':
+                if (data.config) {
+                  resultSummary = ' - ✅ Template found';
+                }
+                break;
+              case 'validate_workflow':
+                const errorCount = data.errors?.length || 0;
+                const warningCount = data.warnings?.length || 0;
+                if (errorCount === 0 && warningCount === 0) {
+                  resultSummary = ' - ✅ Valid workflow';
+                } else {
+                  resultSummary = ` - ⚠️  ${errorCount} errors, ${warningCount} warnings`;
+                }
+                break;
+            }
+            
+            // Log full result at verbose level
+            loggers.mcp.verbose(`Result data:`, data);
+          } catch (e) {
+            // If not JSON, show text preview
+            const preview = content.text.length > 100 
+              ? content.text.substring(0, 100) + '...' 
               : content.text;
             loggers.mcp.verbose(`Result preview: ${preview}`);
-          } catch (e) {
-            // Ignore logging errors
           }
         }
       }
+      
+      loggers.mcp.info(`Tool ${name} completed in ${duration}ms${resultSummary}`);
       
       return result;
     } catch (error) {

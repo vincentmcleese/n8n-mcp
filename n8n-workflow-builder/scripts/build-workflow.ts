@@ -25,17 +25,17 @@ if (!isProduction) {
   }
 }
 
-// Load environment variables
+// Load environment variables BEFORE any module imports
 dotenv.config({ path: path.join(process.cwd(), '.env.local') });
 
-import { WorkflowOrchestrator } from '../lib/workflow-orchestrator';
+// Type imports can stay as they don't execute code
 import type { 
   DiscoveryResult, 
   ConfigurationResult,
   BuildingResult,
   ValidationPhaseResult,
   DocumentationPhaseResult
-} from '../lib/workflow-orchestrator';
+} from '@/lib/workflow-orchestrator';
 
 // Helper to prompt user for input
 async function promptUser(question: string): Promise<string> {
@@ -79,6 +79,8 @@ Examples:
 
 // Main workflow builder
 async function buildWorkflow(prompt: string): Promise<any> {
+  // Dynamic import to ensure env vars are loaded first
+  const { WorkflowOrchestrator } = await import('@/lib/workflow-orchestrator');
   const orchestrator = new WorkflowOrchestrator();
   const sessionId = `build-${Date.now()}`;
   
@@ -130,6 +132,38 @@ async function buildWorkflow(prompt: string): Promise<any> {
     const validNodes = configResult.configured.filter(n => n.validated);
     console.log(`   ✅ Configured ${configResult.configured.length} nodes`);
     console.log(`   ✓  Validated: ${validNodes.length}/${configResult.configured.length}`);
+    
+    // Show validation details if verbose
+    if (isVerbose && configResult.operations) {
+      console.log('\n   📊 Validation Details:');
+      
+      // Extract validation history from operations
+      const validationOps = configResult.operations.filter((op: any) => op.type === 'validationHistory');
+      validationOps.forEach((op: any) => {
+        console.log(`\n   Node: ${op.nodeType} (${op.nodeId})`);
+        console.log(`   Attempts: ${op.totalAttempts}`);
+        console.log(`   Final Status: ${op.finalValid ? '✅ Valid' : '❌ Invalid'}`);
+        
+        if (op.history && op.history.length > 0) {
+          op.history.forEach((attempt: any) => {
+            console.log(`     Attempt ${attempt.attempt}: ${attempt.valid ? '✅' : '❌'}`);
+            if (!attempt.valid && attempt.errors && attempt.errors.length > 0) {
+              attempt.errors.forEach((err: string) => {
+                console.log(`       - ${err}`);
+              });
+            }
+          });
+        }
+      });
+      
+      // Show reasoning if available
+      if (configResult.reasoning && configResult.reasoning.length > 0) {
+        console.log('\n   🧠 Configuration Reasoning:');
+        configResult.reasoning.forEach((reason: string) => {
+          console.log(`     ${reason}`);
+        });
+      }
+    }
     
     if (validNodes.length === 0) {
       throw new Error('No nodes passed validation');

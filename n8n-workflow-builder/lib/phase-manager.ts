@@ -23,14 +23,17 @@ export class PhaseManager {
       'configureNode',
       'updateNodeConfig'
     ],
-    validation: [
-      'validateNode',
-      'addValidationError'
-    ],
     building: [
       'addToWorkflow',
       'addConnection',
       'updateWorkflowSettings'
+    ],
+    validation: [
+      'validateNode',
+      'addValidationError'
+    ],
+    documentation: [
+      'addStickyNote'
     ],
     complete: []
   }
@@ -47,16 +50,17 @@ export class PhaseManager {
       'get_node_schema',
       'validate_params'
     ],
+    building: [
+      'generate_workflow',
+      'optimize_workflow'
+    ],
     validation: [
       'validate_workflow',
       'check_connections',
       'get_input_schema',
       'get_output_schema'
     ],
-    building: [
-      'generate_workflow',
-      'optimize_workflow'
-    ],
+    documentation: [], // No MCP tools needed for documentation phase
     complete: []
   }
 
@@ -103,6 +107,20 @@ export class PhaseManager {
         return {
           canProgress: true,
           autoTransition: true,
+          nextPhase: 'building'
+        }
+
+      case 'building':
+        if (workflow.nodes.length === 0) {
+          return {
+            canProgress: false,
+            autoTransition: false,
+            reason: 'No nodes in workflow'
+          }
+        }
+        return {
+          canProgress: true,
+          autoTransition: true,
           nextPhase: 'validation'
         }
 
@@ -126,17 +144,12 @@ export class PhaseManager {
         return {
           canProgress: true,
           autoTransition: true,
-          nextPhase: 'building'
+          nextPhase: 'documentation'
         }
 
-      case 'building':
-        if (workflow.nodes.length === 0) {
-          return {
-            canProgress: false,
-            autoTransition: false,
-            reason: 'No nodes in workflow'
-          }
-        }
+      case 'documentation':
+        // Documentation phase is complete when sticky notes have been added
+        // Since documentation is the final content phase, we can auto-transition to complete
         return {
           canProgress: true,
           autoTransition: true,
@@ -190,7 +203,7 @@ export class PhaseManager {
    * Get the next phase in the workflow
    */
   getNextPhase(currentPhase: WorkflowPhase): WorkflowPhase | null {
-    const phaseOrder: WorkflowPhase[] = ['discovery', 'configuration', 'validation', 'building', 'complete']
+    const phaseOrder: WorkflowPhase[] = ['discovery', 'configuration', 'building', 'validation', 'documentation', 'complete']
     const currentIndex = phaseOrder.indexOf(currentPhase)
     
     if (currentIndex === -1 || currentIndex === phaseOrder.length - 1) {

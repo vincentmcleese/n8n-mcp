@@ -4,32 +4,26 @@ module.exports = {
   testEnvironment: 'node',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   
-  // ESM configuration for ts-jest
-  globals: {
-    'ts-jest': {
-      useESM: true,
-      tsconfig: {
-        jsx: 'react',
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true,
-      },
-    },
-  },
-  
   // Module resolution
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
     // Mock problematic ESM modules
     '^nanoid$': '<rootDir>/lib/nanoid-wrapper.js',
     '^lodash-es$': 'lodash',
+    '^@supabase/supabase-js$': '<rootDir>/__mocks__/@supabase/supabase-js.js',
     // Handle .js extensions in imports
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   
-  // Transform configuration
+  // Transform configuration - all ts-jest config goes here
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
       useESM: true,
+      tsconfig: {
+        jsx: 'react',
+        esModuleInterop: true,
+        allowSyntheticDefaultImports: true,
+      },
     }],
   },
   
@@ -40,6 +34,9 @@ module.exports = {
   
   // ESM support
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  
+  // Inject jest globals
+  injectGlobals: true,
   
   // Resolver options
   resolver: undefined,

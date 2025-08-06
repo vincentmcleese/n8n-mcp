@@ -1,33 +1,292 @@
 {
-  "summary": "Delta-based validation system successfully implemented",
-  "achievements": [
-    "✅ Updated WorkflowOrchestrator with runValidations() method that calls MCP directly",
-    "✅ Created applyFixes() method that intelligently handles node-level properties",
-    "✅ Updated ClaudeService.generateValidationFixes() to generate proper fix operations",
-    "✅ Added NODE_LEVEL_PROPERTIES array to correctly place properties at node level",
-    "✅ Added cleanup logic to remove properties from parameters after moving them",
-    "✅ Successfully tested fix generation and application"
+  "sessionId": "test-full-flow-1754374955266",
+  "prompt": "Create a workflow to send daily Slack notifications from a Google Sheets spreadsheet",
+  "startTime": "2025-08-05T06:22:35.266Z",
+  "phases": [
+    {
+      "name": "Discovery",
+      "success": true,
+      "duration": 16667,
+      "details": {
+        "success": true,
+        "operations": [
+          {
+            "type": "discoverNode",
+            "node": {
+              "id": "node_1",
+              "type": "nodes-base.scheduleTrigger",
+              "purpose": "Trigger the workflow daily at a specified time"
+            }
+          },
+          {
+            "type": "selectNode",
+            "nodeId": "node_1"
+          },
+          {
+            "type": "discoverNode",
+            "node": {
+              "id": "node_2",
+              "type": "nodes-base.googleSheets",
+              "purpose": "Read data from Google Sheets spreadsheet to get content for notifications"
+            }
+          },
+          {
+            "type": "selectNode",
+            "nodeId": "node_2"
+          },
+          {
+            "type": "discoverNode",
+            "node": {
+              "id": "node_3",
+              "type": "nodes-base.slack",
+              "purpose": "Send formatted notifications to Slack channels or users"
+            }
+          },
+          {
+            "type": "selectNode",
+            "nodeId": "node_3"
+          }
+        ],
+        "phase": "discovery",
+        "discoveredNodes": [
+          {
+            "id": "node_1",
+            "type": "nodes-base.scheduleTrigger",
+            "purpose": "Trigger the workflow daily at a specified time",
+            "displayName": "Schedule Trigger"
+          },
+          {
+            "id": "node_2",
+            "type": "nodes-base.googleSheets",
+            "purpose": "Read data from Google Sheets spreadsheet to get content for notifications",
+            "displayName": "Google Sheets"
+          },
+          {
+            "id": "node_3",
+            "type": "nodes-base.slack",
+            "purpose": "Send formatted notifications to Slack channels or users",
+            "displayName": "Slack"
+          }
+        ],
+        "selectedNodeIds": [
+          "node_1",
+          "node_2",
+          "node_3"
+        ],
+        "reasoning": [
+          "User wants daily notifications so Schedule Trigger is needed to run workflow at specific time each day",
+          "Google Sheets node is required to read data from the spreadsheet",
+          "Slack node is needed to send the notifications to Slack",
+          "This creates a simple data flow: Schedule → Read Sheets → Send to Slack",
+          "All required functionality is available in the discovered nodes"
+        ]
+      }
+    },
+    {
+      "name": "Configuration",
+      "success": true,
+      "duration": 35068,
+      "details": {
+        "success": true,
+        "operations": [
+          {
+            "type": "configureNode",
+            "nodeId": "node_1",
+            "config": {
+              "rule": {
+                "interval": [
+                  {
+                    "field": "hours",
+                    "triggerAtHour": 9
+                  }
+                ],
+                "typeInterval": "hours"
+              },
+              "notice": ""
+            }
+          },
+          {
+            "type": "validateNode",
+            "nodeId": "node_1",
+            "result": {
+              "valid": true,
+              "errors": []
+            }
+          },
+          {
+            "type": "configureNode",
+            "nodeId": "node_2",
+            "config": {
+              "resource": "sheet",
+              "operation": "read",
+              "documentId": {
+                "__rl": true,
+                "value": "",
+                "mode": "url"
+              },
+              "sheetName": {
+                "__rl": true,
+                "value": "Sheet1",
+                "mode": "name"
+              },
+              "range": "A:F",
+              "options": {}
+            }
+          },
+          {
+            "type": "validateNode",
+            "nodeId": "node_2",
+            "result": {
+              "valid": true,
+              "errors": []
+            }
+          },
+          {
+            "type": "configureNode",
+            "nodeId": "node_3",
+            "config": {
+              "resource": "message",
+              "operation": "post",
+              "channel": "#general",
+              "text": "Formatted notification message",
+              "onError": "continueRegularOutput",
+              "retryOnFail": true,
+              "maxTries": 2,
+              "waitBetweenTries": 2000
+            }
+          },
+          {
+            "type": "validateNode",
+            "nodeId": "node_3",
+            "result": {
+              "valid": true,
+              "errors": []
+            }
+          }
+        ],
+        "phase": "configuration",
+        "configured": [
+          {
+            "id": "node_1",
+            "type": "nodes-base.scheduleTrigger",
+            "purpose": "Trigger the workflow daily at a specified time",
+            "config": {
+              "rule": {
+                "interval": [
+                  {
+                    "field": "hours",
+                    "triggerAtHour": 9
+                  }
+                ],
+                "typeInterval": "hours"
+              },
+              "notice": ""
+            },
+            "validated": true
+          },
+          {
+            "id": "node_2",
+            "type": "nodes-base.googleSheets",
+            "purpose": "Read data from Google Sheets spreadsheet to get content for notifications",
+            "config": {
+              "resource": "sheet",
+              "operation": "read",
+              "documentId": {
+                "__rl": true,
+                "value": "",
+                "mode": "url"
+              },
+              "sheetName": {
+                "__rl": true,
+                "value": "Sheet1",
+                "mode": "name"
+              },
+              "range": "A:F",
+              "options": {}
+            },
+            "validated": true
+          },
+          {
+            "id": "node_3",
+            "type": "nodes-base.slack",
+            "purpose": "Send formatted notifications to Slack channels or users",
+            "config": {
+              "resource": "message",
+              "operation": "post",
+              "select": "channel",
+              "channelId": "#general",
+              "text": "Formatted notification message",
+              "onError": "continueRegularOutput",
+              "retryOnFail": true,
+              "maxTries": 2,
+              "waitBetweenTries": 2000
+            },
+            "validated": true
+          }
+        ],
+        "reasoning": [
+          "Fetched additional context for nodes-base.scheduleTrigger: task template: daily_schedule_trigger",
+          "Analysis for nodes-base.scheduleTrigger: Schedule Trigger is a trigger node that needs scheduling configuration not shown in essentials, Essentials only show a notice property, but scheduling requires timing properties like interval, rule, or cron expressions, User specifically wants daily scheduling, so need to find properties for setting daily intervals and specific times, Common schedule trigger properties include schedule type (interval/rule), timing values, and timezone settings, A daily schedule task template would provide a working configuration for this common use case, No authentication needed as this is a time-based trigger, not an external service trigger",
+          "Used schedule trigger essentials structure",
+          "Configured for daily trigger at 9 AM",
+          "Set interval type to hours with specific trigger hour",
+          "nodes-base.scheduleTrigger configured and validated successfully",
+          "Fetched additional context for nodes-base.googleSheets: task template: read_google_sheets",
+          "Analysis for nodes-base.googleSheets: Node requires Google Sheets credentials for authentication, User wants to read data from Google Sheets for notifications - 'read' operation is appropriate, Essentials show basic properties (operation, documentId, sheetName, range) but missing key read-specific properties, Need to search for read operation properties like dataStartRow (where data starts), columns (which columns to read), outputMode (how to format output), May need filtering options if user wants specific rows for notifications, The 'read_google_sheets' task template would provide a complete working configuration for reading spreadsheet data, Examples show columns property with mappingMode structure - need to understand this for read operations, Range property is available but may need additional read-specific configuration options",
+          "Used node essentials structure for Google Sheets read operation",
+          "Set operation to 'read' to get data from spreadsheet",
+          "Configured documentId as resource locator with URL mode",
+          "Set default sheetName to Sheet1",
+          "Used default range A:F to read data columns",
+          "User needs to provide actual spreadsheet URL",
+          "nodes-base.googleSheets configured and validated successfully",
+          "Fetched additional context for nodes-base.slack: task template: send_slack_message",
+          "Analysis for nodes-base.slack: Node requires Slack API credentials as indicated by hasCredentials: true in metadata, Essentials show resource defaults to 'message' which matches user's intent to send notifications, The 'text' property is already available in essentials and is required for message content, Missing critical properties: 'channel' (where to send the message) and 'operation' (likely 'post' for sending messages), The examples show 'operation': 'post' and 'channel' properties that aren't in the common properties list, Task template 'send_slack_message' would provide a complete working configuration for sending notifications, Attachments property is available in essentials for rich formatting if needed, The node supports multiple resources (channel, file, message, etc.) but message resource is appropriate for notifications",
+          "Used task template as base configuration",
+          "Set default channel to #general for notifications",
+          "Added placeholder text for formatted notifications",
+          "Template already includes error handling and retry logic",
+          "Configuration validation failed for nodes-base.slack, attempting to fix: Missing required field: \"Send Message To\" (this might be a display name - check the node properties for the actual field name)",
+          "nodes-base.slack configured and validated successfully"
+        ]
+      }
+    },
+    {
+      "name": "Error",
+      "success": false,
+      "duration": 0,
+      "details": null,
+      "error": "Phase mismatch: expected configuration, got discovery"
+    }
   ],
-  "key_improvements": [
-    "Token usage reduced by ~80% - only sending errors to Claude, not full workflow",
-    "Claude generates minimal fix operations instead of full workflow",
-    "Fixes are applied incrementally with max 3 retry attempts",
-    "Node-level properties (onError, retryOnFail, etc.) are correctly placed"
+  "recoveryTests": [
+    {
+      "name": "Recovery after Discovery",
+      "success": true,
+      "details": {
+        "phase": "discovery",
+        "operations": 6,
+        "discovered": 3,
+        "selected": 3
+      }
+    },
+    {
+      "name": "Recovery after Configuration",
+      "success": false,
+      "details": {
+        "error": "Phase mismatch: expected configuration, got discovery"
+      }
+    }
   ],
-  "code_changes": {
-    "workflow-orchestrator.ts": [
-      "Added runValidations() method",
-      "Added applyFixes() method with NODE_LEVEL_PROPERTIES handling",
-      "Modified runValidationPhase() to use delta-based approach"
-    ],
-    "claude-service.ts": [
-      "Updated generateValidationFixes() with clear instructions",
-      "Added examples for node-level property fixes"
-    ]
+  "summary": {
+    "phasesCompleted": 2,
+    "totalOperations": 0,
+    "totalTokens": 0,
+    "nodesDiscovered": 3,
+    "nodesConfigured": 3,
+    "stickyNotesAdded": 0,
+    "validationFixesApplied": 0
   },
-  "test_results": {
-    "fix_generation": "✅ Claude correctly generates updateField operations for node-level properties",
-    "apply_fixes": "✅ Properties moved from parameters to node level and cleaned up",
-    "validation_loop": "✅ Retry logic working with max 3 attempts"
-  }
+  "endTime": "2025-08-05T06:23:27.153Z",
+  "totalDuration": 51887
 }

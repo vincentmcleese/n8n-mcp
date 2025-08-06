@@ -1,119 +1,49 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getWorkflowSession, parseSessionId } from '@/lib/session-utils';
+import { NextResponse } from 'next/server';
+import { sessionManager } from '@/lib/services/session-manager';
 
 /**
  * GET /api/workflow/[sessionId]/export
- * Export final workflow as n8n-compatible JSON
+ * Returns the complete workflow JSON for download
  */
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { sessionId: string } }
 ) {
-  const startTime = Date.now();
-  
   try {
-    // Validate session exists
-    const session = await getWorkflowSession(params.sessionId);
+    const { sessionId } = params;
+
+    if (!sessionId) {
+      return NextResponse.json(
+        { error: 'Session ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Load session from database using singleton
+    const session = await sessionManager.loadSession(sessionId);
+
     if (!session) {
       return NextResponse.json(
-        { 
-          error: 'Session not found',
-          message: 'The specified workflow session does not exist or has expired'
-        },
+        { error: 'Session not found' },
         { status: 404 }
       );
     }
 
-    // Validate workflow is complete
-    const state = session.state;
-    if (state.phase !== 'complete') {
+    // Check if workflow is complete
+    if (session.state.phase !== 'complete') {
       return NextResponse.json(
-        { 
-          error: 'Workflow not complete',
-          message: `Workflow is in '${state.phase}' phase. Only complete workflows can be exported.`,
-          currentPhase: state.phase
-        },
-        { status: 409 } // Conflict
+        { error: 'Workflow is not yet complete' },
+        { status: 400 }
       );
     }
 
-    // Parse session ID for metadata
-    const sessionInfo = parseSessionId(params.sessionId);
-    
-    // Calculate token savings estimate
-    const operationCount = state.operationHistory.length;
-    const traditionalTokens = operationCount * 200; // Estimate
-    const deltaTokens = operationCount * 20; // Estimate
-    const tokensSaved = Math.max(0, traditionalTokens - deltaTokens);
-    const savingsPercentage = traditionalTokens > 0 
-      ? Math.round((tokensSaved / traditionalTokens) * 100)
-      : 0;
-
-    const responseTime = Date.now() - startTime;
-
-    // Export workflow in PRD format
-    return NextResponse.json({
-      workflow: {
-        nodes: state.workflow.nodes,
-        connections: state.workflow.connections,
-        settings: {
-          ...state.workflow.settings,
-          name: state.workflow.settings.name || 'n8n Workflow',
-          executionOrder: state.workflow.settings.executionOrder || 'v1',
-          saveDataSuccessExecution: state.workflow.settings.saveDataSuccessExecution ?? true
-        }
-      },
-      metadata: {
-        createdAt: session.createdAt.toISOString(),
-        operationCount: operationCount,
-        tokensSaved: `${savingsPercentage}% (${tokensSaved} tokens)`
-      },
-      performance: {
-        responseTime,
-        withinTarget: responseTime < 500
-      }
-    });
+    // Return the workflow data directly from state
+    return NextResponse.json(session.state.workflow);
 
   } catch (error) {
-    console.error('Export workflow error:', error);
-    
-    const responseTime = Date.now() - startTime;
-    
-    if (error instanceof Error) {
-      // Database connection errors
-      if (error.message.includes('Database') || error.message.includes('connection')) {
-        return NextResponse.json(
-          { 
-            error: 'Database error',
-            message: 'Unable to connect to database',
-            retryable: true,
-            performance: { responseTime }
-          },
-          { status: 503 }
-        );
-      }
-      
-      // Session ID parsing errors
-      if (error.message.includes('Invalid session ID')) {
-        return NextResponse.json(
-          { 
-            error: 'Invalid session',
-            message: 'Session ID format is invalid',
-            retryable: false,
-            performance: { responseTime }
-          },
-          { status: 400 }
-        );
-      }
-    }
-
+    console.error('Failed to export workflow:', error);
     return NextResponse.json(
-      { 
-        error: 'Internal server error',
-        message: 'Failed to export workflow',
-        retryable: true,
-        performance: { responseTime }
-      },
+      { error: 'Failed to export workflow' },
       { status: 500 }
     );
   }

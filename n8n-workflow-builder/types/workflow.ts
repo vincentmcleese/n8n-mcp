@@ -1,5 +1,22 @@
 // types/workflow.ts
 
+import type {
+  DiscoverNodeOperation,
+  SelectNodeOperation,
+  DeselectNodeOperation,
+  RequestClarificationOperation,
+  ConfigureNodeOperation,
+  AddFieldOperation,
+  UpdateFieldOperation,
+  RemoveFieldOperation,
+  AddConnectionOperation,
+  RemoveConnectionOperation,
+  AddNodeOperation,
+  UpdateWorkflowSettingsOperation,
+  SetWorkflowNameOperation,
+  AddStickyNoteOperation
+} from './claude';
+
 // ==========================================
 // Core Types
 // ==========================================
@@ -106,35 +123,45 @@ export interface BaseOperation {
   operationIndex?: number; // Index in the operation sequence
 }
 
-export type WorkflowOperation = BaseOperation & (
-  // Discovery phase operations
-  | { type: 'discoverNode'; node: { id: string; type: string; purpose: string } }
-  | { type: 'selectNode'; nodeId: string }
-  | { type: 'deselectNode'; nodeId: string }
-  | { type: 'requestClarification'; questionId: string; question: string; context: any }
+/**
+ * Extended operation types for session management
+ * These extend the Claude operation types with additional session-specific operations
+ * 
+ * @see Claude operation types in @/types/claude/operations.ts
+ */
+export type SessionOperation = 
+  // Use imported Claude operation types
+  | DiscoverNodeOperation
+  | SelectNodeOperation
+  | DeselectNodeOperation
+  | RequestClarificationOperation
+  | ConfigureNodeOperation
+  | AddFieldOperation
+  | UpdateFieldOperation
+  | RemoveFieldOperation
+  | AddConnectionOperation
+  | RemoveConnectionOperation
+  | AddNodeOperation
+  | UpdateWorkflowSettingsOperation
+  | SetWorkflowNameOperation
+  | AddStickyNoteOperation
+  
+  // Additional session-specific operations not in Claude types
   | { type: 'clarificationResponse'; questionId: string; response: string }
-  
-  // Configuration phase operations
-  | { type: 'configureNode'; nodeId: string; nodeType: string; purpose: string; config: any } // Enhanced with metadata
   | { type: 'updateNodeConfig'; nodeId: string; path: string; value: any }
-  
-  // Validation phase operations
   | { type: 'validateNode'; nodeId: string; result: ValidationResult }
   | { type: 'addValidationError'; nodeId: string; error: ValidationError }
-  
-  // Building phase operations
+  | { type: 'validationHistory'; nodeId: string; nodeType: string; history: any[]; finalValid: boolean; totalAttempts: number }
   | { type: 'addToWorkflow'; nodeId: string; position: [number, number] }
-  | { type: 'addConnection'; source: string; target: string }
-  | { type: 'updateWorkflowSettings'; settings: Partial<WorkflowSettings> }
   | { type: 'setWorkflow'; workflow: { nodes: any[]; connections: any; settings: any } }
-  
-  // Documentation phase operations
-  | { type: 'addStickyNote'; note: StickyNote }
-  
-  // Phase transition operations
   | { type: 'setPhase'; phase: WorkflowPhase }
-  | { type: 'completePhase'; phase: WorkflowPhase }
-);
+  | { type: 'completePhase'; phase: WorkflowPhase };
+
+/**
+ * Workflow operation with metadata
+ * Combines base operation metadata with specific operation types
+ */
+export type WorkflowOperation = BaseOperation & SessionOperation;
 
 // ==========================================
 // Supporting Types
@@ -347,11 +374,4 @@ export interface ClaudeRequest {
   prompt: string;
   selectedNodes?: string[];
   [key: string]: any; // Additional fields as needed
-}
-
-/**
- * Claude API response - operations to apply
- */
-export interface ClaudeResponse {
-  operations: WorkflowOperation[];
 }

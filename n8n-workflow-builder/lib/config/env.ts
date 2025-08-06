@@ -52,6 +52,22 @@ let env: Env | undefined;
 
 export function getEnv(): Env {
   if (!env) {
+    // Skip validation in test mode
+    if (process.env.SKIP_ENV_VALIDATION === 'true' || process.env.NODE_ENV === 'test') {
+      env = {
+        NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://test.supabase.co',
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'test-key',
+        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || 'sk-test',
+        MCP_SERVER_URL: process.env.MCP_SERVER_URL || 'http://localhost:3001',
+        MCP_API_KEY: process.env.MCP_API_KEY || 'test-key',
+        MCP_PROFILE: process.env.MCP_PROFILE || 'test',
+        CRON_SECRET: process.env.CRON_SECRET || 'test-secret',
+        SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || 'test-service-key',
+        NODE_ENV: process.env.NODE_ENV as 'development' | 'production' | 'test'
+      };
+      return env;
+    }
+    
     try {
       env = envSchema.parse(process.env);
     } catch (error) {

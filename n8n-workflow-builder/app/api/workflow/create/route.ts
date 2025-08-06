@@ -1,86 +1,70 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createWorkflowSession } from '@/lib/session-utils';
-import { z } from 'zod';
-
-/**
- * Request validation schema
- */
-const createSessionSchema = z.object({
-  prompt: z.string().min(1).max(1000),
-  metadata: z.object({
-    name: z.string().min(1).max(100).optional(),
-    description: z.string().max(500).optional(),
-  }).optional(),
-});
+import { NextResponse } from 'next/server';
+import { WorkflowOrchestrator } from '@/lib/workflow-orchestrator';
+import { nanoid } from 'nanoid';
 
 /**
  * POST /api/workflow/create
- * Creates a new workflow session
+ * Creates a new workflow session and starts the discovery phase
  */
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    // Parse and validate request body
-    const body = await request.json();
-    
-    // Validate input
-    const validationResult = createSessionSchema.safeParse(body);
-    if (!validationResult.success) {
+    const { prompt } = await request.json();
+
+    if (!prompt || typeof prompt !== 'string') {
       return NextResponse.json(
-        { 
-          error: 'Invalid request', 
-          details: validationResult.error.errors 
-        },
+        { error: 'Prompt is required' },
         { status: 400 }
       );
     }
 
-    const { prompt, metadata } = validationResult.data;
+    // Generate unique session ID
+    const timestamp = Date.now();
+    const random = nanoid(10);
+    const sessionId = `wf_${timestamp}_${random}`;
 
-    // Create the session with prompt stored in metadata
-    const sessionMetadata = {
-      ...metadata,
-      initialPrompt: prompt
-    };
+    // Create orchestrator
+    const orchestrator = new WorkflowOrchestrator();
     
-    const session = await createWorkflowSession(prompt, sessionMetadata);
-
-    // Return success response
-    return NextResponse.json({
-      sessionId: session.sessionId,
-      createdAt: session.createdAt,
-      expiresAt: session.expiresAt,
+    // Start discovery phase asynchronously
+    // Don't await - let it run in background
+    orchestrator.runDiscoveryPhase(sessionId, prompt).then(async (result) => {
+      console.log(`Discovery phase result for ${sessionId}:`, {
+        success: result.success,
+        selectedNodeIds: result.selectedNodeIds,
+        pendingClarification: result.pendingClarification,
+        phase: result.phase
+      });
+      
+      // After discovery, continue with other phases automatically
+      if (!result.pendingClarification && result.selectedNodeIds?.length > 0) {
+        console.log(`Starting configuration phase for ${sessionId} with ${result.selectedNodeIds.length} nodes`);
+        // Continue processing phases in background
+        try {
+          await orchestrator.runConfigurationPhase(sessionId);
+          await orchestrator.runBuildingPhase(sessionId);
+          await orchestrator.runValidationPhase(sessionId);
+          await orchestrator.runDocumentationPhase(sessionId);
+        } catch (phaseError) {
+          console.error(`Phase processing failed for ${sessionId}:`, phaseError);
+        }
+      } else {
+        console.log(`Skipping automatic phase progression for ${sessionId}: pendingClarification=${!!result.pendingClarification}, selectedNodes=${result.selectedNodeIds?.length || 0}`);
+      }
+    }).catch(error => {
+      console.error(`Background processing failed for ${sessionId}:`, error);
     });
-    
-  } catch (error) {
-    console.error('Session creation error:', error);
-    
-    // Handle database errors
-    if (error instanceof Error && error.message.includes('Failed to create session')) {
-      return NextResponse.json(
-        { error: 'Database error', message: 'Failed to create session' },
-        { status: 503 }
-      );
-    }
 
-    // Generic error response
+    return NextResponse.json({
+      sessionId,
+      message: 'Workflow creation started',
+      status: 'processing'
+    });
+
+  } catch (error) {
+    console.error('Failed to create workflow:', error);
     return NextResponse.json(
-      { error: 'Failed to create session' },
+      { error: 'Failed to create workflow session' },
       { status: 500 }
     );
   }
-}
-
-/**
- * OPTIONS /api/workflow/create
- * CORS preflight support
- */
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  });
 }

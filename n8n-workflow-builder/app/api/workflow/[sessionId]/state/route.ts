@@ -1,120 +1,62 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getSessionStats, getWorkflowSession, extendSessionTimeout } from '@/lib/session-utils';
-import { retryWithBackoff } from '@/lib/db/transaction-utils';
+import { NextResponse } from 'next/server';
+import { sessionManager } from '@/lib/services/session-manager';
 
 /**
  * GET /api/workflow/[sessionId]/state
- * Get current workflow session state
+ * Returns the current phase and progress of a workflow session
  */
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { sessionId: string } }
 ) {
-  const startTime = Date.now();
-  
   try {
-    // Validate session exists
-    const session = await getWorkflowSession(params.sessionId);
+    const { sessionId } = params;
+
+    if (!sessionId) {
+      return NextResponse.json(
+        { error: 'Session ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Load session from database using singleton
+    const session = await sessionManager.loadSession(sessionId);
+
     if (!session) {
       return NextResponse.json(
-        { 
-          error: 'Session not found',
-          message: 'The specified workflow session does not exist or has expired'
-        },
+        { error: 'Session not found' },
         { status: 404 }
       );
     }
 
-    // Get session statistics with retry logic for consistency
-    console.log('GET /state - Getting stats for session:', params.sessionId);
-    
-    let stats;
-    try {
-      // Use retry logic to handle potential stale reads
-      stats = await retryWithBackoff(
-        async () => {
-          const result = await getSessionStats(params.sessionId);
-          if (!result) {
-            throw new Error('Stats returned null');
-          }
-          return result;
-        },
-        {
-          maxRetries: 3,
-          initialDelayMs: 50,
-          backoffMultiplier: 2,
-          maxDelayMs: 500
-        }
-      );
-    } catch (retryError) {
-      console.error('Failed to get stats after retries:', retryError);
-      return NextResponse.json(
-        { 
-          error: 'Session state unavailable',
-          message: 'Unable to retrieve session state after multiple attempts'
-        },
-        { status: 500 }
-      );
-    }
-    
-    console.log('GET /state - Stats result:', stats);
+    // Check for pending clarifications
+    const pendingClarifications = session.state.pendingClarifications || [];
+    const pendingClarification = pendingClarifications.length > 0 ? pendingClarifications[0] : null;
 
-    // Extend session timeout (heartbeat)
-    await extendSessionTimeout(params.sessionId);
-
-    const responseTime = Date.now() - startTime;
-
-    // Return state matching PRD format with cache headers
-    const response = NextResponse.json({
-      phase: stats.phase,
+    // Return current phase and basic stats
+    return NextResponse.json({
+      sessionId,
+      phase: session.state.phase,
+      complete: session.state.phase === 'complete',
       stats: {
-        discovered: stats.stats.discovered,
-        selected: stats.stats.selected,
-        configured: stats.stats.configured,
-        validated: stats.stats.validated
+        discovered: session.state.discovered.length,
+        selected: session.state.selected.length,
+        configured: Object.keys(session.state.configured).length,
+        validated: Object.keys(session.state.validated).length
       },
-      metadata: session.state?.metadata || session.metadata || {},
-      performance: {
-        responseTime,
-        withinTarget: responseTime < 500
-      }
+      // Include prompt for display
+      prompt: session.state.userPrompt,
+      // Include pending clarification if any
+      pendingClarification: pendingClarification ? {
+        questionId: pendingClarification.questionId,
+        question: pendingClarification.question
+      } : null
     });
-    
-    // Add cache headers for consistency
-    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-    response.headers.set('Pragma', 'no-cache');
-    response.headers.set('Expires', '0');
-    response.headers.set('Last-Modified', new Date().toUTCString());
-    
-    return response;
 
   } catch (error) {
-    console.error('Get state error:', error);
-    
-    const responseTime = Date.now() - startTime;
-    
-    if (error instanceof Error) {
-      // Database connection errors
-      if (error.message.includes('Database') || error.message.includes('connection')) {
-        return NextResponse.json(
-          { 
-            error: 'Database error',
-            message: 'Unable to connect to database',
-            retryable: true,
-            performance: { responseTime }
-          },
-          { status: 503 }
-        );
-      }
-    }
-
+    console.error('Failed to get session state:', error);
     return NextResponse.json(
-      { 
-        error: 'Internal server error',
-        message: 'Failed to retrieve workflow state',
-        retryable: true,
-        performance: { responseTime }
-      },
+      { error: 'Failed to retrieve session state' },
       { status: 500 }
     );
   }

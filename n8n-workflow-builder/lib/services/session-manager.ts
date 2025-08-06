@@ -7,6 +7,7 @@
 
 import { createServerClient } from '../config/supabase';
 import { loggers } from '../utils/logger';
+import { PhaseManager } from '../phase-manager';
 import type { 
   WorkflowOperation, 
   WorkflowSession,
@@ -527,6 +528,15 @@ export class SessionManager {
         
         case 'setPhase':
           updatedState.phase = op.phase;
+          break;
+        
+        case 'completePhase':
+          // Use PhaseManager to get the next phase
+          const phaseManager = new PhaseManager();
+          const nextPhase = phaseManager.getNextPhase(updatedState.phase);
+          if (nextPhase) {
+            updatedState.phase = nextPhase;
+          }
           break;
         
         case 'requestClarification':
