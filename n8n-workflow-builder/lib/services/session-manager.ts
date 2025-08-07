@@ -56,7 +56,7 @@ export class SessionManager {
   private saveTimers = new Map<string, NodeJS.Timeout>();
 
   /**
-   * Create a new session in Supabase
+   * Create a new session in Supabase (with upsert support)
    */
   async createSession(
     sessionId: string, 
@@ -84,22 +84,26 @@ export class SessionManager {
         }
       };
 
+      // Use upsert to handle duplicate key gracefully
       const { data, error } = await this.supabase
         .from('workflow_sessions')
-        .insert({
+        .upsert({
           session_id: sessionId,
           user_prompt: initialPrompt,
           state: initialState
+        }, {
+          onConflict: 'session_id',
+          ignoreDuplicates: false  // Update if exists
         })
         .select()
         .single();
 
       if (error) {
-        this.logger.error('Failed to create session:', error);
+        this.logger.error('Failed to create/update session:', error);
         throw new Error(`Failed to create session: ${error.message}`);
       }
 
-      this.logger.debug(`Created session ${sessionId} in Supabase`);
+      this.logger.debug(`Created/updated session ${sessionId} in Supabase`);
       return this.convertToWorkflowSession(sessionId, data);
     } catch (error) {
       this.logger.error('Error creating session:', error);

@@ -65,9 +65,53 @@ export const reasoningSchema = z.array(z.string());
 // ==========================================
 
 /**
- * Intent analysis response schema
+ * Intent analysis response schema (optimized for task-based discovery)
  */
 export const intentAnalysisSchema = z.object({
+  intent: z.string(),
+  logic_flow: z.array(z.object({
+    step: z.number(),
+    action: z.string(),
+    type: z.enum(['trigger', 'process', 'condition', 'output']),
+    task: z.string().optional().nullable(), // Exact MCP task name if applicable
+    nodeType: z.string().optional().nullable(), // For non-task nodes
+  })),
+  matched_tasks: z.array(z.string()), // EXACT task names from MCP
+  task_selection_reasoning: z.array(z.object({
+    task: z.string(),
+    reason: z.string(),
+  })).optional(), // Optional to maintain backward compatibility
+  unmatched_capabilities: z.array(z.object({
+    name: z.string(),
+    description: z.string(),
+    searchTerms: z.array(z.string()),
+  })),
+  search_suggestions: z.array(z.object({
+    capability: z.string(),
+    primary: z.string(),
+    alternatives: z.array(z.string()),
+  })),
+  workflow_pattern: z.string(),
+  complexity: z.union([z.enum(['simple', 'medium', 'complex']), z.literal('unknown')]),
+  clarification_needed: z.boolean(),
+  clarification: z.object({
+    question: z.string(),
+    context: z.string(),
+    suggestions: z.array(z.string()),
+  }).optional(),
+  reasoning: reasoningSchema,
+  usage: tokenUsageSchema,
+});
+
+/**
+ * @deprecated Since 2024-01-06 - Phase 1 of discovery refactor
+ * @removal-target After Phase 5 complete and tested
+ * @todo Remove after full migration to task-based discovery
+ * @see intentAnalysisSchema for the new implementation
+ * 
+ * Legacy intent analysis schema (for backward compatibility)
+ */
+export const legacyIntentAnalysisSchema = z.object({
   intent: z.string(),
   requiredCapabilities: z.array(z.string()),
   suggestedSearchTerms: z.array(z.string()),

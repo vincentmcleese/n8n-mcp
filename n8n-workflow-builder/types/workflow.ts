@@ -177,6 +177,10 @@ export interface DiscoveredNode {
   displayName?: string;
   description?: string;
   category?: string;
+  // New flags for task-based discovery
+  isPreConfigured?: boolean;     // True for task nodes with pre-configured settings
+  needsConfiguration?: boolean;  // True for searched nodes that need configuration
+  config?: any;                  // Pre-configured settings from task template
 }
 
 /**

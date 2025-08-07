@@ -8,16 +8,31 @@ import {
   DiscoveryRunnerDeps,
 } from "@/lib/orchestrator/contracts/discovery.types";
 import { DiscoveredNode, WorkflowOperation } from "@/types/workflow";
-import { NodeSearchResult } from "@/lib/orchestrator/context/NodeContextService";
 import { wrapPhase, PhaseContext } from "@/lib/orchestrator/utils/wrapPhase";
-import { OperationLogger } from "@/lib/orchestrator/utils/OperationLogger";
+import { TaskService, GapSearchService } from "@/services/mcp";
+import type { ClaudeAnalysisResponse } from "@/types/claude";
 
 /**
- * Runner for the discovery phase
- * Handles node discovery, selection, and clarification
+ * Runner for the discovery phase (OPTIMIZED with task-based flow)
+ * 
+ * New flow:
+ * 1. Intent analysis -> exact task names + unmatched capabilities
+ * 2. Direct task fetching from MCP (no Claude)
+ * 3. Gap searching with optimized terms (no Claude)
+ * 4. Claude selection only for gaps (if any)
+ * 5. Hybrid assembly with pre-configured flags
  */
 export class DiscoveryRunner implements PhaseRunner<DiscoveryInput, DiscoveryOutput> {
-  constructor(private deps: DiscoveryRunnerDeps) {}
+  private taskService: TaskService;
+  private gapSearchService: GapSearchService;
+  
+  constructor(private deps: DiscoveryRunnerDeps) {
+    // Initialize services with MCP client from deps or node context
+    // Prefer the one from deps if available as it's more likely to be fresh
+    const mcpClient = this.deps.mcpClient || this.deps.nodeContextService.getMCPClient?.() || undefined;
+    this.taskService = new TaskService(mcpClient);
+    this.gapSearchService = new GapSearchService(mcpClient);
+  }
 
   /**
    * Run the discovery phase - wrapped with error handling and operation logging
@@ -28,8 +43,8 @@ export class DiscoveryRunner implements PhaseRunner<DiscoveryInput, DiscoveryOut
       const { sessionId, prompt } = input;
       const { operationLogger } = context;
       
-      this.deps.loggers.orchestrator.debug(
-        "Starting simplified discovery phase - trusting AI agent decisions"
+      this.deps.loggers.orchestrator.info(
+        "Starting OPTIMIZED discovery phase with task-based flow"
       );
 
       // Initialize Supabase session if enabled
@@ -55,112 +70,271 @@ export class DiscoveryRunner implements PhaseRunner<DiscoveryInput, DiscoveryOut
         }
       }
 
-      // Step 1: Have Claude analyze the prompt and suggest what to search for
-      // Set up token tracking for Claude service
+      // ====================================================================
+      // STEP 1: Intent Analysis with exact task names
+      // ====================================================================
+      
       const { logger: _logger, onTokenUsage } = operationLogger.withTokenTracking();
       if (this.deps.claudeService.setOnUsageCallback) {
         this.deps.claudeService.setOnUsageCallback(onTokenUsage);
       }
       
+      this.deps.loggers.orchestrator.debug("Step 1: Analyzing intent for task-based discovery");
       const analysisResult = await this.deps.claudeService.analyzeIntent({ prompt });
+      
       if (!analysisResult.success || !analysisResult.data) {
-        throw new Error('Failed to analyze workflow intent');
+        // Log more details about the failure
+        this.deps.loggers.orchestrator.error("Intent analysis failed", {
+          success: analysisResult.success,
+          hasData: !!analysisResult.data,
+          error: analysisResult.error?.message || 'Unknown error',
+          usage: analysisResult.usage
+        });
+        throw new Error(`Failed to analyze workflow intent: ${analysisResult.error?.message || 'Invalid response'}`);
       }
-      const analysisResponse = analysisResult.data;
       
-      this.deps.loggers.orchestrator.debug(
-        "Claude suggests searching for:",
-        analysisResponse.suggestedSearchTerms
-      );
-      this.deps.loggers.orchestrator.debug(
-        "Node recommendations:",
-        analysisResponse.nodeRecommendations.map((r) => r.type)
-      );
-
-      // Step 2: Simple search - just search for what Claude suggests
-      const searchResults = await this.searchNodes(analysisResponse.suggestedSearchTerms);
-
-      this.deps.loggers.orchestrator.debug(
-        `Found ${searchResults.length} nodes from search`
-      );
-
-      // Step 3: Get node details for ALL search results
-      const nodeDetails = await this.getNodeDetails(searchResults);
-
-      // Step 4: Have Claude select and design the workflow with discovered nodes
-      this.deps.loggers.orchestrator.debug(
-        `Sending ${nodeDetails.length} nodes to Claude for workflow design`
-      );
-
-      const claudeResult = await this.deps.claudeService.execute(
-        {
-          prompt,
-          sessionId,
-          mode: 'fresh',
+      const intentAnalysis = analysisResult.data as ClaudeAnalysisResponse;
+      
+      // Log what Claude identified
+      this.deps.loggers.orchestrator.debug("Intent analysis results", {
+        matchedTasks: intentAnalysis.matched_tasks,
+        unmatchedCount: intentAnalysis.unmatched_capabilities?.length || 0,
+        searchSuggestions: intentAnalysis.search_suggestions?.length || 0,
+        unmatchedCapabilities: intentAnalysis.unmatched_capabilities,
+        searchSuggestionsDetail: intentAnalysis.search_suggestions
+      });
+      
+      // Log task selection reasoning if available
+      if (intentAnalysis.task_selection_reasoning && intentAnalysis.task_selection_reasoning.length > 0) {
+        this.deps.loggers.orchestrator.info("Task selection reasoning:");
+        intentAnalysis.task_selection_reasoning.forEach(({ task, reason }) => {
+          this.deps.loggers.orchestrator.info(`  📦 ${task}: ${reason}`);
+        });
+      }
+      
+      // Check if clarification is needed
+      if (intentAnalysis.clarification_needed && intentAnalysis.clarification) {
+        this.deps.loggers.orchestrator.info(
+          "Clarification needed from intent analysis"
+        );
+        
+        const clarificationOp: WorkflowOperation = {
+          type: "requestClarification",
+          questionId: `q_${Date.now()}`,
+          question: intentAnalysis.clarification.question,
           context: {
-            mcpDiscoveredNodes: nodeDetails,
-            analysisIntent: analysisResponse.intent,
-            searchKeywords: analysisResponse.suggestedSearchTerms,
+            reason: intentAnalysis.clarification.context,
+            suggestions: intentAnalysis.clarification.suggestions
           }
-        },
-        { sessionId }
+        };
+        
+        return {
+          success: true,
+          operations: [clarificationOp],
+          phase: "discovery",
+          discoveredNodes: [],
+          selectedNodeIds: [],
+          pendingClarification: {
+            questionId: clarificationOp.questionId,
+            question: clarificationOp.question
+          },
+          reasoning: intentAnalysis.reasoning || []
+        };
+      }
+      
+      this.deps.loggers.orchestrator.info(
+        `Intent analysis complete: ${intentAnalysis.matched_tasks.length} tasks, ` +
+        `${intentAnalysis.unmatched_capabilities.length} gaps`
       );
       
-      if (!claudeResult.success || !claudeResult.data) {
-        throw new Error('Failed to generate discovery operations');
+      // ====================================================================
+      // STEP 2: Fetch task nodes directly (NO CLAUDE NEEDED!)
+      // ====================================================================
+      
+      let taskNodes: DiscoveredNode[] = [];
+      let taskOperations: WorkflowOperation[] = [];
+      
+      if (intentAnalysis.matched_tasks.length > 0) {
+        this.deps.loggers.orchestrator.debug(
+          `Step 2: Fetching ${intentAnalysis.matched_tasks.length} task templates: ` +
+          intentAnalysis.matched_tasks.join(', ')
+        );
+        
+        const taskResult = await this.taskService.fetchTaskNodes(intentAnalysis.matched_tasks);
+        
+        // Convert successful task fetches to discovered nodes
+        taskNodes = taskResult.successful.map(task => ({
+          id: task.nodeId,
+          type: task.nodeType,
+          displayName: task.taskName.replace(/_/g, ' '),
+          purpose: task.purpose || `Pre-configured: ${task.taskName}`,
+          isPreConfigured: true,
+          config: task.config
+        }));
+        
+        // Generate operations for task nodes
+        taskOperations = taskResult.successful.flatMap(task => [
+          {
+            type: "discoverNode" as const,
+            node: {
+              id: task.nodeId,
+              type: task.nodeType,
+              purpose: task.purpose || `Pre-configured: ${task.taskName}`,
+              displayName: task.taskName.replace(/_/g, ' ')
+            }
+          },
+          {
+            type: "selectNode" as const,
+            nodeId: task.nodeId
+          }
+        ]);
+        
+        this.deps.loggers.orchestrator.info(
+          `✅ Fetched ${taskResult.successful.length}/${intentAnalysis.matched_tasks.length} task templates`
+        );
+        
+        // Convert failed tasks to unmatched capabilities
+        if (taskResult.failed.length > 0) {
+          const additionalGaps = this.taskService.convertFailedTasksToCapabilities(taskResult.failed);
+          intentAnalysis.unmatched_capabilities.push(...additionalGaps);
+          
+          this.deps.loggers.orchestrator.warn(
+            `Failed to fetch ${taskResult.failed.length} tasks, added to gaps`
+          );
+        }
       }
-      const claudeResponse = claudeResult.data;
-
-      // Process operations
-      const { discoveredNodes, selectedNodeIds, pendingClarification } = 
-        this.processDiscoveryOperations(claudeResponse.operations, nodeDetails);
-
-      // Log operations via OperationLogger instead of direct persistence
-      if (claudeResponse.operations && claudeResponse.operations.length > 0) {
-        await operationLogger.logBatch(claudeResponse.operations);
+      
+      // ====================================================================
+      // STEP 3: Search for gaps (NO CLAUDE NEEDED!)
+      // ====================================================================
+      
+      let gapNodes: DiscoveredNode[] = [];
+      let gapOperations: WorkflowOperation[] = [];
+      
+      if (intentAnalysis.unmatched_capabilities.length > 0) {
+        this.deps.loggers.orchestrator.debug(
+          `Step 3: Searching for ${intentAnalysis.unmatched_capabilities.length} capability gaps`
+        );
+        
+        const gapResults = await this.gapSearchService.searchForGaps(
+          intentAnalysis.unmatched_capabilities
+        );
+        
+        this.deps.loggers.orchestrator.info(
+          `Gap search complete: ${gapResults.summary.found}/${gapResults.summary.totalCapabilities} found, ` +
+          `${gapResults.summary.totalNodes} total nodes`
+        );
+        
+        // ====================================================================
+        // STEP 4: Claude selects from pre-searched results (ONLY IF GAPS EXIST)
+        // ====================================================================
+        
+        if (gapResults.summary.totalNodes > 0) {
+          this.deps.loggers.orchestrator.debug(
+            "Step 4: Having Claude select best nodes from search results"
+          );
+          
+          const selectionPrompt = this.createGapSelectionPrompt(
+            prompt,
+            intentAnalysis,
+            gapResults
+          );
+          
+          // Call Claude for gap selection
+          const selectionResult = await this.deps.claudeService.execute(
+            {
+              prompt: selectionPrompt,
+              sessionId,
+              mode: 'selection',
+              context: {
+                taskNodes,
+                searchResults: gapResults,
+                originalIntent: intentAnalysis.intent
+              }
+            },
+            { sessionId }
+          );
+          
+          if (selectionResult.success && selectionResult.data) {
+            const { discoveredNodes: selectedGapNodes, operations: selectedGapOps } = 
+              this.processGapSelections(selectionResult.data.operations, gapResults);
+            
+            gapNodes = selectedGapNodes;
+            gapOperations = selectedGapOps;
+            
+            this.deps.loggers.orchestrator.info(
+              `Claude selected ${gapNodes.length} nodes from search results`
+            );
+          }
+        } else {
+          this.deps.loggers.orchestrator.warn(
+            "No nodes found for capability gaps - may need manual configuration"
+          );
+        }
       }
-
+      
+      // ====================================================================
+      // STEP 5: Assemble hybrid output
+      // ====================================================================
+      
+      const allDiscoveredNodes = [...taskNodes, ...gapNodes];
+      const allOperations = [...taskOperations, ...gapOperations];
+      const selectedNodeIds = allDiscoveredNodes.map(n => n.id);
+      
+      // Log operations via OperationLogger
+      if (allOperations.length > 0) {
+        await operationLogger.logBatch(allOperations);
+      }
+      
       // Log phase completion
       await operationLogger.logPhaseCompletion(
-        (analysisResult.usage?.totalTokens || 0) + (claudeResult.usage?.totalTokens || 0)
+        analysisResult.usage?.totalTokens || 0
       );
       
-      // Log summary at INFO level
+      // Log summary
       this.deps.loggers.orchestrator.info(
-        `Discovery completed: ${discoveredNodes.length} nodes discovered, ${selectedNodeIds.length} selected`
+        `Discovery completed: ${allDiscoveredNodes.length} nodes (${taskNodes.length} tasks, ${gapNodes.length} searched)`
       );
-      if (discoveredNodes.length > 0 && discoveredNodes.length <= 5) {
-        const nodeTypes = discoveredNodes.map(n => n.type).join(', ');
+      
+      if (allDiscoveredNodes.length > 0 && allDiscoveredNodes.length <= 5) {
+        const nodeTypes = allDiscoveredNodes.map(n => n.type).join(', ');
         this.deps.loggers.orchestrator.info(`   Discovered nodes: ${nodeTypes}`);
       }
-      if (pendingClarification) {
-        this.deps.loggers.orchestrator.info(`   ❓ Clarification needed: ${pendingClarification.question.substring(0, 100)}...`);
-      }
-
+      
       return {
         success: true,
-        operations: claudeResponse.operations,
+        operations: allOperations,
         phase: "discovery",
-        discoveredNodes,
+        discoveredNodes: allDiscoveredNodes,
         selectedNodeIds,
-        pendingClarification,
-        reasoning: claudeResponse.reasoning,
+        reasoning: [
+          `Analyzed intent: ${intentAnalysis.intent}`,
+          `Found ${taskNodes.length} pre-configured task templates`,
+          `Searched for ${intentAnalysis.unmatched_capabilities.length} capability gaps`,
+          `Total nodes discovered: ${allDiscoveredNodes.length}`
+        ],
+        // Include metadata for configuration phase
+        metadata: {
+          taskNodes: taskNodes.map(n => n.id),
+          searchedNodes: gapNodes.map(n => n.id),
+          workflow_pattern: intentAnalysis.workflow_pattern,
+          complexity: intentAnalysis.complexity
+        }
       };
     }
   );
 
   /**
-   * Handle clarification response with incremental discovery
+   * Handle clarification response
    */
   async handleClarification(input: ClarificationInput): Promise<DiscoveryOutput> {
     const { sessionId, questionId, response } = input;
     
     this.deps.loggers.orchestrator.debug(
-      `Processing answer for question: ${questionId}`
+      `Processing clarification response for question: ${questionId}`
     );
-    this.deps.loggers.orchestrator.debug(`User response: "${response}"`);
-
-    // Try to load from Supabase first
+    
+    // Load session state
     const supabaseSession = await this.deps.sessionRepo.load(sessionId);
     if (!supabaseSession) {
       return {
@@ -178,352 +352,86 @@ export class DiscoveryRunner implements PhaseRunner<DiscoveryInput, DiscoveryOut
         },
       };
     }
-
-    const existingDiscoveredNodes = supabaseSession.state.discovered;
-    const existingSelectedNodeIds = supabaseSession.state.selected;
-    const clarificationHistory = supabaseSession.state.clarificationHistory || [];
+    
     const originalPrompt = supabaseSession.state.userPrompt || "";
-
-    // Create clarification response operation
-    const clarificationOp: WorkflowOperation = {
-      type: "clarificationResponse",
-      questionId,
-      response,
-    };
-
+    
+    // Re-run intent analysis with clarification
+    // Important: The session already exists, so we don't need to re-initialize it
+    const clarifiedPrompt = `${originalPrompt}\n\nClarification: ${response}`;
+    
+    // Update the prompt in the existing session instead of creating a new one
+    // This prevents the duplicate key error
     this.deps.loggers.orchestrator.debug(
-      `Only searching for additional nodes based on: "${response}"`
-    );
-
-    // Step 1: Extract new search terms from clarification response
-    const clarificationAnalysisResult = await this.deps.claudeService.analyzeIntent({
-      prompt: `Based on this clarification: "${response}", what additional nodes should we search for? Context: ${originalPrompt}`
-    });
-    if (!clarificationAnalysisResult.success || !clarificationAnalysisResult.data) {
-      throw new Error('Failed to analyze clarification');
-    }
-    const clarificationAnalysis = clarificationAnalysisResult.data;
-
-    this.deps.loggers.orchestrator.debug(
-      `Claude suggests searching for additional terms: ${clarificationAnalysis.suggestedSearchTerms.join(", ")}`
-    );
-
-    // Step 2: Search ONLY for new nodes based on clarification
-    const newSearchResults = await this.searchNewNodes(
-      clarificationAnalysis.suggestedSearchTerms,
-      existingDiscoveredNodes
-    );
-
-    this.deps.loggers.orchestrator.debug(
-      `Total new nodes found: ${newSearchResults.length}`
-    );
-
-    // Step 3: Process clarification with existing context
-    const claudeResult = await this.deps.claudeService.execute(
-      {
-        prompt: originalPrompt,
-        sessionId,
-        mode: 'incremental',
-        context: {
-          clarificationResponse: response,
-          existingNodes: existingDiscoveredNodes,
-          existingSelectedIds: existingSelectedNodeIds,
-          newlyDiscoveredNodes: newSearchResults,
-        }
-      },
-      { sessionId }
+      `Updating existing session ${sessionId} with clarified prompt`
     );
     
-    if (!claudeResult.success || !claudeResult.data) {
-      throw new Error('Failed to process clarification');
-    }
-    const claudeResponse = claudeResult.data;
-
-    // Process operations - merge with existing state
-    const { newDiscoveredNodes, newSelectedNodeIds, newPendingClarification } = 
-      this.processIncrementalOperations(
-        claudeResponse.operations,
-        existingDiscoveredNodes,
-        existingSelectedNodeIds
-      );
-
-    this.deps.loggers.orchestrator.debug(`Incremental update complete:`);
-    this.deps.loggers.orchestrator.debug(
-      `  - New nodes discovered: ${newDiscoveredNodes.length}`
+    // Run the full discovery with the clarified prompt
+    // The session already exists, so initialization will be skipped
+    return this.run(
+      { sessionId, prompt: clarifiedPrompt },
+      { sessionId, operationLogger: null as any } // Will be provided by wrapPhase
     );
-    this.deps.loggers.orchestrator.debug(
-      `  - Additional nodes selected: ${newSelectedNodeIds.length}`
-    );
-    this.deps.loggers.orchestrator.debug(
-      `  - Total nodes now: ${existingDiscoveredNodes.length + newDiscoveredNodes.length}`
-    );
-
-    // Always preserve existing state even if Claude asks for more clarification
-    return {
-      success: true,
-      operations: [clarificationOp, ...claudeResponse.operations],
-      phase: "discovery",
-      discoveredNodes: [...existingDiscoveredNodes, ...newDiscoveredNodes],
-      selectedNodeIds: [...existingSelectedNodeIds, ...newSelectedNodeIds],
-      pendingClarification: newPendingClarification,
-      reasoning: claudeResponse.reasoning,
-    };
   }
 
   /**
-   * Search for nodes based on search terms
+   * Create prompt for Claude to select from gap search results
    */
-  private async searchNodes(searchTerms: string[]): Promise<NodeSearchResult[]> {
-    const searchResults: NodeSearchResult[] = [];
+  private createGapSelectionPrompt(
+    originalPrompt: string,
+    intentAnalysis: ClaudeAnalysisResponse,
+    gapResults: any
+  ): string {
+    const formattedResults = this.gapSearchService.formatResultsForSelection(gapResults);
+    
+    return `Based on the user's request: "${originalPrompt}"
 
-    // Handle empty search terms
-    if (searchTerms.length === 0) {
-      this.deps.loggers.orchestrator.debug(
-        "No search terms suggested - likely invalid prompt"
-      );
-      return searchResults;
-    }
+We've already fetched ${intentAnalysis.matched_tasks.length} pre-configured task templates.
 
-    // Search for each term Claude suggested
-    for (const searchTerm of searchTerms) {
-      try {
-        const results = await this.deps.nodeContextService.searchNodes(searchTerm, 3);
-        
-        // Add nodes that aren't already in our list
-        results.forEach((node) => {
-          if (!searchResults.some((n) => n.nodeType === node.nodeType)) {
-            searchResults.push(node);
-          }
-        });
-      } catch (error) {
-        this.deps.loggers.orchestrator.error(`Error searching nodes:`, error);
-      }
-    }
+Now select the BEST node for each capability gap from these search results:
 
-    return searchResults;
+${formattedResults}
+
+For each capability, select ONE node that best matches the requirement.
+Generate discoverNode and selectNode operations for your selections.
+
+Selection criteria:
+1. Exact functionality match
+2. Popularity and reliability
+3. Configuration simplicity
+4. Integration with existing task nodes
+
+Return operations in the standard format.`;
   }
 
   /**
-   * Get detailed information for nodes
+   * Process Claude's gap selections into nodes and operations
    */
-  private async getNodeDetails(searchResults: NodeSearchResult[]): Promise<any[]> {
-    const nodeDetails: any[] = [];
-    const nodesToDetail = searchResults; // Send ALL nodes to Claude, no filtering!
-
-    this.deps.loggers.orchestrator.debug(
-      `Getting details for all ${nodesToDetail.length} discovered nodes (trusting Claude to filter)`
-    );
-
-    for (const node of nodesToDetail) {
-      try {
-        const nodeInfo = await this.deps.nodeContextService.getNodeInfo(node.nodeType);
-
-        if (nodeInfo) {
-          nodeDetails.push({
-            type: node.nodeType,
-            displayName: nodeInfo.displayName || node.displayName,
-            description: nodeInfo.description || node.description,
-            category: nodeInfo.defaults?.group?.[0] || node.category || "other",
-          });
-        } else {
-          // Still include basic info if we couldn't get details
-          nodeDetails.push({
-            type: node.nodeType,
-            displayName: node.displayName,
-            description: node.description,
-            category: node.category || "other",
-          });
-        }
-      } catch (error) {
-        this.deps.loggers.orchestrator.error(
-          `Error getting info for ${node.nodeType}:`,
-          error
-        );
-        // Still include basic info
-        nodeDetails.push({
-          type: node.nodeType,
-          displayName: node.displayName,
-          description: node.description,
-          category: node.category || "other",
-        });
-      }
-    }
-
-    return nodeDetails;
-  }
-
-  /**
-   * Process discovery operations to extract nodes and selections
-   */
-  private processDiscoveryOperations(
+  private processGapSelections(
     operations: WorkflowOperation[],
-    nodeDetails: any[]
+    gapResults: any
   ): {
     discoveredNodes: DiscoveredNode[];
-    selectedNodeIds: string[];
-    pendingClarification?: { questionId: string; question: string };
+    operations: WorkflowOperation[];
   } {
     const discoveredNodes: DiscoveredNode[] = [];
-    const selectedNodeIds: string[] = [];
-    const clarificationQuestions: Array<{ questionId: string; question: string }> = [];
-
-    for (const operation of operations) {
-      switch (operation.type) {
-        case "discoverNode":
-          // Enrich the node with displayName from nodeDetails
-          const nodeDetail = nodeDetails.find((n) => n.type === operation.node.type);
-          const enrichedNode = {
-            ...operation.node,
-            displayName: nodeDetail?.displayName || operation.node.displayName || operation.node.type,
-          };
-          discoveredNodes.push(enrichedNode);
-          break;
-          
-        case "selectNode":
-          selectedNodeIds.push(operation.nodeId);
-          break;
-          
-        case "requestClarification":
-          clarificationQuestions.push({
-            questionId: operation.questionId,
-            question: operation.question,
-          });
-          break;
-      }
-    }
-
-    // If we have clarification questions, combine them into a single question
-    let pendingClarification = undefined;
-    if (clarificationQuestions.length > 0) {
-      const combinedQuestion =
-        clarificationQuestions.length === 1
-          ? clarificationQuestions[0].question
-          : `I need clarification on a few things:\n\n${clarificationQuestions
-              .map((q, i) => `${i + 1}. ${q.question}`)
-              .join("\n\n")}`;
-
-      pendingClarification = {
-        questionId: clarificationQuestions.map((q) => q.questionId).join(","),
-        question: combinedQuestion,
-      };
-
-      this.deps.loggers.orchestrator.debug(
-        `Combined ${clarificationQuestions.length} clarification questions`
-      );
-    }
-
-    return { discoveredNodes, selectedNodeIds, pendingClarification };
-  }
-
-  /**
-   * Search for new nodes not already discovered
-   */
-  private async searchNewNodes(
-    searchTerms: string[],
-    existingNodes: DiscoveredNode[]
-  ): Promise<any[]> {
-    const newSearchResults: any[] = [];
-
-    for (const searchTerm of searchTerms) {
-      // Skip if we already have nodes of this type
-      const alreadyHaveType = existingNodes.some(
-        (node) =>
-          node.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (node.displayName && node.displayName.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-
-      if (alreadyHaveType) {
-        this.deps.loggers.orchestrator.debug(
-          `Skipping search for "${searchTerm}" - already have nodes of this type`
-        );
-        continue;
-      }
-
-      try {
-        const results = await this.deps.nodeContextService.searchNodes(searchTerm, 3);
-        
-        // Filter out nodes we already have
-        const newNodes = results.filter(
-          (node: any) => !existingNodes.some((existing) => existing.type === node.nodeType)
-        );
-
-        this.deps.loggers.orchestrator.debug(
-          `Found ${newNodes.length} new nodes for "${searchTerm}"`
-        );
-        newSearchResults.push(...newNodes);
-      } catch (error) {
-        this.deps.loggers.orchestrator.error(`Error searching for "${searchTerm}":`, error);
-      }
-    }
-
-    return newSearchResults;
-  }
-
-  /**
-   * Process incremental operations for clarification
-   */
-  private processIncrementalOperations(
-    operations: WorkflowOperation[],
-    existingDiscoveredNodes: DiscoveredNode[],
-    existingSelectedNodeIds: string[]
-  ): {
-    newDiscoveredNodes: DiscoveredNode[];
-    newSelectedNodeIds: string[];
-    newPendingClarification?: { questionId: string; question: string };
-  } {
-    const newDiscoveredNodes: DiscoveredNode[] = [];
-    const newSelectedNodeIds: string[] = [];
-    const followUpClarifications: Array<{ questionId: string; question: string }> = [];
-
+    const processedOps: WorkflowOperation[] = [];
+    
     for (const operation of operations) {
       if (operation.type === "discoverNode") {
-        // Only add if not already discovered
-        if (!existingDiscoveredNodes.some((n) => n.id === operation.node.id)) {
-          // Ensure the node has a displayName
-          const enrichedNode = {
-            ...operation.node,
-            displayName: operation.node.displayName || operation.node.type,
-          };
-          newDiscoveredNodes.push(enrichedNode);
-          this.deps.loggers.orchestrator.debug(
-            `Added new node: ${operation.node.type} (${operation.node.id})`
-          );
-        }
+        const node: DiscoveredNode = {
+          id: operation.node.id,
+          type: operation.node.type,
+          displayName: operation.node.displayName || operation.node.type,
+          purpose: operation.node.purpose,
+          needsConfiguration: true // Gap nodes need configuration
+        };
+        discoveredNodes.push(node);
+        processedOps.push(operation);
       } else if (operation.type === "selectNode") {
-        // Only add if not already selected
-        if (!existingSelectedNodeIds.includes(operation.nodeId)) {
-          newSelectedNodeIds.push(operation.nodeId);
-          this.deps.loggers.orchestrator.debug(`Selected additional node: ${operation.nodeId}`);
-        }
-      } else if (operation.type === "requestClarification") {
-        // Collect follow-up clarification requests
-        followUpClarifications.push({
-          questionId: operation.questionId,
-          question: operation.question,
-        });
+        processedOps.push(operation);
       }
     }
-
-    // If we have follow-up clarifications, combine them
-    let newPendingClarification = undefined;
-    if (followUpClarifications.length > 0) {
-      const combinedQuestion =
-        followUpClarifications.length === 1
-          ? followUpClarifications[0].question
-          : `I need clarification on a few more things:\n\n${followUpClarifications
-              .map((q, i) => `${i + 1}. ${q.question}`)
-              .join("\n\n")}`;
-
-      newPendingClarification = {
-        questionId: followUpClarifications.map((q) => q.questionId).join(","),
-        question: combinedQuestion,
-      };
-
-      this.deps.loggers.orchestrator.debug(
-        `${followUpClarifications.length} follow-up clarification(s) needed`
-      );
-    }
-
-    return { newDiscoveredNodes, newSelectedNodeIds, newPendingClarification };
+    
+    return { discoveredNodes, operations: processedOps };
   }
 }

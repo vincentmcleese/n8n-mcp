@@ -42,23 +42,68 @@ export interface BaseClaudeResponse {
 // ==========================================
 
 /**
- * Initial workflow intent analysis response
+ * Initial workflow intent analysis response (optimized for task-based discovery)
  * Used in: analyzeWorkflowIntent()
  * 
  * @example
  * {
  *   "intent": "Create a webhook that sends Slack notifications",
- *   "requiredCapabilities": ["webhook-receiver", "message-sender"],
- *   "suggestedSearchTerms": ["webhook", "slack", "notification"],
- *   "nodeRecommendations": [{
- *     "type": "webhook",
- *     "purpose": "Receive incoming webhook requests",
- *     "priority": "essential"
- *   }],
+ *   "logic_flow": [
+ *     {"step": 1, "action": "Receive webhook", "type": "trigger", "task": "receive_webhook"},
+ *     {"step": 2, "action": "Send to Slack", "type": "output", "task": "send_slack_message"}
+ *   ],
+ *   "matched_tasks": ["receive_webhook", "send_slack_message"],
+ *   "unmatched_capabilities": [],
+ *   "search_suggestions": [],
+ *   "workflow_pattern": "trigger-notify",
+ *   "complexity": "simple",
+ *   "clarification_needed": false,
  *   "reasoning": ["User needs webhook to receive data", "Slack for notifications"]
  * }
  */
 export interface ClaudeAnalysisResponse extends BaseClaudeResponse {
+  intent: string;
+  logic_flow: Array<{
+    step: number;
+    action: string;
+    type: 'trigger' | 'process' | 'condition' | 'output';
+    task?: string; // Exact MCP task name if applicable
+    nodeType?: string; // For non-task nodes
+  }>;
+  matched_tasks: string[]; // EXACT task names from MCP
+  task_selection_reasoning?: Array<{
+    task: string;
+    reason: string;
+  }>; // Optional for backward compatibility
+  unmatched_capabilities: Array<{
+    name: string;
+    description: string;
+    searchTerms: string[];
+  }>;
+  search_suggestions: Array<{
+    capability: string;
+    primary: string;
+    alternatives: string[];
+  }>;
+  workflow_pattern: string;
+  complexity: 'simple' | 'medium' | 'complex' | 'unknown';
+  clarification_needed: boolean;
+  clarification?: {
+    question: string;
+    context: string;
+    suggestions: string[];
+  };
+}
+
+/**
+ * @deprecated Since 2024-01-06 - Phase 1 of discovery refactor
+ * @removal-target After Phase 5 complete and tested
+ * @todo Remove after full migration to task-based discovery
+ * @see ClaudeAnalysisResponse for the new implementation
+ * 
+ * Legacy intent analysis response (for backward compatibility)
+ */
+export interface LegacyClaudeAnalysisResponse extends BaseClaudeResponse {
   intent: string;
   requiredCapabilities: string[];
   suggestedSearchTerms: string[];

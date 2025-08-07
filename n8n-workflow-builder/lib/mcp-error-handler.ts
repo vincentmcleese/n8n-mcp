@@ -273,7 +273,7 @@ export const MCPErrorRecovery = {
         ...errorInfo.error,
         retryable: error.retryable,
         fallbackAction: error.fallbackAction
-      };
+      } as any;
     }
     
     console.error('[MCP Error]', JSON.stringify(errorInfo, null, 2));

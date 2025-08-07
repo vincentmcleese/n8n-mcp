@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { Loader2, CheckCircle, XCircle, Download } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Loader2, CheckCircle, XCircle, Download } from "lucide-react";
 
 /**
  * Workflow Status Page
@@ -10,21 +10,21 @@ import { Loader2, CheckCircle, XCircle, Download } from 'lucide-react';
  */
 
 const PHASE_NAMES = {
-  discovery: 'Discovery',
-  configuration: 'Configuration',
-  validation: 'Validation',
-  building: 'Building',
-  documentation: 'Documentation',
-  complete: 'Complete'
+  discovery: "Discovery",
+  configuration: "Configuration",
+  validation: "Validation",
+  building: "Building",
+  documentation: "Documentation",
+  complete: "Complete",
 };
 
 const PHASE_DESCRIPTIONS = {
-  discovery: 'Finding relevant nodes for your workflow...',
-  configuration: 'Configuring node parameters...',
-  validation: 'Validating workflow configuration...',
-  building: 'Building workflow connections...',
-  documentation: 'Adding documentation...',
-  complete: 'Workflow generation complete!'
+  discovery: "Finding relevant nodes for your workflow...",
+  configuration: "Configuring node parameters...",
+  validation: "Validating workflow configuration...",
+  building: "Building workflow connections...",
+  documentation: "Adding documentation...",
+  complete: "Workflow generation complete!",
 };
 
 export default function WorkflowStatusPage() {
@@ -32,22 +32,30 @@ export default function WorkflowStatusPage() {
   const router = useRouter();
   const sessionId = params.sessionId as string;
 
-  const [phase, setPhase] = useState<string>('discovery');
+  const [phase, setPhase] = useState<string>("discovery");
   const [complete, setComplete] = useState(false);
-  const [prompt, setPrompt] = useState('');
-  const [error, setError] = useState('');
+  const [prompt, setPrompt] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [pendingClarification, setPendingClarification] = useState<{
     questionId: string;
     question: string;
   } | null>(null);
-  const [clarificationResponse, setClarificationResponse] = useState('');
+  const [clarificationResponse, setClarificationResponse] = useState("");
   const [clarificationSubmitted, setClarificationSubmitted] = useState(false);
   const [submittingClarification, setSubmittingClarification] = useState(false);
 
+  type SelectedNode = {
+    id: string;
+    nodeType: string;
+    name: string;
+  };
+
+  const [selectedNodes, setSelectedNodes] = useState<SelectedNode[]>([]);
+
   useEffect(() => {
     if (!sessionId) {
-      setError('No session ID provided');
+      setError("No session ID provided");
       setLoading(false);
       return;
     }
@@ -68,40 +76,46 @@ export default function WorkflowStatusPage() {
   const fetchStatus = async () => {
     try {
       const response = await fetch(`/api/workflow/${sessionId}/state`);
-      
+
       if (!response.ok) {
         if (response.status === 404) {
-          setError('Session not found');
+          setError("Session not found");
         } else {
-          setError('Failed to fetch status');
+          setError("Failed to fetch status");
         }
         setLoading(false);
         return;
       }
 
       const data = await response.json();
-      
+
       setPhase(data.phase);
       setComplete(data.complete);
-      setPrompt(data.prompt || '');
+      setPrompt(data.prompt || "");
       setPendingClarification(data.pendingClarification);
+      setSelectedNodes(data.selectedNodes || []);
       setLoading(false);
-      setError('');
+      setError("");
 
       // Stop polling if complete
       if (data.complete) {
-        console.log('Workflow complete!');
+        console.log("Workflow complete!");
       }
     } catch (err) {
-      console.error('Failed to fetch status:', err);
-      setError('Failed to connect to server');
+      console.error("Failed to fetch status:", err);
+      setError("Failed to connect to server");
       setLoading(false);
     }
   };
 
+  const getNodeIconUrl = (nodeType: string) => {
+    const iconName = nodeType.replace("n8n-nodes-base.", "");
+    return `/node-icons/${iconName}.svg`;
+  };
+
   const handleClarificationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!clarificationResponse.trim() || !pendingClarification) {
       return;
     }
@@ -110,9 +124,9 @@ export default function WorkflowStatusPage() {
 
     try {
       const response = await fetch(`/api/workflow/${sessionId}/clarify`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           questionId: pendingClarification.questionId,
@@ -121,24 +135,23 @@ export default function WorkflowStatusPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit clarification');
+        throw new Error("Failed to submit clarification");
       }
 
       const data = await response.json();
-      
+
       // Show thank you message
       setClarificationSubmitted(true);
-      setClarificationResponse('');
-      
+      setClarificationResponse("");
+
       // Clear clarification state after a moment
       setTimeout(() => {
         setPendingClarification(data.pendingClarification || null);
         setClarificationSubmitted(false);
       }, 2000);
-      
     } catch (err) {
-      console.error('Failed to submit clarification:', err);
-      alert('Failed to submit clarification. Please try again.');
+      console.error("Failed to submit clarification:", err);
+      alert("Failed to submit clarification. Please try again.");
     } finally {
       setSubmittingClarification(false);
     }
@@ -147,32 +160,32 @@ export default function WorkflowStatusPage() {
   const downloadWorkflow = async () => {
     try {
       const response = await fetch(`/api/workflow/${sessionId}/export`);
-      
+
       if (!response.ok) {
-        console.error('Failed to export workflow');
+        console.error("Failed to export workflow");
         return;
       }
 
       const workflowData = await response.json();
-      
+
       // Create a blob from the JSON data
-      const blob = new Blob([JSON.stringify(workflowData, null, 2)], { 
-        type: 'application/json' 
+      const blob = new Blob([JSON.stringify(workflowData, null, 2)], {
+        type: "application/json",
       });
-      
+
       // Create a download link
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = `workflow-${sessionId}.json`;
       document.body.appendChild(a);
       a.click();
-      
+
       // Cleanup
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err) {
-      console.error('Failed to download workflow:', err);
+      console.error("Failed to download workflow:", err);
     }
   };
 
@@ -195,7 +208,7 @@ export default function WorkflowStatusPage() {
           </h2>
           <p className="text-center text-gray-600 mb-6">{error}</p>
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push("/")}
             className="w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
           >
             Start New Workflow
@@ -216,7 +229,9 @@ export default function WorkflowStatusPage() {
           {prompt && (
             <div className="max-w-2xl mx-auto">
               <p className="text-gray-600 mb-2">Your request:</p>
-              <p className="text-lg text-gray-800 italic">&quot;{prompt}&quot;</p>
+              <p className="text-lg text-gray-800 italic">
+                &quot;{prompt}&quot;
+              </p>
             </div>
           )}
         </div>
@@ -241,8 +256,39 @@ export default function WorkflowStatusPage() {
 
                 {/* Phase Description */}
                 <p className="text-center text-gray-600 mb-8">
-                  {PHASE_DESCRIPTIONS[phase as keyof typeof PHASE_DESCRIPTIONS] || 'Processing...'}
+                  {PHASE_DESCRIPTIONS[
+                    phase as keyof typeof PHASE_DESCRIPTIONS
+                  ] || "Processing..."}
                 </p>
+
+                {/* Selected Nodes Preview */}
+                {selectedNodes.length > 0 && (
+                  <div className="mb-8">
+                    <p className="text-center text-gray-600 mb-4">
+                      Workflow Preview
+                    </p>
+                    <div className="flex items-center justify-center space-x-2 bg-gray-50 p-4 rounded-lg">
+                      {selectedNodes.map((node, index) => (
+                        <div key={node.id} className="flex items-center">
+                          <img
+                            src={getNodeIconUrl(node.nodeType)}
+                            alt={node.name}
+                            title={node.name}
+                            className="w-8 h-8"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.onerror = null;
+                              target.src = "/node-icons/n8n.svg";
+                            }}
+                          />
+                          {index < selectedNodes.length - 1 && (
+                            <div className="w-4 h-px bg-gray-300 mx-2" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Clarification Section */}
                 {pendingClarification && !clarificationSubmitted && (
@@ -253,10 +299,15 @@ export default function WorkflowStatusPage() {
                     <p className="text-gray-700 mb-4 whitespace-pre-line">
                       {pendingClarification.question}
                     </p>
-                    <form onSubmit={handleClarificationSubmit} className="space-y-3">
+                    <form
+                      onSubmit={handleClarificationSubmit}
+                      className="space-y-3"
+                    >
                       <textarea
                         value={clarificationResponse}
-                        onChange={(e) => setClarificationResponse(e.target.value)}
+                        onChange={(e) =>
+                          setClarificationResponse(e.target.value)
+                        }
                         placeholder="Type your response here..."
                         className="w-full h-24 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                         disabled={submittingClarification}
@@ -264,7 +315,10 @@ export default function WorkflowStatusPage() {
                       />
                       <button
                         type="submit"
-                        disabled={submittingClarification || !clarificationResponse.trim()}
+                        disabled={
+                          submittingClarification ||
+                          !clarificationResponse.trim()
+                        }
                         className="w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
                       >
                         {submittingClarification ? (
@@ -273,7 +327,7 @@ export default function WorkflowStatusPage() {
                             Submitting...
                           </>
                         ) : (
-                          'Submit Response'
+                          "Submit Response"
                         )}
                       </button>
                     </form>
@@ -284,7 +338,8 @@ export default function WorkflowStatusPage() {
                 {clarificationSubmitted && (
                   <div className="mb-8 p-6 bg-green-50 border border-green-200 rounded-lg">
                     <p className="text-center text-green-700 font-medium">
-                      ✅ Thanks for the clarification! Processing your workflow...
+                      ✅ Thanks for the clarification! Processing your
+                      workflow...
                     </p>
                   </div>
                 )}
@@ -297,19 +352,21 @@ export default function WorkflowStatusPage() {
                     const itemIndex = phases.indexOf(key);
                     const isPast = itemIndex < currentIndex;
                     const isCurrent = key === phase;
-                    const isComplete = key === 'complete' && complete;
+                    const isComplete = key === "complete" && complete;
 
                     return (
                       <div
                         key={key}
                         className={`flex items-center p-3 rounded-lg transition-colors ${
-                          isCurrent ? 'bg-blue-50 border border-blue-200' :
-                          isPast || isComplete ? 'bg-green-50 border border-green-200' :
-                          'bg-gray-50 border border-gray-200'
+                          isCurrent
+                            ? "bg-blue-50 border border-blue-200"
+                            : isPast || isComplete
+                            ? "bg-green-50 border border-green-200"
+                            : "bg-gray-50 border border-gray-200"
                         }`}
                       >
                         <div className="flex-shrink-0 mr-3">
-                          {(isPast || isComplete) ? (
+                          {isPast || isComplete ? (
                             <CheckCircle className="w-5 h-5 text-green-500" />
                           ) : isCurrent ? (
                             <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
@@ -317,11 +374,15 @@ export default function WorkflowStatusPage() {
                             <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
                           )}
                         </div>
-                        <span className={`font-medium ${
-                          isCurrent ? 'text-blue-700' :
-                          isPast || isComplete ? 'text-green-700' :
-                          'text-gray-500'
-                        }`}>
+                        <span
+                          className={`font-medium ${
+                            isCurrent
+                              ? "text-blue-700"
+                              : isPast || isComplete
+                              ? "text-green-700"
+                              : "text-gray-500"
+                          }`}
+                        >
                           {name}
                         </span>
                       </div>
@@ -345,7 +406,7 @@ export default function WorkflowStatusPage() {
                       Download Workflow JSON
                     </button>
                     <button
-                      onClick={() => router.push('/')}
+                      onClick={() => router.push("/")}
                       className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       Create Another Workflow

@@ -146,9 +146,27 @@ export class DiscoveryPhaseService extends BasePhaseService<DiscoveryInput, Disc
     );
     
     if (result.success && result.data) {
+      // Log the actual data structure for new schema
       this.logSuccess('Intent analysis', {
-        searchTerms: result.data.suggestedSearchTerms,
-        recommendations: result.data.nodeRecommendations?.length || 0,
+        matchedTasks: result.data.matched_tasks?.length || 0,
+        unmatchedCapabilities: result.data.unmatched_capabilities?.length || 0,
+        searchSuggestions: result.data.search_suggestions?.length || 0,
+        clarificationNeeded: result.data.clarification_needed || false,
+      });
+      
+      // Log task selection reasoning if provided
+      if (result.data.task_selection_reasoning && result.data.task_selection_reasoning.length > 0) {
+        this.logger.info('[discovery] Task selection reasoning:');
+        result.data.task_selection_reasoning.forEach(({ task, reason }) => {
+          this.logger.info(`[discovery]   📦 ${task}: ${reason}`);
+        });
+      }
+    } else {
+      // Log detailed error information
+      this.logger.error('Intent analysis failed', {
+        success: result.success,
+        error: result.error?.message,
+        usage: result.usage
       });
     }
     

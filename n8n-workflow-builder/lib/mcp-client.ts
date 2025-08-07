@@ -32,9 +32,14 @@ export interface MCPToolParams {
   limit?: number;
   nodeType?: string;
   params?: Record<string, any>;
+  config?: any;
+  profile?: string;
+  task?: string;
   workflow?: any;
   connections?: any[];
   nodes?: any[];
+  options?: any;
+  [key: string]: any; // Allow additional properties
 }
 
 /**
@@ -48,7 +53,9 @@ class MCPClient {
   private isConnected: boolean = false;
   private connectionAttempts: number = 0;
   private lastConnectionTime: number = 0;
-  private readonly CONNECTION_COOLDOWN = process.env.NODE_ENV === 'test' ? 100 : 5000; // Reduced cooldown for tests
+  private isReconnecting: boolean = false;
+  private readonly CONNECTION_COOLDOWN = process.env.NODE_ENV === 'test' ? 100 : 1000; // Reduced cooldown for faster recovery
+  private readonly MAX_RECONNECT_ATTEMPTS = 5;
 
   private constructor(config: MCPClientConfig) {
     this.config = {
@@ -71,6 +78,16 @@ class MCPClient {
     }
     return MCPClient.instance;
   }
+  
+  /**
+   * Reset the singleton instance (useful for reconnection scenarios)
+   */
+  public static reset(): void {
+    if (MCPClient.instance) {
+      MCPClient.instance.cleanup();
+      MCPClient.instance = null;
+    }
+  }
 
   /**
    * Connect to MCP server with retry logic
@@ -80,17 +97,19 @@ class MCPClient {
       return;
     }
 
-    // Implement connection cooldown
-    const now = Date.now();
-    const timeSinceLastAttempt = now - this.lastConnectionTime;
-    if (timeSinceLastAttempt < this.CONNECTION_COOLDOWN) {
-      throw new MCPConnectionError(
-        `Connection cooldown active. Please wait ${Math.ceil((this.CONNECTION_COOLDOWN - timeSinceLastAttempt) / 1000)} seconds.`,
-        false
-      );
+    // Skip cooldown if this is a reconnection attempt after error
+    if (!this.isReconnecting) {
+      // Implement connection cooldown only for new connection attempts
+      const now = Date.now();
+      const timeSinceLastAttempt = now - this.lastConnectionTime;
+      if (timeSinceLastAttempt < this.CONNECTION_COOLDOWN && this.connectionAttempts > 0) {
+        throw new MCPConnectionError(
+          `Connection cooldown active. Please wait ${Math.ceil((this.CONNECTION_COOLDOWN - timeSinceLastAttempt) / 1000)} seconds.`,
+          false
+        );
+      }
+      this.lastConnectionTime = now;
     }
-
-    this.lastConnectionTime = now;
 
     try {
       await this.connectStreamableHTTP();
@@ -164,11 +183,40 @@ class MCPClient {
   }
 
   /**
-   * Ensure connection is active
+   * Ensure connection is active with reconnection support
    */
   private async ensureConnected(): Promise<void> {
     if (!this.isConnected || !this.client) {
-      await this.connect();
+      this.isReconnecting = true;
+      try {
+        await this.connect();
+      } finally {
+        this.isReconnecting = false;
+      }
+    }
+    
+    // Verify connection is still healthy
+    if (this.client && !await this.isConnectionHealthy()) {
+      loggers.mcp.debug('Connection unhealthy, attempting reconnection...');
+      this.cleanup();
+      this.isReconnecting = true;
+      try {
+        await this.connect();
+      } finally {
+        this.isReconnecting = false;
+      }
+    }
+  }
+  
+  /**
+   * Check if the connection is healthy
+   */
+  private async isConnectionHealthy(): Promise<boolean> {
+    try {
+      // Quick health check - just verify the client exists and transport is open
+      return this.isConnected && this.client !== null && this.transport !== null;
+    } catch {
+      return false;
     }
   }
 
@@ -232,7 +280,7 @@ class MCPClient {
     
     try {
       const result = await this.executeWithRetry(
-        async () => this.client!.callTool({ name, arguments: params }),
+        async () => this.client!.callTool({ name, arguments: params as { [x: string]: unknown } }),
         `callTool(${name})`
       );
       
@@ -240,7 +288,7 @@ class MCPClient {
       
       // Extract useful info from result for INFO level logging
       let resultSummary = '';
-      if (result && result.content && result.content.length > 0) {
+      if (result && 'content' in result && Array.isArray(result.content) && result.content.length > 0) {
         const content = result.content[0];
         if (content.type === 'text') {
           try {
@@ -299,7 +347,7 @@ class MCPClient {
       
       loggers.mcp.info(`Tool ${name} completed in ${duration}ms${resultSummary}`);
       
-      return result;
+      return result as CallToolResult;
     } catch (error) {
       const duration = Date.now() - startTime;
       loggers.mcp.error(`Tool ${name} failed after ${duration}ms:`, error);

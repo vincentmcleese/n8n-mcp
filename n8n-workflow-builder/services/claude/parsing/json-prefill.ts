@@ -61,12 +61,23 @@ export function parseWithPrefill<T = any>(
     if (schema) {
       const validationResult = schema.safeParse(parsed);
       if (!validationResult.success) {
+        // Log validation errors for debugging
+        loggers.claude.error('Schema validation failed', {
+          errors: validationResult.error.errors.map(e => ({
+            path: e.path.join('.'),
+            message: e.message,
+            code: e.code
+          })),
+          receivedKeys: Object.keys(parsed || {}),
+          methodName
+        });
         return {
           success: false,
           error: {
             message: 'Schema validation failed',
             originalError: validationResult.error,
-          }
+          },
+          raw: parsed
         };
       }
       return { success: true, data: validationResult.data };

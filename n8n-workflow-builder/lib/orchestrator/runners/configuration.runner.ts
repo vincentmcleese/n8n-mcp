@@ -140,7 +140,11 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
           nodeId: node.id,
           result: {
             valid: isValid,
-            errors: validationErrors,
+            errors: validationErrors.map(error => ({
+              nodeId: node.id,
+              message: error,
+              severity: 'error' as const
+            })),
           },
         });
 

@@ -21,6 +21,14 @@ export interface NodeValidationResult {
  */
 export class NodeContextService {
   constructor(private mcpClient: MCPClient) {}
+  
+  /**
+   * Get the MCP client instance
+   * Useful for passing to other services that need MCP access
+   */
+  getMCPClient(): MCPClient {
+    return this.mcpClient;
+  }
 
   /**
    * Search for nodes based on a query

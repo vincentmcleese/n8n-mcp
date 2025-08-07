@@ -110,6 +110,13 @@ export abstract class BasePhaseService<TInput = any, TOutput = any> {
       );
       
       if (!parseResult.success) {
+        // Log the parsing error details
+        this.logger.error(`[${this.phaseName}] Failed to parse response for ${methodName}`, {
+          error: parseResult.error?.message,
+          raw: parseResult.raw,
+          methodName,
+          phase: this.phaseName
+        });
         return {
           success: false,
           error: new Error(parseResult.error?.message || 'Failed to parse response'),

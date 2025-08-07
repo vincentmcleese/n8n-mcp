@@ -31,9 +31,21 @@ export class WorkflowOrchestratorHooks {
     if (!this.useSupabase) return;
 
     try {
+      // First check if session already exists
+      const existingSession = await sessionManager.loadSession(sessionId);
+      if (existingSession) {
+        this.logger.debug(`Session ${sessionId} already exists, skipping creation`);
+        return;
+      }
+      
       await sessionManager.createSession(sessionId, prompt);
       this.logger.debug(`Initialized Supabase session: ${sessionId}`);
-    } catch (error) {
+    } catch (error: any) {
+      // Check if it's a duplicate key error
+      if (error?.message?.includes('duplicate key')) {
+        this.logger.debug(`Session ${sessionId} already exists (duplicate key), continuing...`);
+        return;
+      }
       this.logger.error('Failed to initialize Supabase session:', error);
       // Don't throw - allow fallback to in-memory
     }
