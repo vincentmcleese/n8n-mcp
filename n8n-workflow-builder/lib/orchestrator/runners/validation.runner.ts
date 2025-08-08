@@ -112,8 +112,18 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
             `\n   🔍 Validation Errors (Attempt ${attempts}/${MAX_ATTEMPTS}):`
           );
           allErrors.forEach((error, index) => {
-            const errorMsg = typeof error === 'string' ? error : 
-                           error.message || JSON.stringify(error);
+            // Safely extract error message
+            let errorMsg = '';
+            if (typeof error === 'string') {
+              errorMsg = error;
+            } else if (error?.message) {
+              errorMsg = String(error.message);
+            } else if (error?.error) {
+              errorMsg = String(error.error);
+            } else {
+              errorMsg = JSON.stringify(error);
+            }
+            
             const nodeInfo = error.node || error.nodeId ? 
                            ` [Node: ${error.node || error.nodeId}]` : '';
             this.deps.loggers.orchestrator.info(
@@ -388,7 +398,17 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
     let needsConnectionFix = false;
     
     for (const error of errors) {
-      const errorMsg = typeof error === 'string' ? error : error.message || '';
+      // Safely extract error message - handle various error structures
+      let errorMsg = '';
+      if (typeof error === 'string') {
+        errorMsg = error;
+      } else if (error?.message) {
+        errorMsg = String(error.message);
+      } else if (error?.error) {
+        errorMsg = String(error.error);
+      } else {
+        errorMsg = JSON.stringify(error);
+      }
       
       // Check if error is about connections
       if (errorMsg.includes('Connection') || 
