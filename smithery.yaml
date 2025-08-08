@@ -1,0 +1,19 @@
+# Smithery configuration file: https://smithery.ai/docs/build/project-config
+
+startCommand:
+  type: stdio
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({ command: 'node', args: ['dist/mcp/index.js'], env: Object.assign({ MCP_MODE: 'stdio', LOG_LEVEL: 'error', DISABLE_CONSOLE_OUTPUT: 'true' }, config.n8nApiUrl ? { N8N_API_URL: config.n8nApiUrl } : {}, config.n8nApiKey ? { N8N_API_KEY: config.n8nApiKey } : {}) })
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    properties:
+      n8nApiUrl:
+        type: string
+        description: Optional URL of your n8n instance for management tools
+      n8nApiKey:
+        type: string
+        description: Optional API key for your n8n instance
+  exampleConfig: {}
