@@ -75,7 +75,7 @@ export {
 } from './prompts/common';
 
 export { DiscoveryPrompts } from './prompts/discovery';
-export { ConfigurationPrompts } from './prompts/configuration';
+// ConfigurationPrompts deprecated - use ConfigurationPromptBuilder instead
 export { ValidationPrompts } from './prompts/validation';
 export { BuildingPrompts } from './prompts/building';
 export { DocumentationPrompts } from './prompts/documentation';
@@ -259,7 +259,7 @@ export function migrateToModular(oldService?: any): {
     client,
     prompts: {
       discovery: DiscoveryPrompts,
-      configuration: ConfigurationPrompts,
+      // configuration: deprecated - use ConfigurationPromptBuilder
       validation: ValidationPrompts,
       building: BuildingPrompts,
       documentation: DocumentationPrompts,

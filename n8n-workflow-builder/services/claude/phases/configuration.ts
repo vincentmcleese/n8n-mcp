@@ -12,7 +12,6 @@ import { TOKEN_LIMITS } from '../constants';
 import { 
   configurationOperationsResponseSchema
 } from '../validation/schemas';
-import { ConfigurationPrompts } from '../prompts/configuration';
 import type { 
   ConfigurationOperationsResponse,
   WorkflowOperation
@@ -70,29 +69,13 @@ export class ConfigurationPhaseService extends BasePhaseService<ConfigurationInp
     this.logger.debug(`Starting configuration generation for ${selectedNodes.length} nodes`);
     
     try {
-      // Check if we have a custom prompt (from ConfigurationPromptBuilder)
-      let promptParts: any;
-      if (configContext.enrichedContext?.customPrompt) {
-        // Use the custom prompt directly as a PromptParts object
-        promptParts = {
-          system: "You are an n8n workflow configuration expert. Configure nodes based on the user's requirements.",
-          user: prompt,
-          prefill: '{"operations":['
-        };
-        this.logger.debug('Using custom configuration prompt from ConfigurationPromptBuilder');
-      } else {
-        // Generate the OPTIMIZED configuration prompt using essentials
-        promptParts = ConfigurationPrompts.getConfigurationPrompt(
-          prompt,
-          selectedNodes,
-          configContext.nodeSchemas || {}, // This now contains essentials (5KB)
-          {}, // No templates needed - essentials are sufficient
-          {}, // No property searches - essentials have everything
-          {}, // No documentation needed - essentials include examples
-          { optimized: true, essentialsOnly: true },
-          configContext.discoveredNodes || []
-        );
-      }
+      // Always use the prompt passed in (from ConfigurationPromptBuilder)
+      const promptParts = {
+        system: "You are an n8n workflow configuration expert. Configure nodes based on the user's requirements.",
+        user: prompt,
+        prefill: '{"operations":['
+      };
+      this.logger.debug('Using configuration prompt from ConfigurationPromptBuilder');
       
       // Call Claude for configuration operations
       const result = await this.callClaude<ConfigurationOperationsResponse>(

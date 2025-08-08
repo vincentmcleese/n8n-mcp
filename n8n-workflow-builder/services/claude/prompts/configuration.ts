@@ -1,7 +1,14 @@
 /**
  * Configuration Phase Prompts
  * 
- * Prompts for configuring selected n8n nodes with appropriate parameters.
+ * @deprecated This file is deprecated. Use ConfigurationPromptBuilder with configureprompt.md instead.
+ * The new system provides better structure with proper node-level vs parameter-level property separation.
+ * 
+ * Migration path:
+ * - Configuration prompts now come from ConfigurationPromptBuilder in /services/claude/config/prompt-builder.ts
+ * - Template is in /services/claude/prompts/configureprompt.md
+ * 
+ * This file is kept temporarily for reference but will be removed in a future update.
  */
 
 import { 
