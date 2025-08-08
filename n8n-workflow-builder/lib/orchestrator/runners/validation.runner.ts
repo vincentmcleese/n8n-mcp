@@ -56,7 +56,7 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
       }
 
       this.deps.loggers.orchestrator.debug(
-        "Starting delta-based validation phase..."
+        "Starting entity-based validation phase..."
       );
       this.deps.loggers.orchestrator.debug(
         `Validating workflow with ${
@@ -122,57 +122,6 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
           });
         }
 
-        // Create validateNode operations for each node with errors
-        const nodeErrorMap = new Map<string, string[]>();
-        
-        // Group errors by node
-        for (const error of allErrors) {
-          // Extract node ID from error - errors typically have a node property or mention node ID in message
-          let nodeId = error.node || error.nodeId;
-          
-          // If no direct node ID, try to extract from message
-          if (!nodeId && error.message) {
-            const nodeMatch = error.message.match(/node[:\s]+["']?([^"'\s]+)["']?/i);
-            if (nodeMatch) {
-              nodeId = nodeMatch[1];
-            }
-          }
-          
-          if (nodeId) {
-            if (!nodeErrorMap.has(nodeId)) {
-              nodeErrorMap.set(nodeId, []);
-            }
-            nodeErrorMap.get(nodeId)!.push(error.message || String(error));
-          } else {
-            // Workflow-level error without specific node
-            if (!nodeErrorMap.has('workflow')) {
-              nodeErrorMap.set('workflow', []);
-            }
-            nodeErrorMap.get('workflow')!.push(error.message || String(error));
-          }
-        }
-        
-        // Create validateNode operations for each node with errors
-        for (const [nodeId, errors] of nodeErrorMap) {
-          const validationOp = {
-            type: "validateNode" as const,
-            nodeId: nodeId,
-            result: {
-              valid: false,
-              errors: errors,
-            },
-            timestamp: new Date().toISOString(),
-            attempt: attempts,
-            reasoning: `Validation errors detected: ${errors.join('; ')}`,
-          };
-          
-          operations.push(validationOp);
-          
-          this.deps.loggers.orchestrator.debug(
-            `Validation failed for ${nodeId === 'workflow' ? 'workflow' : `node ${nodeId}`}: ${errors.join(', ')}`
-          );
-        }
-
         if (allErrors.length === 0) {
           allValid = true;
           validationReport.final = validationResults;
@@ -199,32 +148,53 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
           break;
         }
 
-        // Step 2: Send only errors to Claude for fixes
-        this.deps.loggers.orchestrator.debug(
-          "Sending errors to Claude for fix generation..."
+        // Step 2: Extract affected entities
+        const { affectedNodes, needsConnectionFix } = this.extractAffectedEntities(
+          allErrors, 
+          currentWorkflow
         );
 
-        const fixResult = await this.deps.claudeService.generateValidationFixes({
+        // Step 3: Prepare entities for Claude
+        const entities: any = {};
+        
+        if (affectedNodes.size > 0) {
+          entities.nodes = Array.from(affectedNodes.values());
+          this.deps.loggers.orchestrator.debug(
+            `Sending ${entities.nodes.length} nodes to Claude for fixing`
+          );
+        }
+        
+        if (needsConnectionFix) {
+          entities.connections = currentWorkflow.connections;
+          this.deps.loggers.orchestrator.debug(
+            `Sending entire connections object to Claude for fixing`
+          );
+        }
+
+        // Step 4: Get fixed entities from Claude
+        this.deps.loggers.orchestrator.debug(
+          "Requesting entity fixes from Claude..."
+        );
+
+        const fixResult = await this.deps.claudeService.generateEntityFixes({
           errors: allErrors,
+          entities,
           workflow: currentWorkflow
         });
         
         if (!fixResult.success || !fixResult.data) {
-          throw new Error('Failed to generate validation fixes');
+          throw new Error('Failed to generate entity fixes');
         }
-        const fixResponse = fixResult.data;
         
-        const fixes = Array.isArray(fixResponse) ? fixResponse : fixResponse.fixes || [];
-        const reasoning = !Array.isArray(fixResponse) && fixResponse.reasoning ? 
-                        fixResponse.reasoning : [];
+        const { fixedNodes, fixedConnections, reasoning } = fixResult.data;
 
-        if (!fixes || fixes.length === 0) {
+        if (!fixedNodes && !fixedConnections) {
           this.deps.loggers.orchestrator.debug("Claude could not generate fixes");
           break;
         }
 
         this.deps.loggers.orchestrator.info(
-          `\n   🤖 Claude Analysis & Fixes (Attempt ${attempts}/${MAX_ATTEMPTS}):`
+          `\n   🤖 Claude Entity Fixes (Attempt ${attempts}/${MAX_ATTEMPTS}):`
         );
         
         // Log Claude's reasoning if available
@@ -234,61 +204,64 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
           );
         }
         
-        this.deps.loggers.orchestrator.info(
-          `      Generated ${fixes.length} fix operations:`
-        );
-        
-        // Log each fix with details
-        fixes.forEach((fix: any, index: number) => {
-          const fixDescription = this.describeFix(fix);
+        if (fixedNodes && fixedNodes.length > 0) {
           this.deps.loggers.orchestrator.info(
-            `      ${index + 1}. ${fixDescription}`
+            `      Fixed ${fixedNodes.length} nodes`
           );
+        }
+        
+        if (fixedConnections) {
+          this.deps.loggers.orchestrator.info(
+            `      Replaced entire connections object`
+          );
+        }
+
+        // Step 5: Apply entity replacements
+        currentWorkflow = this.applyEntityFixes(currentWorkflow, {
+          fixedNodes,
+          fixedConnections
         });
 
-        // Step 3: Apply fixes to workflow
-        currentWorkflow = this.applyFixes(currentWorkflow, fixes);
-
-        // Track fixes in report with reasoning
-        validationReport.fixesApplied.push(
-          ...fixes.map((fix: any, index: number) => ({
-            ...fix,
-            attempt: attempts,
-            timestamp: new Date().toISOString(),
-            reasoning: reasoning?.[index] || this.describeFix(fix),
-            description: this.describeFix(fix),
-          }))
-        );
+        // Track fixes in report
+        const fixDescription = [];
+        if (fixedNodes) {
+          fixDescription.push(`Replaced ${fixedNodes.length} nodes`);
+        }
+        if (fixedConnections) {
+          fixDescription.push(`Replaced connections object`);
+        }
         
-        // Log fix operations for affected nodes
-        const fixedNodeIds = new Set<string>();
-        for (const fix of fixes) {
-          if (fix.nodeId) {
-            fixedNodeIds.add(fix.nodeId);
+        validationReport.fixesApplied.push({
+          type: 'entity-replacement',
+          attempt: attempts,
+          timestamp: new Date().toISOString(),
+          description: fixDescription.join(', '),
+          reasoning: reasoning || [],
+          entitiesFixed: {
+            nodes: fixedNodes?.map((n: any) => n.id),
+            connections: !!fixedConnections
+          }
+        });
+        
+        // Log operations for tracking
+        if (fixedNodes) {
+          for (const node of fixedNodes) {
+            operations.push({
+              type: "validateNode" as const,
+              nodeId: node.id,
+              result: {
+                valid: false, // Still needs re-validation
+                errors: [`Node replaced entirely`],
+              },
+              timestamp: new Date().toISOString(),
+              attempt: attempts,
+              reasoning: `Node replaced to fix validation errors`,
+            });
           }
         }
         
-        // Create validation operations showing fixes were applied
-        for (const nodeId of fixedNodeIds) {
-          const fixesForNode = fixes.filter((f: any) => f.nodeId === nodeId);
-          const fixDescriptions = fixesForNode.map((f: any) => this.describeFix(f));
-          
-          operations.push({
-            type: "validateNode" as const,
-            nodeId: nodeId,
-            result: {
-              valid: false, // Still needs re-validation
-              errors: [`Applied fixes: ${fixDescriptions.join('; ')}`],
-            },
-            timestamp: new Date().toISOString(),
-            attempt: attempts,
-            reasoning: `Applied ${fixesForNode.length} fixes to resolve validation errors`,
-            fixes: fixesForNode,
-          });
-        }
-        
         this.deps.loggers.orchestrator.debug(
-          `Applied ${fixes.length} fixes to ${fixedNodeIds.size} nodes`
+          `Applied entity replacements: ${fixDescription.join(', ')}`
         );
       }
 
@@ -405,6 +378,101 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
   }
 
   /**
+   * Extract affected entities from validation errors
+   */
+  private extractAffectedEntities(errors: any[], workflow: any): {
+    affectedNodes: Map<string, any>;
+    needsConnectionFix: boolean;
+  } {
+    const affectedNodes = new Map<string, any>();
+    let needsConnectionFix = false;
+    
+    for (const error of errors) {
+      const errorMsg = typeof error === 'string' ? error : error.message || '';
+      
+      // Check if error is about connections
+      if (errorMsg.includes('Connection') || 
+          errorMsg.includes('connection') ||
+          errorMsg.includes('uses node ID') ||
+          errorMsg.includes('instead of node name')) {
+        needsConnectionFix = true;
+      }
+      
+      // Check if error is node-specific
+      const nodeId = error.node || error.nodeId;
+      const nodeName = error.nodeName;
+      
+      if (nodeId && nodeId !== 'workflow') {
+        // Find node by ID or name
+        const node = workflow.nodes?.find((n: any) => 
+          n.id === nodeId || n.name === nodeId || n.name === nodeName
+        );
+        if (node && !affectedNodes.has(node.id)) {
+          affectedNodes.set(node.id, node);
+        }
+      }
+      
+      // Also check if error message mentions a specific node
+      if (errorMsg) {
+        // Try to extract node name from error message
+        const nodeNameMatch = errorMsg.match(/node ["']([^"']+)["']/i);
+        if (nodeNameMatch) {
+          const nodeName = nodeNameMatch[1];
+          const node = workflow.nodes?.find((n: any) => 
+            n.name === nodeName || n.id === nodeName
+          );
+          if (node && !affectedNodes.has(node.id)) {
+            affectedNodes.set(node.id, node);
+          }
+        }
+      }
+    }
+    
+    return { affectedNodes, needsConnectionFix };
+  }
+
+  /**
+   * Apply entity fixes by replacing entire nodes/connections
+   */
+  private applyEntityFixes(workflow: any, fixes: {
+    fixedNodes?: any[];
+    fixedConnections?: any;
+  }): any {
+    const updatedWorkflow = JSON.parse(JSON.stringify(workflow));
+    
+    // Replace entire nodes
+    if (fixes.fixedNodes) {
+      for (const fixedNode of fixes.fixedNodes) {
+        const index = updatedWorkflow.nodes.findIndex(
+          (n: any) => n.id === fixedNode.id
+        );
+        if (index !== -1) {
+          updatedWorkflow.nodes[index] = fixedNode;
+          this.deps.loggers.orchestrator.debug(
+            `Replaced entire node ${fixedNode.id} (${fixedNode.name})`
+          );
+        } else {
+          // If node doesn't exist, add it
+          updatedWorkflow.nodes.push(fixedNode);
+          this.deps.loggers.orchestrator.debug(
+            `Added new node ${fixedNode.id} (${fixedNode.name})`
+          );
+        }
+      }
+    }
+    
+    // Replace entire connections object
+    if (fixes.fixedConnections) {
+      updatedWorkflow.connections = fixes.fixedConnections;
+      this.deps.loggers.orchestrator.debug(
+        `Replaced entire connections object`
+      );
+    }
+    
+    return updatedWorkflow;
+  }
+
+  /**
    * Run MCP validation tools directly
    */
   private async runValidations(workflow: any): Promise<{
@@ -478,294 +546,4 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
     return results;
   }
 
-  /**
-   * Apply fix operations to workflow
-   */
-  /**
-   * Describe a fix operation in human-readable format
-   */
-  private describeFix(fix: any): string {
-    switch (fix.type) {
-      case 'updateField':
-      case 'updateParameter':
-        return `Update ${fix.field || fix.parameter} on ${fix.nodeId} to ${JSON.stringify(fix.value)}`;
-      case 'addField':
-        return `Add ${fix.field} to ${fix.nodeId} with value ${JSON.stringify(fix.value)}`;
-      case 'removeField':
-        return `Remove ${fix.field} from ${fix.nodeId}`;
-      case 'addConnection':
-        return `Add connection from ${fix.from} to ${fix.to}`;
-      case 'removeConnection':
-        return `Remove connection from ${fix.from} to ${fix.to}`;
-      case 'addNode':
-        return `Add new node ${fix.node?.name || fix.node?.id || 'unknown'}`;
-      case 'updateNode':
-        return `Update entire node ${fix.nodeId}`;
-      case 'updateWorkflowSettings':
-        return `Update workflow settings`;
-      case 'setWorkflowName':
-        return `Set workflow name to "${fix.name}"`;
-      default:
-        return `${fix.type} operation on ${fix.nodeId || 'workflow'}`;
-    }
-  }
-  
-  private applyFixes(workflow: any, fixes: any[]): any {
-    // Deep clone workflow to avoid mutations
-    const updatedWorkflow = JSON.parse(JSON.stringify(workflow));
-
-    this.deps.loggers.orchestrator.debug(`Applying ${fixes.length} fixes`);
-
-    // Define node-level properties that should not go into parameters
-    const NODE_LEVEL_PROPERTIES = [
-      "type",  // Critical: node type must be at node level
-      "typeVersion",  // Also important for node versioning
-      "name",
-      "position",
-      "disabled",
-      "notes",
-      "retryOnFail",
-      "maxTries",
-      "waitBetweenTries",
-      "continueOnFail",
-      "alwaysOutputData",  // Always output data even on failure
-      "executeOnce",  // Execute node only once
-      "onError",  // Error handling strategy
-      "credentials",  // Node credentials configuration
-      "issues",  // Node validation issues
-      "color",
-      "webhookId",
-      "externalHooks",
-      "notesInFlow",
-    ];
-
-    for (const fix of fixes) {
-      const nodeId = fix.nodeId;
-
-      switch (fix.type) {
-        case "updateParameter":
-          // Update node parameter
-          const node = updatedWorkflow.nodes.find((n: any) => n.id === nodeId);
-          if (node) {
-            // Check if this should be a node-level property
-            if (NODE_LEVEL_PROPERTIES.includes(fix.parameter)) {
-              // Set at node level
-              node[fix.parameter] = fix.value;
-              this.deps.loggers.orchestrator.debug(
-                `Applied node-level fix for node ${nodeId}: ${fix.parameter} = ${JSON.stringify(fix.value)}`
-              );
-            } else {
-              // Ensure parameters object exists
-              if (!node.parameters) node.parameters = {};
-              // Set in parameters
-              node.parameters[fix.parameter] = fix.value;
-              this.deps.loggers.orchestrator.debug(
-                `Applied parameter fix for node ${nodeId}: ${fix.parameter} = ${JSON.stringify(fix.value)}`
-              );
-            }
-          } else {
-            this.deps.loggers.orchestrator.warn(
-              `Node ${nodeId} not found for parameter update`
-            );
-          }
-          break;
-
-        case "updateField":
-          // Update node field (similar to updateParameter but uses 'field' property)
-          const nodeForField = updatedWorkflow.nodes.find((n: any) => n.id === nodeId);
-          if (nodeForField) {
-            // Check if this should be a node-level property
-            if (NODE_LEVEL_PROPERTIES.includes(fix.field)) {
-              // Set at node level
-              nodeForField[fix.field] = fix.value;
-              this.deps.loggers.orchestrator.debug(
-                `Applied node-level fix for node ${nodeId}: ${fix.field} = ${JSON.stringify(fix.value)}`
-              );
-            } else {
-              // Ensure parameters object exists
-              if (!nodeForField.parameters) nodeForField.parameters = {};
-              // Set in parameters
-              nodeForField.parameters[fix.field] = fix.value;
-              this.deps.loggers.orchestrator.debug(
-                `Applied parameter fix for node ${nodeId}: ${fix.field} = ${JSON.stringify(fix.value)}`
-              );
-            }
-          } else {
-            this.deps.loggers.orchestrator.warn(
-              `Node ${nodeId} not found for field update`
-            );
-          }
-          break;
-
-        case "addField":
-          // Add a field to a node
-          const nodeForAdd = updatedWorkflow.nodes.find((n: any) => n.id === nodeId);
-          if (nodeForAdd) {
-            // Check if this should be a node-level property
-            if (NODE_LEVEL_PROPERTIES.includes(fix.field)) {
-              // Set at node level
-              nodeForAdd[fix.field] = fix.value;
-              this.deps.loggers.orchestrator.debug(
-                `Added node-level field for node ${nodeId}: ${fix.field} = ${JSON.stringify(fix.value)}`
-              );
-            } else {
-              // Ensure parameters object exists
-              if (!nodeForAdd.parameters) nodeForAdd.parameters = {};
-              // Set in parameters
-              nodeForAdd.parameters[fix.field] = fix.value;
-              this.deps.loggers.orchestrator.debug(
-                `Added parameter field for node ${nodeId}: ${fix.field} = ${JSON.stringify(fix.value)}`
-              );
-            }
-          } else {
-            this.deps.loggers.orchestrator.warn(
-              `Node ${nodeId} not found for field addition`
-            );
-          }
-          break;
-
-        case "removeField":
-          // Remove a field from a node
-          const nodeForRemove = updatedWorkflow.nodes.find((n: any) => n.id === nodeId);
-          if (nodeForRemove) {
-            // Check if this is a node-level property
-            if (NODE_LEVEL_PROPERTIES.includes(fix.field)) {
-              // Remove from node level
-              delete nodeForRemove[fix.field];
-              this.deps.loggers.orchestrator.debug(
-                `Removed node-level field from node ${nodeId}: ${fix.field}`
-              );
-            } else if (nodeForRemove.parameters) {
-              // Remove from parameters
-              delete nodeForRemove.parameters[fix.field];
-              this.deps.loggers.orchestrator.debug(
-                `Removed parameter field from node ${nodeId}: ${fix.field}`
-              );
-            }
-          } else {
-            this.deps.loggers.orchestrator.warn(
-              `Node ${nodeId} not found for field removal`
-            );
-          }
-          break;
-
-        case "updateNode":
-          // Update entire node
-          const existingNodeIndex = updatedWorkflow.nodes.findIndex(
-            (n: any) => n.id === nodeId
-          );
-          if (existingNodeIndex !== -1) {
-            updatedWorkflow.nodes[existingNodeIndex] = fix.node;
-            this.deps.loggers.orchestrator.debug(
-              `Updated entire node ${nodeId}`
-            );
-          }
-          break;
-
-        case "addConnection":
-          // Add connection between nodes
-          if (!updatedWorkflow.connections[fix.from]) {
-            updatedWorkflow.connections[fix.from] = { main: [[]] };
-          }
-          // Check if connection already exists
-          const existingConnection = updatedWorkflow.connections[
-            fix.from
-          ].main[0].find((c: any) => c.node === fix.to);
-          if (!existingConnection) {
-            updatedWorkflow.connections[fix.from].main[0].push({
-              node: fix.to,
-              type: "main",
-              index: 0,
-            });
-            this.deps.loggers.orchestrator.debug(
-              `Added connection from ${fix.from} to ${fix.to}`
-            );
-          } else {
-            this.deps.loggers.orchestrator.debug(
-              `Connection from ${fix.from} to ${fix.to} already exists, skipping`
-            );
-          }
-          break;
-
-        case "removeConnection":
-          // Remove connection
-          if (updatedWorkflow.connections[fix.from]) {
-            updatedWorkflow.connections[fix.from].main[0] =
-              updatedWorkflow.connections[fix.from].main[0].filter(
-                (c: any) => c.node !== fix.to
-              );
-          }
-          break;
-
-        case "addNode":
-          // Add new node
-          updatedWorkflow.nodes.push(fix.node);
-          break;
-
-        case "updateWorkflowSettings":
-          // Update workflow-level settings
-          if (!updatedWorkflow.settings) updatedWorkflow.settings = {};
-          Object.assign(updatedWorkflow.settings, fix.settings);
-          break;
-
-        case "setWorkflowName":
-          updatedWorkflow.name = fix.name;
-          break;
-
-        case "addStickyNote":
-          // Add sticky note to workflow
-          const stickyNode = {
-            id: fix.note.id,
-            name: `Sticky Note ${fix.note.id}`,
-            type: "n8n-nodes-base.stickyNote",
-            typeVersion: 1,
-            position: [0, 0], // Will be calculated by positioning algorithm
-            parameters: {
-              content: fix.note.content,
-              height: 150,
-              width: 250,
-              color: fix.note.color || 1
-            },
-            // Store nodeGroupIds at node level for positioning (will be removed later)
-            _nodeGroupIds: fix.note.nodeGroupIds
-          };
-          updatedWorkflow.nodes.push(stickyNode);
-          this.deps.loggers.orchestrator.debug(
-            `Added sticky note ${fix.note.id} for nodes: ${fix.note.nodeGroupIds.join(", ")}`
-          );
-          break;
-      }
-    }
-
-    // Clean up empty connections
-    for (const nodeId in updatedWorkflow.connections) {
-      if (updatedWorkflow.connections[nodeId].main[0].length === 0) {
-        delete updatedWorkflow.connections[nodeId];
-        this.deps.loggers.orchestrator.debug(
-          `Removed empty connection for ${nodeId}`
-        );
-      }
-    }
-
-    // Clean up node-level properties that might be in parameters
-    for (const node of updatedWorkflow.nodes) {
-      if (node.parameters) {
-        for (const prop of NODE_LEVEL_PROPERTIES) {
-          if (prop in node.parameters) {
-            // Move to node level if not already there
-            if (!(prop in node)) {
-              node[prop] = node.parameters[prop];
-            }
-            // Remove from parameters
-            delete node.parameters[prop];
-            this.deps.loggers.orchestrator.debug(
-              `Cleaned up ${prop} from parameters of node ${node.id} (${node.name})`
-            );
-          }
-        }
-      }
-    }
-
-    return updatedWorkflow;
-  }
 }

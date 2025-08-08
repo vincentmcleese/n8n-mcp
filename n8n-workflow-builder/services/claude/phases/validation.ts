@@ -104,7 +104,81 @@ export class ValidationPhaseService extends BasePhaseService<ValidationInput, Va
   }
 
   /**
-   * Generate fixes for validation errors
+   * Generate entity fixes for validation errors
+   */
+  async generateEntityFixes(
+    input: {
+      errors: any[];
+      entities: {
+        nodes?: any[];
+        connections?: any;
+      };
+      workflow: any;
+    }
+  ): Promise<PhaseResult<{
+    fixedNodes?: any[];
+    fixedConnections?: any;
+    reasoning: string[];
+  }>> {
+    const { errors, entities, workflow } = input;
+    
+    this.logger.verbose('Generating entity fixes for validation errors');
+    
+    if (!errors || errors.length === 0) {
+      return {
+        success: true,
+        data: {
+          reasoning: ['No validation errors to fix'],
+        },
+      };
+    }
+    
+    try {
+      // Generate the entity fixes prompt
+      const promptParts = ValidationPrompts.getEntityFixesPrompt(errors, entities, workflow);
+      
+      // Call Claude for fixes
+      const result = await this.callClaude<{
+        fixedNodes?: any[];
+        fixedConnections?: any;
+        reasoning: string[];
+      }>(
+        promptParts,
+        TOKEN_LIMITS.validationFixes,
+        undefined, // We'll validate the structure ourselves
+        'generateEntityFixes'
+      );
+      
+      if (!result.success || !result.data) {
+        return {
+          success: false,
+          error: result.error || new Error('Failed to generate entity fixes'),
+          usage: result.usage,
+        };
+      }
+      
+      this.logSuccess('Entity fixes generated', {
+        nodesFixed: result.data.fixedNodes?.length || 0,
+        connectionsFixed: !!result.data.fixedConnections,
+        errorCount: errors.length,
+      });
+      
+      return {
+        success: true,
+        data: result.data,
+        usage: result.usage,
+      };
+    } catch (error) {
+      this.logError('generateEntityFixes', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error : new Error(String(error)),
+      };
+    }
+  }
+
+  /**
+   * Generate fixes for validation errors (OLD - keeping for compatibility)
    */
   async generateValidationFixes(
     input: ValidationFixesInput

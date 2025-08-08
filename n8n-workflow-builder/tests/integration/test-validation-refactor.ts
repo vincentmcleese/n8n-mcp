@@ -108,8 +108,8 @@ const TEST_SCENARIOS = [
   },
 
   {
-    name: "Simple - Invalid HTTP Method",
-    description: "Should fix invalid HTTP method in webhook",
+    name: "Simple - Missing Webhook Path",
+    description: "Should fix missing required path in webhook",
     buildingOutput: {
       workflow: {
         name: "Webhook Workflow",
@@ -121,8 +121,8 @@ const TEST_SCENARIOS = [
             typeVersion: 2,
             position: [250, 300],
             parameters: {
-              httpMethod: "INVALID_METHOD", // Invalid HTTP method
-              path: "webhook"
+              httpMethod: "POST"
+              // Missing required path field
             }
           }
         ],
@@ -132,7 +132,7 @@ const TEST_SCENARIOS = [
     },
     expectedAttempts: 1,
     expectedValid: true,
-    expectedFixes: ["httpMethod"]
+    expectedFixes: ["path"]
   },
 
   {

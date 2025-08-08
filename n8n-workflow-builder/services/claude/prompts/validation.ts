@@ -166,7 +166,72 @@ Generate fix operations for these errors with reasoning. Return a JSON object wi
   }, 'validation');
 }
 
+/**
+ * Generate prompt for entity-based validation fixes
+ */
+export function getEntityFixesPrompt(
+  errors: any[], 
+  entities: { nodes?: any[]; connections?: any },
+  workflow: any
+): PromptParts {
+  const systemPrompt = `You are an n8n workflow validation expert. Fix validation errors by returning COMPLETE, CORRECTED entities.
+
+CRITICAL RULES:
+1. When fixing nodes: Return the ENTIRE node object with ALL fields corrected
+2. When fixing connections: Return the ENTIRE connections object with proper structure
+3. Connections MUST use node NAMES as keys, NOT node IDs!
+
+Connection structure example:
+{
+  "Webhook": {     // ← Use node NAME, not ID
+    "main": [[{ 
+      "node": "Code",  // ← Use target node NAME, not ID
+      "type": "main", 
+      "index": 0 
+    }]]
+  }
+}
+
+Common fixes needed:
+- Missing required fields: Add them with appropriate values
+- Wrong connection keys: Replace entire connections object with NAME-based keys
+- Invalid values: Replace with valid alternatives
+- Missing nodes: Return complete node objects to add
+
+Response format:
+{
+  "fixedNodes": [/* complete fixed node objects */],
+  "fixedConnections": {/* complete fixed connections object if needed */},
+  "reasoning": ["explanation for each major fix"]
+}`;
+
+  const userMessage = `Validation errors found:
+${JSON.stringify(errors, null, 2)}
+
+${entities.nodes ? `Nodes to fix (${entities.nodes.length}):
+${entities.nodes.map(n => `- ${n.name} (id: ${n.id}, type: ${n.type})`).join('\n')}
+
+Full node objects:
+${JSON.stringify(entities.nodes, null, 2)}` : ''}
+
+${entities.connections ? `Current connections object (needs fixing):
+${JSON.stringify(entities.connections, null, 2)}
+
+Remember: Connection keys must use node NAMES, not IDs!
+Available nodes in workflow:
+${workflow.nodes?.map((n: any) => `- Name: "${n.name}", ID: "${n.id}"`).join('\n')}` : ''}
+
+Fix the entities and return complete, corrected versions.`;
+
+  return addVersionMetadata({
+    system: systemPrompt,
+    user: userMessage,
+    prefill: '{"'
+  }, 'validation');
+}
+
 export const ValidationPrompts = {
   getValidationPrompt,
   getValidationFixesPrompt,
+  getEntityFixesPrompt,
 };
