@@ -1,0 +1,35 @@
+{
+  "prompt": "Receive webhook data and send a message to Slack channel #general saying 'New webhook received'",
+  "configuredNodes": [
+    {
+      "id": "node_2",
+      "type": "nodes-base.slack",
+      "purpose": "Send a message to Slack channel",
+      "config": {
+        "text": "",
+        "channel": "",
+        "onError": "continueRegularOutput",
+        "maxTries": 2,
+        "resource": "message",
+        "operation": "post",
+        "retryOnFail": true,
+        "waitBetweenTries": 2000
+      },
+      "validated": true
+    },
+    {
+      "id": "node_1",
+      "type": "nodes-base.webhook",
+      "purpose": "Set up a webhook to receive data from external services",
+      "config": {
+        "path": "webhook",
+        "onError": "continueRegularOutput",
+        "httpMethod": "POST",
+        "responseData": "allEntries",
+        "responseMode": "lastNode",
+        "alwaysOutputData": true
+      },
+      "validated": true
+    }
+  ]
+}

@@ -22,7 +22,7 @@ import { PromptParts } from '../prompts/common';
 // ==========================================
 
 export interface BuildingInput {
-  prompt?: string;  // Pre-built prompt from runner
+  promptParts?: any;  // Pre-built prompt parts from runner
   userIntent: string;
   configuredNodes: ConfiguredNode[];
 }
@@ -55,24 +55,14 @@ export class BuildingPhaseService extends BasePhaseService<BuildingInput, Buildi
     input: BuildingInput,
     context: PhaseContext
   ): Promise<PhaseResult<BuildingOutput>> {
-    const { prompt, userIntent, configuredNodes } = input;
+    const { promptParts, userIntent, configuredNodes } = input;
     
     this.logger.debug('Building workflow structure from configured nodes');
     
     try {
-      // Use pre-built prompt or create one
-      let promptParts: PromptParts;
-      
-      if (prompt) {
-        // Use the pre-built prompt from runner
-        promptParts = {
-          system: prompt,
-          user: '',  // All content is in the system prompt
-          prefill: '{\n  "name": "'
-        };
-      } else {
-        // Shouldn't happen with new pattern, but provide fallback
-        throw new Error('Building phase requires a pre-built prompt');
+      // Use pre-built prompt parts or error
+      if (!promptParts) {
+        throw new Error('Building phase requires pre-built prompt parts');
       }
       
       // Call Claude for workflow building

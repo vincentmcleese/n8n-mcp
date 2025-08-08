@@ -77,15 +77,15 @@ export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput
       operations.push({ type: 'setPhase', phase: 'building' });
 
       // Build the prompt using the prompt builder
-      const prompt = this.promptBuilder.buildPrompt({
+      const promptParts = this.promptBuilder.buildPrompt({
         userIntent: userPrompt,
         configuredNodes: validatedNodes,
       });
 
-      // Have Claude build the complete workflow with the built prompt
+      // Have Claude build the complete workflow with the built prompt parts
       const claudeResult = await this.deps.claudeService.execute(
         {
-          prompt,  // Pass the built prompt
+          promptParts,  // Pass the properly structured prompt parts
           userPrompt,
           configuredNodes: validatedNodes,
         },

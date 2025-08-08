@@ -13,6 +13,12 @@ export interface BuildingPromptInput {
   configuredNodes: ConfiguredNode[];
 }
 
+export interface BuildingPromptParts {
+  system: string;
+  user: string;
+  prefill?: string;
+}
+
 export class BuildingPromptBuilder {
   private templatePath: string;
   private template: string | null = null;
@@ -40,22 +46,35 @@ export class BuildingPromptBuilder {
   }
   
   /**
-   * Build workflow assembly prompt
+   * Build workflow assembly prompt - returns properly structured prompt parts
    */
-  buildPrompt(input: BuildingPromptInput): string {
+  buildPrompt(input: BuildingPromptInput): BuildingPromptParts {
     const { userIntent, configuredNodes } = input;
     const template = this.loadTemplate();
     
     // Format configured nodes for prompt
     const nodesDescription = this.formatConfiguredNodes(configuredNodes);
     
-    // Replace placeholders in template
-    const prompt = template
+    // Split template into system context and user request
+    // The template contains the rules and format, we add the specific task
+    const systemPrompt = template
       .replace(/\[USER_INTENT\]/g, userIntent)
       .replace('[CONFIGURED_NODES]', nodesDescription)
       .replace('[NODE_COUNT]', configuredNodes.length.toString());
     
-    return prompt;
+    // User message is the specific request
+    const userPrompt = `Build a complete n8n workflow that achieves: "${userIntent}"
+    
+Using these ${configuredNodes.length} configured nodes:
+${nodesDescription}
+
+Connect them logically and return the complete workflow JSON.`;
+    
+    return {
+      system: systemPrompt,
+      user: userPrompt,
+      prefill: '{\n  "name": "'
+    };
   }
   
   /**
