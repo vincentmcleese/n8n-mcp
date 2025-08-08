@@ -199,7 +199,7 @@ export class DiscoveryRunner
           config: task.config,
         }));
 
-        // Generate operations for task nodes
+        // Generate operations for task nodes, including pre-configured flags
         taskOperations = taskResult.successful.flatMap((task) => [
           {
             type: "discoverNode" as const,
@@ -208,6 +208,8 @@ export class DiscoveryRunner
               type: task.nodeType,
               purpose: task.purpose || `Pre-configured: ${task.taskName}`,
               displayName: task.taskName.replace(/_/g, " "),
+              isPreConfigured: true,
+              config: task.config,
             },
           },
           {

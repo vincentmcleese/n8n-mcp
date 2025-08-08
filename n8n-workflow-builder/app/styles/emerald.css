@@ -1,0 +1,353 @@
+/* Emerald Design System (integrated) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@layer base {
+  :root {
+    --emerald: #1bc88c;
+    --emerald-50: #ecfdf5;
+    --emerald-100: #d1fae5;
+    --emerald-200: #a7f3d0;
+    --emerald-300: #6ee7b7;
+    --emerald-400: #34d399;
+    --emerald-500: #10b981;
+    --emerald-600: #059669;
+    --emerald-700: #047857;
+    --emerald-800: #065f46;
+    --emerald-900: #064e3b;
+    --emerald-950: #022c22;
+
+    --primary: var(--emerald);
+    --primary-foreground: #ffffff;
+    --secondary: #f1f5f9;
+    --secondary-foreground: #0f172a;
+    --muted: #f8fafc;
+    --muted-foreground: #64748b;
+    --accent: #f8fafc;
+    --accent-foreground: #0f172a;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+
+    --background: #ffffff;
+    --foreground: #0f172a;
+    --card: rgba(236, 244, 240, 0.9);
+    --card-foreground: #0f172a;
+    --popover: #ffffff;
+    --popover-foreground: #0f172a;
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: var(--emerald);
+
+    --glass-light: rgba(255, 255, 255, 0.25);
+    --glass-medium: rgba(255, 255, 255, 0.15);
+    --glass-dark: rgba(255, 255, 255, 0.1);
+    --glass-backdrop: blur(16px);
+
+    --dark-background: #0f172a;
+    --dark-foreground: #f8fafc;
+    --dark-card: rgba(26, 26, 26, 0.85);
+    --dark-card-foreground: #f8fafc;
+    --dark-muted: #1e293b;
+    --dark-muted-foreground: #94a3b8;
+    --dark-border: #334155;
+    --dark-input: #334155;
+
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --shadow-emerald: 0 8px 32px rgba(27, 200, 140, 0.3);
+    --shadow-emerald-lg: 0 12px 40px rgba(27, 200, 140, 0.4);
+
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-md: 16px;
+    --radius-lg: 20px;
+    --radius-xl: 24px;
+
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+    --spring: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: var(--dark-background);
+    --foreground: var(--dark-foreground);
+    --card: var(--dark-card);
+    --card-foreground: var(--dark-card-foreground);
+    --muted: var(--dark-muted);
+    --muted-foreground: var(--dark-muted-foreground);
+    --border: var(--dark-border);
+    --input: var(--dark-input);
+    --secondary: #1e293b;
+    --secondary-foreground: #f8fafc;
+    --accent: #1e293b;
+    --accent-foreground: #f8fafc;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .bg-emerald-gradient {
+    background: radial-gradient(
+        circle at 30% 40%,
+        rgba(0, 255, 180, 0.12),
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 60% 20%,
+        rgba(0, 255, 180, 0.08),
+        transparent 60%
+      ),
+      radial-gradient(
+        circle at 80% 60%,
+        rgba(0, 255, 180, 0.05),
+        transparent 70%
+      ),
+      linear-gradient(to bottom, #00c878 0%, #00b3bd 70%, #78d4e4 100%);
+  }
+
+  .bg-emerald-button {
+    @apply bg-gradient-to-br from-emerald-500 to-emerald-600;
+  }
+
+  .bg-emerald-card {
+    @apply bg-gradient-to-br from-emerald-500 to-emerald-400;
+  }
+
+  .glass {
+    background: var(--glass-light);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  .glass-medium {
+    background: var(--glass-medium);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  .glass-strong {
+    background: var(--glass-dark);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .card {
+    @apply bg-card text-card-foreground rounded-lg border shadow-sm;
+  }
+  .card-glass {
+    @apply glass rounded-xl shadow-lg backdrop-blur-md;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-glass::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+  }
+  .card-emerald {
+    @apply bg-emerald-card text-white;
+    box-shadow: var(--shadow-emerald);
+  }
+  .card-dark {
+    background: var(--dark-card);
+    @apply text-white shadow-lg;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.01em;
+  }
+  .btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transition: left 0.5s ease;
+  }
+  .btn:hover::before {
+    left: 100%;
+  }
+  .btn-primary {
+    @apply bg-emerald-button text-primary-foreground shadow-md;
+    box-shadow: 0 4px 12px rgba(27, 200, 140, 0.3);
+  }
+  .btn-primary:hover {
+    @apply -translate-y-0.5;
+    box-shadow: 0 8px 20px rgba(27, 200, 140, 0.4);
+  }
+  .btn-secondary {
+    @apply glass text-foreground hover:bg-white/30;
+  }
+  .btn-secondary:hover {
+    @apply -translate-y-0.5;
+  }
+  .btn-ghost {
+    @apply bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground;
+  }
+  .btn-outline {
+    @apply border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground;
+  }
+
+  .icon {
+    @apply w-5 h-5 flex-shrink-0;
+  }
+  .icon-sm {
+    @apply w-4 h-4;
+  }
+  .icon-lg {
+    @apply w-6 h-6;
+  }
+  .icon-xl {
+    @apply w-8 h-8;
+  }
+
+  .card-icon {
+    @apply w-12 h-12 flex items-center justify-center rounded-xl glass text-emerald-600;
+    backdrop-filter: blur(8px);
+    transition: all var(--transition-fast);
+  }
+  .card-icon:hover {
+    @apply rotate-1 scale-105;
+  }
+  .card-emerald .card-icon {
+    @apply bg-white/20 text-white;
+  }
+  .card-dark .card-icon {
+    @apply bg-emerald-500/15 text-emerald-400;
+  }
+
+  .stats {
+    @apply grid grid-cols-3 gap-4 p-5 bg-white/5 rounded-xl backdrop-blur-sm;
+  }
+  .stat {
+    @apply text-center;
+    transition: all var(--transition-fast);
+  }
+  .stat:hover {
+    @apply -translate-y-0.5;
+  }
+  .stat-number {
+    @apply text-2xl font-bold text-emerald-400 mb-1 tracking-tight;
+  }
+  .stat-label {
+    @apply text-xs opacity-70 uppercase tracking-wide font-medium;
+  }
+
+  .tag {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium border border-emerald-200;
+    backdrop-filter: blur(4px);
+    transition: all var(--transition-fast);
+  }
+  .tag:hover {
+    @apply bg-emerald-100 -translate-y-0.5;
+  }
+  .dark .tag {
+    @apply bg-emerald-500/15 text-emerald-400 border-emerald-500/30;
+  }
+  .dark .tag:hover {
+    @apply bg-emerald-500/25;
+  }
+
+  .feature-list {
+    @apply space-y-3;
+  }
+  .feature-list li {
+    @apply flex items-center gap-3 text-sm;
+    transition: all var(--transition-fast);
+  }
+  .feature-list li:hover {
+    @apply translate-x-1;
+  }
+  .feature-list .icon {
+    @apply w-4 h-4 text-emerald-600 bg-emerald-100 p-1 rounded flex-shrink-0;
+  }
+  .dark .feature-list .icon {
+    @apply text-emerald-400 bg-emerald-500/20;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-emerald-600 to-emerald-400 bg-clip-text text-transparent;
+  }
+  .hero-title {
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  .hero-subtitle {
+    @apply text-lg md:text-xl text-white/90 font-normal;
+  }
+  .card-title {
+    @apply text-xl font-semibold tracking-tight;
+  }
+  .card-subtitle {
+    @apply text-xs uppercase tracking-wide font-medium opacity-70;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .shadow-emerald {
+    box-shadow: var(--shadow-emerald);
+  }
+  .shadow-emerald-lg {
+    box-shadow: var(--shadow-emerald-lg);
+  }
+  .backdrop-blur-glass {
+    backdrop-filter: var(--glass-backdrop);
+  }
+  .transition-spring {
+    transition-timing-function: var(--spring);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes glow {
+  from {
+    box-shadow: 0 0 20px rgba(27, 200, 140, 0.3);
+  }
+  to {
+    box-shadow: 0 0 40px rgba(27, 200, 140, 0.6);
+  }
+}

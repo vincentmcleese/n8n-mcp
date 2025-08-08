@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test:discovery": "NODE_ENV=test tsx tests/integration/test-discovery-refactor.ts",
     "test:configure": "NODE_ENV=test tsx tests/integration/test-configuration-refactor.ts",
+    "test:complete": "NODE_ENV=test tsx tests/integration/test-complete-e2e.ts",
     "test:buildworkflow": "tsx scripts/build-workflow.ts"
   },
   "dependencies": {

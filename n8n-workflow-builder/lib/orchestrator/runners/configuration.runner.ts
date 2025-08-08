@@ -179,7 +179,10 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
       
       // Log node types configured
       if (configured.length > 0) {
-        const taskNodes = configured.filter(n => n.type.includes('task')).length;
+        // Count pre-configured task nodes based on discovery flag
+        const taskNodes = discoveredNodes
+          .filter(n => selectedNodeIds.includes(n.id))
+          .filter(n => n.isPreConfigured && !!n.config).length;
         const searchNodes = configured.length - taskNodes;
         this.deps.loggers.orchestrator.info(
           `   Task nodes: ${taskNodes} (pre-configured), Search nodes: ${searchNodes} (essentials-based)`
@@ -267,8 +270,8 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
     const operations: WorkflowOperation[] = [];
 
     try {
-      // Skip pre-configured task nodes
-      if (node.isPreConfigured && node.config) {
+          // Skip pre-configured task nodes (detected from discovery)
+          if (node.isPreConfigured && node.config) {
         this.deps.loggers.orchestrator.debug(
           `Skipping pre-configured task node: ${node.type}`
         );
@@ -278,12 +281,13 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
           validationErrors: [],
           nodeReasoning: [`${node.type} was pre-configured from task template`],
           configOperations: [{
-            type: "configureNode",
-            nodeId: node.id,
-            nodeType: node.type,
-            config: node.config,
-            purpose: node.purpose
-          }]
+                type: "configureNode",
+                nodeId: node.id,
+                nodeType: node.type,
+                config: node.config,
+                purpose: node.purpose,
+                preConfigured: true
+              }]
         };
       }
 

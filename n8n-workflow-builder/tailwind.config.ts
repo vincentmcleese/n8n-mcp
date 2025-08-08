@@ -8,12 +8,28 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Suisse Intl", "ui-sans-serif", "Arial", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        emerald: {
+          50: "var(--emerald-50)",
+          100: "var(--emerald-100)",
+          200: "var(--emerald-200)",
+          300: "var(--emerald-300)",
+          400: "var(--emerald-400)",
+          500: "var(--emerald-500)",
+          600: "var(--emerald-600)",
+          700: "var(--emerald-700)",
+          800: "var(--emerald-800)",
+          900: "var(--emerald-900)",
+          950: "var(--emerald-950)",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",

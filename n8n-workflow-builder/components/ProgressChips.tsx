@@ -29,7 +29,7 @@ export function ProgressChips({ current }: { current: Step }) {
               <span
                 className={
                   "mr-2 h-2 w-2 rounded-full " +
-                  (active ? "bg-white" : "bg-neutral-300")
+                  (active ? "bg-white" : "bg-[rgba(27,200,140,0.6)]")
                 }
               />
               {s.label}
@@ -41,7 +41,7 @@ export function ProgressChips({ current }: { current: Step }) {
         })}
       </div>
       <div className="h-0.5 w-full bg-neutral-100 overflow-hidden rounded">
-        <div className="h-full w-1/3 bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-indigo-500 animate-[progress_1.8s_linear_infinite]" />
+        <div className="h-full w-1/3 bg-[rgb(27,200,140)]/70 animate-[progress_1.8s_linear_infinite]" />
       </div>
       <style jsx>{`
         @keyframes progress {

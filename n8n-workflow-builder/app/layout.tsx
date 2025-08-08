@@ -26,10 +26,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-neutral-50`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="min-h-screen">
-          <header className="sticky top-0 z-40 bg-white/70 backdrop-blur border-b border-neutral-200">
+        <div className="min-h-screen bg-emerald-gradient">
+          <header className="sticky top-0 z-40 bg-[rgba(236,244,240,0.7)] backdrop-blur border-b border-neutral-200">
             <div className="max-w-screen-lg mx-auto px-4 py-3 flex items-center justify-between">
               <div className="text-base sm:text-lg font-semibold tracking-tight text-neutral-900">
                 n8n Workflow Builder

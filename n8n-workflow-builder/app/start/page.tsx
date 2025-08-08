@@ -3,11 +3,22 @@ import React, { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
-const examples = [
-  "send a Slack message when a new GitHub issue is created",
-  "parse incoming emails and add order details to Airtable",
-  "watch Stripe payments and add paying users to MailerLite",
-  "receive a webhook, transform JSON, and post to Notion",
+const outcomes: { label: string; prompt: string }[] = [
+  {
+    label: "I want to spend less time on email",
+    prompt:
+      "Categorize incoming emails, generate a daily summary, and send it at 5pm.",
+  },
+  {
+    label: "I want to get more leads from SEO",
+    prompt:
+      "Capture organic contact form submissions, enrich with Clearbit, add to HubSpot, and alert Slack.",
+  },
+  {
+    label: "I want to stay hyperinformed on a topic",
+    prompt:
+      "Watch RSS feeds for 'AI regulation', summarize daily, and post to Slack.",
+  },
 ];
 
 export default function StartPage() {
@@ -30,7 +41,7 @@ export default function StartPage() {
     <div className="min-h-[calc(100vh-60px)]">
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(1200px_400px_at_50%_-100px,rgba(99,102,241,0.25),transparent_60%)]" />
-        <div className="max-w-screen-md mx-auto px-4 py-14">
+        <div className="max-w-screen-md mx-auto container-padding section-padding">
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-neutral-900">
             What would you like to automate?
           </h1>
@@ -39,7 +50,7 @@ export default function StartPage() {
           </div>
 
           <div className="mt-6">
-            <div className="group relative rounded-2xl border border-neutral-200 bg-white/80 backdrop-blur-sm shadow-sm transition ring-0 focus-within:ring-1 focus-within:ring-neutral-300">
+            <div className="group relative rounded-2xl border border-neutral-200 bg-white/80 backdrop-blur-sm shadow-sm transition-spring ring-0 focus-within:ring-1 focus-within:ring-neutral-300">
               <Textarea
                 placeholder="e.g., Send a Slack message when a new GitHub issue is created"
                 value={prompt}
@@ -53,30 +64,25 @@ export default function StartPage() {
                 className="flex flex-wrap gap-1.5 animate-slide-in"
                 style={{ animationDelay: "80ms" }}
               >
-                {examples.map((ex) => (
+                {outcomes.map((ex) => (
                   <button
-                    key={ex}
-                    onClick={() => onUseExample(`I want to ${ex}`)}
-                    className="px-2.5 py-1 rounded-full text-[11px] bg-white text-neutral-700 border border-neutral-200 shadow-sm hover:border-neutral-300 hover:shadow transition"
+                    key={ex.label}
+                    onClick={() => onUseExample(ex.prompt)}
+                    className="px-2.5 py-1 rounded-full text-[11px] bg-white text-neutral-800 border border-neutral-200 shadow-sm hover:border-neutral-300 hover:shadow transition-spring"
                     type="button"
-                    aria-label={`Use example: I want to ${ex}`}
+                    aria-label={`Use example: ${ex.label}`}
                   >
-                    <span className="text-neutral-500">I want to</span>
-                    <span className="mx-1">·</span>
-                    <span className="font-medium text-neutral-800">{ex}</span>
+                    {ex.label}
                   </button>
                 ))}
               </div>
-              <Button
+              <button
+                className="btn btn-primary"
                 onClick={onSubmit}
                 disabled={disabled}
-                variant="brand"
-                size="xl"
-                className="animate-fade-in"
-                style={{ animationDelay: "120ms" }}
               >
-                Start
-              </Button>
+                <i className="fa-solid fa-bolt icon-sm" /> Start
+              </button>
             </div>
           </div>
         </div>

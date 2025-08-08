@@ -515,3 +515,12 @@ Key insight: `get_node_essentials` + category rules + clean prompts = dramatic i
 - Implement parallel processing
 - Add smart categorization
 - Cache configurations for common patterns
+
+## Implementation Notes (Cleanup, 2025-08-08)
+
+- Removed legacy configuration analysis/fix APIs to align with essentials-based flow:
+  - Removed `NodeRequirementsResponse` and `FixedNodeConfigResponse` types; all configuration is single-pass from the essentials prompt.
+  - Dropped export of `nodeRequirementsResponseSchema` and legacy exports from the Claude index barrel.
+  - Deleted `services/claude/examples/usage.ts` that referenced old analyze/fix flows.
+- Centralized essentials retrieval in `NodeContextService.getNodeEssentials` instead of a separate `NodeEssentialsService` file (same functionality, fewer files).
+- Enforced canonical nodeType format `package-name.nodeName` before MCP calls (e.g., `nodes-base.httpRequest`) for consistency with MCP tools.

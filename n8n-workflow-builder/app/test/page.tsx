@@ -111,8 +111,8 @@ export default function TestPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <div className="sticky top-0 z-10 bg-white/70 backdrop-blur border-b border-neutral-200">
+    <div className="min-h-screen bg-emerald-gradient">
+      <div className="sticky top-0 z-10 bg-card backdrop-blur border-b border-neutral-200">
         <div className="max-w-screen-lg mx-auto px-4 py-3">
           <div className="text-lg font-semibold tracking-tight text-neutral-900">
             n8n Workflow Builder
