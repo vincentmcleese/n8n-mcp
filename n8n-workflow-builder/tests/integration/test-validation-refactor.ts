@@ -95,8 +95,8 @@ const TEST_SCENARIOS = [
           }
         ],
         connections: {
-          "webhook_1": {
-            main: [[{ node: "code_1", type: "main", index: 0 }]]
+          "Webhook": {
+            main: [[{ node: "Code", type: "main", index: 0 }]]
           }
         },
         settings: {}
@@ -165,8 +165,8 @@ const TEST_SCENARIOS = [
           }
         ],
         connections: {
-          "webhook_1": {
-            main: [[{ node: "code_1", type: "main", index: 0 }]]
+          "Webhook": {
+            main: [[{ node: "Transform", type: "main", index: 0 }]]
           }
         },
         settings: {}
@@ -198,7 +198,7 @@ const TEST_SCENARIOS = [
           }
         ],
         connections: {
-          "webhook_1": {
+          "Webhook": {
             main: [[
               { node: "non_existent_node", type: "main", index: 0 }
             ]]
@@ -332,11 +332,11 @@ const TEST_SCENARIOS = [
           }
         ],
         connections: {
-          "webhook_1": {
-            main: [[{ node: "code_1", type: "main", index: 0 }]]
+          "Webhook": {
+            main: [[{ node: "Code", type: "main", index: 0 }]]
           },
-          "code_1": {
-            main: [[{ node: "if_1", type: "main", index: 0 }]]
+          "Code": {
+            main: [[{ node: "IF", type: "main", index: 0 }]]
           }
         },
         settings: {}
@@ -429,10 +429,10 @@ const TEST_SCENARIOS = [
           }
         ],
         connections: {
-          "if_1": {
+          "IF": {
             main: [
-              [{ node: "slack_1", type: "main", index: 0 }],
-              [{ node: "email_1", type: "main", index: 0 }]
+              [{ node: "Slack Success", type: "main", index: 0 }],
+              [{ node: "Email Error", type: "main", index: 0 }]
             ]
           }
         },
@@ -535,21 +535,21 @@ const TEST_SCENARIOS = [
           }
         ],
         connections: {
-          "webhook_1": {
-            main: [[{ node: "code_1", type: "main", index: 0 }]]
+          "Webhook": {
+            main: [[{ node: "Transform Data", type: "main", index: 0 }]]
           },
-          "code_1": {
-            main: [[{ node: "if_1", type: "main", index: 0 }]]
+          "Transform Data": {
+            main: [[{ node: "Check Status", type: "main", index: 0 }]]
           },
-          "if_1": {
+          "Check Status": {
             main: [
-              [{ node: "http_1", type: "main", index: 0 }],
-              [{ node: "mongo_1", type: "main", index: 0 }]
+              [{ node: "API Call", type: "main", index: 0 }],
+              [{ node: "Save to MongoDB", type: "main", index: 0 }]
             ]
           },
           // Invalid circular reference
-          "http_1": {
-            main: [[{ node: "webhook_1", type: "main", index: 0 }]]
+          "API Call": {
+            main: [[{ node: "Webhook", type: "main", index: 0 }]]
           }
         },
         settings: {}
