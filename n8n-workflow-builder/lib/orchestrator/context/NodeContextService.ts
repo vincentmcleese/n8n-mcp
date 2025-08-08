@@ -64,15 +64,27 @@ export class NodeContextService {
    */
   async getNodeInfo(nodeType: string): Promise<any> {
     try {
-      loggers.orchestrator.debug(`Getting info for ${nodeType}`);
-      const infoResult = await this.mcpClient.getNodeInfo(nodeType);
+      const candidates = buildNodeTypeCandidates(nodeType);
+      loggers.orchestrator.debug(`Getting info for ${nodeType} (candidates: ${candidates.join(', ')})`);
 
-      if (infoResult?.content?.[0]?.type === "text") {
+      for (const candidate of candidates) {
         try {
-          return JSON.parse(infoResult.content[0].text);
-        } catch (e) {
-          loggers.orchestrator.debug(`Could not parse info for ${nodeType}`);
-          return { raw: infoResult.content[0].text };
+          const infoResult = await this.mcpClient.getNodeInfo(candidate);
+          if (infoResult?.content?.[0]?.type === "text") {
+            const text = infoResult.content[0].text;
+            const lower = text.toLowerCase();
+            if (lower.includes("not found") || lower.startsWith("error executing tool")) {
+              continue;
+            }
+            try {
+              return JSON.parse(text);
+            } catch (e) {
+              loggers.orchestrator.debug(`Could not parse info for ${candidate}`);
+              return { raw: text };
+            }
+          }
+        } catch (err) {
+          // try next
         }
       }
     } catch (error) {
@@ -87,14 +99,36 @@ export class NodeContextService {
   async getNodeEssentials(nodeType: string): Promise<any> {
     try {
       loggers.orchestrator.debug(`Getting essentials for ${nodeType}`);
-      const essentialsResult = await this.mcpClient.getNodeEssentials(nodeType);
 
-      if (essentialsResult?.content?.[0]?.type === "text") {
+      // Try original plus normalized variants to match MCP expectations
+      const candidates = buildNodeTypeCandidates(nodeType);
+
+      for (const candidate of candidates) {
         try {
-          return JSON.parse(essentialsResult.content[0].text);
-        } catch (e) {
-          loggers.orchestrator.debug(`Could not parse essentials for ${nodeType}`);
-          return { raw: essentialsResult.content[0].text };
+          const result = await this.mcpClient.getNodeEssentials(candidate);
+          const text = result?.content?.[0]?.type === "text" ? result.content[0].text : undefined;
+
+          if (!text) continue;
+
+          // If MCP explicitly says not found or tool error, try next candidate
+          const lower = text.toLowerCase();
+          if (
+            lower.includes("not found") && lower.includes("node") ||
+            lower.startsWith("error executing tool")
+          ) {
+            loggers.orchestrator.debug(`Essentials not found for candidate '${candidate}', trying next`);
+            continue;
+          }
+
+          try {
+            return JSON.parse(text);
+          } catch {
+            // Return raw if it's not JSON but not a not-found error
+            return { raw: text };
+          }
+        } catch (err) {
+          // Move to next candidate on failure
+          loggers.orchestrator.debug(`Error fetching essentials for '${candidate}', trying next`);
         }
       }
     } catch (error) {
@@ -170,34 +204,56 @@ export class NodeContextService {
     let isValid = false;
 
     try {
-      loggers.orchestrator.debug(`Validating configuration for ${nodeType}`);
-      const validationResult = await this.mcpClient.validateNodeMinimal(nodeType, config);
+      const candidates = buildNodeTypeCandidates(nodeType);
+      loggers.orchestrator.debug(`Validating configuration for ${nodeType} (candidates: ${candidates.join(', ')})`);
 
-      if (validationResult?.content?.[0]?.type === "text") {
+      let validationResult: any = null;
+      for (const candidate of candidates) {
         try {
-          const validation = JSON.parse(validationResult.content[0].text);
-          isValid = validation.valid || validation.isValid || false;
-          
-          if (!isValid) {
-            if (validation.errors) {
-              validationErrors = Array.isArray(validation.errors)
-                ? validation.errors
-                : [validation.errors];
-            } else if (validation.missingFields) {
-              validationErrors = validation.missingFields.map(
-                (field: string) => `Missing required field: ${field}`
-              );
-            } else if (validation.missingRequiredFields) {
-              validationErrors = validation.missingRequiredFields.map(
-                (field: string) =>
-                  `Missing required field: "${field}" (this might be a display name - check the node properties for the actual field name)`
-              );
-            }
+          validationResult = await this.mcpClient.validateNodeMinimal(candidate, config);
+          const text = validationResult?.content?.[0]?.type === "text" ? validationResult.content[0].text : '';
+          const lower = (text || '').toLowerCase();
+          if (lower.includes("not found") || lower.startsWith("error executing tool")) {
+            continue;
           }
-        } catch (e) {
-          loggers.orchestrator.debug(`Could not parse validation result`);
-          isValid = true; // Assume valid if we can't parse
+          break;
+        } catch (err) {
+          // try next candidate
         }
+      }
+
+      // Prefer strict JSON from any content part; fall back to tolerant parser
+      const parts = Array.isArray(validationResult?.content) ? validationResult.content : [];
+      let parsedFromJson = false;
+      for (const part of parts) {
+        if (part?.type === 'text' && typeof part.text === 'string') {
+          const text = part.text.trim();
+          if (text.startsWith('{') || text.startsWith('[')) {
+            try {
+              const data = JSON.parse(text);
+              const missing: string[] = Array.isArray((data as any).missingRequiredFields)
+                ? (data as any).missingRequiredFields
+                : [];
+              if (missing.length > 0) {
+                isValid = false;
+                validationErrors = missing.map((f: string) => `Missing required field: ${f}`);
+              } else {
+                // If 'valid' present, trust it; otherwise consider empty missing as valid
+                isValid = (data as any).valid !== undefined ? !!(data as any).valid : true;
+                validationErrors = [];
+              }
+              parsedFromJson = true;
+              break;
+            } catch { /* try next part */ }
+          }
+        }
+      }
+
+      if (!parsedFromJson && parts.length > 0) {
+        const fallbackText = (parts.find(p => p?.type === 'text') as any)?.text || '';
+        const parsed = parseValidationOutput(fallbackText);
+        isValid = parsed.isValid;
+        validationErrors = parsed.errors;
       }
     } catch (error) {
       loggers.orchestrator.error(`Validation failed for ${nodeType}:`, error);
@@ -234,4 +290,125 @@ export class NodeContextService {
 
     return { valid: false, errors: [], warnings: [] };
   }
+}
+
+// Helper methods
+
+/**
+ * Build likely MCP node type identifiers for a given workflow node type.
+ * Handles common package prefix differences between discovery/configuration.
+ */
+export function toMcpNodeType(nodeType: string): string {
+  // Normalize scoped packages like '@n8n/n8n-nodes-langchain.openAi'
+  let normalized = nodeType.replace(/^@n8n\//, '');
+
+  const hasDot = normalized.includes('.');
+  if (!hasDot) {
+    // No package segment, return as-is
+    return normalized;
+  }
+
+  const [pkg, rest] = [normalized.substring(0, normalized.indexOf('.')), normalized.substring(normalized.indexOf('.') + 1)];
+  // Strip leading 'n8n-' from package segment, e.g., 'n8n-nodes-base' -> 'nodes-base'
+  const canonicalPkg = pkg.replace(/^n8n-/, '');
+  return `${canonicalPkg}.${rest}`;
+}
+
+export function buildNodeTypeCandidates(nodeType: string): string[] {
+  const candidates: string[] = [];
+
+  // 0) Canonical MCP identifier first
+  const canonical = toMcpNodeType(nodeType);
+  candidates.push(canonical);
+
+  // 1) Original
+  candidates.push(nodeType);
+
+  // 2) Strip leading 'n8n-' from package segment (if not already canonical)
+  if (nodeType.startsWith('n8n-')) {
+    const parts = nodeType.split('.');
+    if (parts.length > 1 && parts[0].startsWith('n8n-')) {
+      const withoutPrefix = `${parts[0].replace(/^n8n-/, '')}.${parts.slice(1).join('.')}`;
+      candidates.push(withoutPrefix);
+    }
+  }
+
+  // 3) Handle scoped AI package variants like '@n8n/n8n-nodes-langchain.openAi'
+  if (nodeType.startsWith('@n8n/n8n-')) {
+    const afterScope = nodeType.replace('@n8n/', ''); // 'n8n-nodes-langchain.openAi'
+    candidates.push(afterScope.replace(/^n8n-/, ''));
+  }
+
+  // 4) Fallback to simple type (last segment after '.') e.g., 'httpRequest'
+  if (nodeType.includes('.')) {
+    const simple = nodeType.substring(nodeType.lastIndexOf('.') + 1);
+    candidates.push(simple);
+  }
+
+  // Deduplicate while preserving order
+  return Array.from(new Set(candidates));
+}
+
+/**
+ * Parse validation output which may be JSON or plain text.
+ */
+export function parseValidationOutput(text: string): { isValid: boolean; errors: string[]; wasJson: boolean } {
+  const trimmed = (text || '').trim();
+  // Try direct JSON
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      const data = JSON.parse(trimmed);
+      const isValid = !!(data.valid ?? data.isValid ?? false);
+      let errors: string[] = [];
+      if (!isValid) {
+        if (Array.isArray(data.errors)) {
+          errors = data.errors;
+        } else if (typeof data.errors === 'string') {
+          errors = [data.errors];
+        } else if (Array.isArray(data.missingFields)) {
+          errors = data.missingFields.map((f: string) => `Missing required field: ${f}`);
+        } else if (Array.isArray(data.missingRequiredFields)) {
+          errors = data.missingRequiredFields.map((f: string) => `Missing required field: ${f}`);
+        }
+      }
+      return { isValid, errors, wasJson: true };
+    } catch {
+      // fall through to non-JSON handling
+    }
+  }
+
+  // Try to extract JSON from fenced code or embedded text
+  const jsonMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i) || trimmed.match(/(\{[\s\S]*\})/);
+  if (jsonMatch && jsonMatch[1]) {
+    try {
+      const data = JSON.parse(jsonMatch[1]);
+      const isValid = !!(data.valid ?? data.isValid ?? false);
+      let errors: string[] = [];
+      if (!isValid) {
+        if (Array.isArray(data.errors)) {
+          errors = data.errors;
+        } else if (typeof data.errors === 'string') {
+          errors = [data.errors];
+        }
+      }
+      return { isValid, errors, wasJson: true };
+    } catch {
+      // ignore
+    }
+  }
+
+  // Heuristic plain-text parsing
+  const lower = trimmed.toLowerCase();
+  if (/(^|\b)(valid|ok|success|pass)(\b|$)/.test(lower) && !/invalid|error|fail|missing/.test(lower)) {
+    return { isValid: true, errors: [], wasJson: false };
+  }
+  if (/invalid|error|fail/.test(lower)) {
+    // Attempt to capture error lines
+    const lines = trimmed.split(/\n|;|\.|,/).map(l => l.trim()).filter(Boolean);
+    const errors = lines.filter(l => /error|missing|invalid/i.test(l)).slice(0, 10);
+    return { isValid: false, errors, wasJson: false };
+  }
+
+  // Default conservative: treat as valid but note unknown format
+  return { isValid: true, errors: [], wasJson: false };
 }

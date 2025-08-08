@@ -24,6 +24,7 @@ process.env.BUILD_WORKFLOW = 'true';
 // Parse command line arguments
 const args = process.argv.slice(2);
 const isVerbose = args.includes('--verbose') || args.includes('-v');
+const skipPrompts = args.includes('--no-prompt') || args.includes('-n') || args.some(a => a.startsWith('--test='));
 
 // Set log level based on verbose flag
 if (!isVerbose) {
@@ -46,7 +47,7 @@ const rl = readline.createInterface({
 function waitForEnter(message: string = 'Press Enter to continue...'): Promise<boolean> {
   return new Promise((resolve) => {
     rl.question(chalk.yellow(`\n${message} `), (answer) => {
-      // Return false if user wants to skip remaining tests
+      // Return false if user wants to skip the next test
       resolve(answer.toLowerCase() !== 's' && answer.toLowerCase() !== 'skip');
     });
   });
@@ -163,7 +164,6 @@ class DiscoveryIntegrationTest {
   }
   
   async runTest(scenario: typeof TEST_SCENARIOS[0]) {
-    console.log(chalk.cyan(`\n📝 Testing: ${scenario.name}`));
     console.log(chalk.gray(`   ${scenario.description}`));
     console.log(chalk.gray(`   Prompt: "${scenario.prompt}"`));
     
@@ -330,22 +330,29 @@ class DiscoveryIntegrationTest {
     
     for (let i = 0; i < scenarios.length; i++) {
       const scenario = scenarios[i];
-      console.log(chalk.cyan(`\n[${i + 1}/${scenarios.length}] Running test...`));
+      console.log(chalk.blue(`\n📋 Test ${i + 1}/${scenarios.length}: ${scenario.name}`));
+      console.log(chalk.gray('─'.repeat(50)));
+      
+      // Ask before running each test (unless skipping prompts)
+      if (!skipPrompts) {
+        const shouldRun = await waitForEnter(
+          `Press Enter to run this test (or type 's' to skip)...`
+        );
+        
+        if (!shouldRun) {
+          console.log(chalk.yellow(`⏭️  Skipped`));
+          results.push({ 
+            scenario: scenario.name, 
+            success: false, 
+            duration: 0,
+            error: new Error('Skipped by user')
+          });
+          continue;
+        }
+      }
       
       const result = await this.runTest(scenario);
       results.push({ scenario: scenario.name, ...result });
-      
-      // Wait for user to continue (except for the last test)
-      if (i < scenarios.length - 1) {
-        const shouldContinue = await waitForEnter(
-          `Press Enter to run test ${i + 2}/${scenarios.length} (or type 's' to skip remaining tests)...`
-        );
-        
-        if (!shouldContinue) {
-          console.log(chalk.yellow('\n⏭️  Skipping remaining tests...'));
-          break;
-        }
-      }
     }
     
     // Close readline interface before summary

@@ -10,7 +10,6 @@ import type {
   TokenUsage,
   ClaudeAnalysisResponse,
   DiscoveryOperationsResponse,
-  NodeRequirementsResponse,
   ConfigurationOperationsResponse,
   WorkflowBuildResponse,
   ValidatedWorkflowResponse,
@@ -208,7 +207,9 @@ export const configurationOperationsResponseSchema = z.object({
 /**
  * Node requirements response schema
  */
-export const nodeRequirementsResponseSchema = z.object({
+// Deprecated (MVP flow no longer uses this). Keep exported in index for compatibility if needed.
+// Removed in MVP; kept here only if needed for older code paths (not exported).
+const nodeRequirementsResponseSchema = z.object({
   needsAuth: z.boolean(),
   needsProperties: z.array(z.string()),
   suggestedTask: z.string().nullable().optional(),

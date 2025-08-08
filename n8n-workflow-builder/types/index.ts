@@ -37,9 +37,7 @@ import type {
 import type {
   ClaudeAnalysisResponse,
   DiscoveryOperationsResponse,
-  NodeRequirementsResponse,
   ConfigurationOperationsResponse,
-  FixedNodeConfigResponse,
   WorkflowBuildResponse,
   ValidationFixesResponse,
   ValidatedWorkflowResponse,
@@ -67,9 +65,7 @@ export type AnyClaudeOperation =
 export type AnyClaudeResponse =
   | ClaudeAnalysisResponse
   | DiscoveryOperationsResponse
-  | NodeRequirementsResponse
   | ConfigurationOperationsResponse
-  | FixedNodeConfigResponse
   | WorkflowBuildResponse
   | ValidationFixesResponse
   | ValidatedWorkflowResponse

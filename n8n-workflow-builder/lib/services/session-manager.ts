@@ -1,23 +1,23 @@
 /**
  * Session Manager for Supabase State Persistence
- * 
+ *
  * Handles all session state operations with Supabase backend
  * Provides atomic operations, error recovery, and state compression
  */
 
-import { createServerClient } from '../config/supabase';
-import { loggers } from '../utils/logger';
-import { PhaseManager } from '../phase-manager';
-import type { 
-  WorkflowOperation, 
+import { createServerClient } from "../config/supabase";
+import { loggers } from "../utils/logger";
+import { PhaseManager } from "../phase-manager";
+import type {
+  WorkflowOperation,
   WorkflowSession,
   WorkflowPhase,
   DiscoveredNode,
   NodeConfiguration,
   ValidationResult,
   ClarificationRequest,
-  ClarificationResponse
-} from '../../types/workflow';
+  ClarificationResponse,
+} from "../../types/workflow";
 
 /**
  * Session state structure in Supabase
@@ -47,7 +47,7 @@ interface SupabaseSessionState {
 export class SessionManager {
   private readonly logger = loggers.orchestrator;
   private readonly supabase = createServerClient();
-  
+
   // Batching configuration
   private pendingOperations = new Map<string, WorkflowOperation[]>();
   private lastSaveTime = new Map<string, number>();
@@ -59,12 +59,12 @@ export class SessionManager {
    * Create a new session in Supabase (with upsert support)
    */
   async createSession(
-    sessionId: string, 
+    sessionId: string,
     initialPrompt: string
   ): Promise<WorkflowSession> {
     try {
       const initialState: SupabaseSessionState = {
-        phase: 'discovery',
+        phase: "discovery",
         userPrompt: initialPrompt,
         discovered: [],
         selected: [],
@@ -73,40 +73,43 @@ export class SessionManager {
         workflow: {
           nodes: [],
           connections: {},
-          settings: {}
+          settings: {},
         },
         operationHistory: [],
         pendingClarifications: [],
         clarificationHistory: [],
         metadata: {
           operationCount: 0,
-          claudeTokensUsed: 0
-        }
+          claudeTokensUsed: 0,
+        },
       };
 
       // Use upsert to handle duplicate key gracefully
       const { data, error } = await this.supabase
-        .from('workflow_sessions')
-        .upsert({
-          session_id: sessionId,
-          user_prompt: initialPrompt,
-          state: initialState
-        }, {
-          onConflict: 'session_id',
-          ignoreDuplicates: false  // Update if exists
-        })
+        .from("workflow_sessions")
+        .upsert(
+          {
+            session_id: sessionId,
+            user_prompt: initialPrompt,
+            state: initialState,
+          },
+          {
+            onConflict: "session_id",
+            ignoreDuplicates: false, // Update if exists
+          }
+        )
         .select()
         .single();
 
       if (error) {
-        this.logger.error('Failed to create/update session:', error);
+        this.logger.error("Failed to create/update session:", error);
         throw new Error(`Failed to create session: ${error.message}`);
       }
 
       this.logger.debug(`Created/updated session ${sessionId} in Supabase`);
       return this.convertToWorkflowSession(sessionId, data);
     } catch (error) {
-      this.logger.error('Error creating session:', error);
+      this.logger.error("Error creating session:", error);
       throw error;
     }
   }
@@ -117,13 +120,13 @@ export class SessionManager {
   async loadSession(sessionId: string): Promise<WorkflowSession | null> {
     try {
       const { data, error } = await this.supabase
-        .from('workflow_sessions')
-        .select('*')
-        .eq('session_id', sessionId)
+        .from("workflow_sessions")
+        .select("*")
+        .eq("session_id", sessionId)
         .single();
 
       if (error) {
-        if (error.code === 'PGRST116') {
+        if (error.code === "PGRST116") {
           // No session found
           return null;
         }
@@ -133,7 +136,7 @@ export class SessionManager {
       this.logger.debug(`Loaded session ${sessionId} from Supabase`);
       return this.convertToWorkflowSession(sessionId, data);
     } catch (error) {
-      this.logger.error('Error loading session:', error);
+      this.logger.error("Error loading session:", error);
       throw error;
     }
   }
@@ -154,7 +157,7 @@ export class SessionManager {
     // Add timestamp to operation for chronological narrative
     const enhancedOperation = {
       ...operation,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     // Add to queue
@@ -162,7 +165,7 @@ export class SessionManager {
     pending.push(enhancedOperation);
 
     // Check if we should save
-    const shouldSave = 
+    const shouldSave =
       this.isPhaseTransition(operation) ||
       this.isCriticalOperation(operation) ||
       pending.length >= this.BATCH_SIZE ||
@@ -189,14 +192,16 @@ export class SessionManager {
     try {
       // Save the batch
       await this.updateSession(sessionId, pending);
-      
+
       // Clear pending and update last save time
       this.pendingOperations.set(sessionId, []);
       this.lastSaveTime.set(sessionId, Date.now());
-      
-      this.logger.debug(`Flushed ${pending.length} operations for session ${sessionId}`);
+
+      this.logger.debug(
+        `Flushed ${pending.length} operations for session ${sessionId}`
+      );
     } catch (error) {
-      this.logger.error('Error flushing operations:', error);
+      this.logger.error("Error flushing operations:", error);
       // Keep operations in queue for retry
       throw error;
     }
@@ -207,19 +212,21 @@ export class SessionManager {
    * Now used internally by flush()
    */
   private async updateSession(
-    sessionId: string, 
+    sessionId: string,
     operations: WorkflowOperation[]
   ): Promise<void> {
     try {
       // Load current state
       const { data: current, error: loadError } = await this.supabase
-        .from('workflow_sessions')
-        .select('state')
-        .eq('session_id', sessionId)
+        .from("workflow_sessions")
+        .select("state")
+        .eq("session_id", sessionId)
         .single();
 
       if (loadError) {
-        throw new Error(`Failed to load session for update: ${loadError.message}`);
+        throw new Error(
+          `Failed to load session for update: ${loadError.message}`
+        );
       }
 
       // Apply operations to state
@@ -230,13 +237,13 @@ export class SessionManager {
 
       // Save updated state
       const { error: updateError } = await this.supabase
-        .from('workflow_sessions')
+        .from("workflow_sessions")
         .update({
           state: updatedState,
           operations: updatedState.operationHistory, // Mirror operations for chronological narrative
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('session_id', sessionId);
+        .eq("session_id", sessionId);
 
       if (updateError) {
         throw new Error(`Failed to update session: ${updateError.message}`);
@@ -246,7 +253,7 @@ export class SessionManager {
         `Updated session ${sessionId} with ${operations.length} operations`
       );
     } catch (error) {
-      this.logger.error('Error updating session:', error);
+      this.logger.error("Error updating session:", error);
       throw error;
     }
   }
@@ -268,17 +275,15 @@ export class SessionManager {
         pendingClarifications: session.state.pendingClarifications,
         clarificationHistory: session.state.clarificationHistory,
         metadata: {
-          operationCount: session.state.operationHistory.length
-        }
+          operationCount: session.state.operationHistory.length,
+        },
       };
 
-      const { error } = await this.supabase
-        .from('workflow_sessions')
-        .upsert({
-          session_id: session.sessionId,
-          state,
-          updated_at: new Date().toISOString()
-        });
+      const { error } = await this.supabase.from("workflow_sessions").upsert({
+        session_id: session.sessionId,
+        state,
+        updated_at: new Date().toISOString(),
+      });
 
       if (error) {
         throw new Error(`Failed to save session: ${error.message}`);
@@ -286,7 +291,7 @@ export class SessionManager {
 
       this.logger.debug(`Saved complete session ${session.sessionId}`);
     } catch (error) {
-      this.logger.error('Error saving session:', error);
+      this.logger.error("Error saving session:", error);
       throw error;
     }
   }
@@ -297,9 +302,9 @@ export class SessionManager {
   async getSessionHistory(sessionId: string): Promise<WorkflowOperation[]> {
     try {
       const { data, error } = await this.supabase
-        .from('workflow_sessions')
-        .select('state')
-        .eq('session_id', sessionId)
+        .from("workflow_sessions")
+        .select("state")
+        .eq("session_id", sessionId)
         .single();
 
       if (error) {
@@ -309,7 +314,7 @@ export class SessionManager {
       const state = data.state as SupabaseSessionState;
       return state.operationHistory || [];
     } catch (error) {
-      this.logger.error('Error getting session history:', error);
+      this.logger.error("Error getting session history:", error);
       throw error;
     }
   }
@@ -319,13 +324,13 @@ export class SessionManager {
    */
   async updateMetadata(
     sessionId: string,
-    metadata: Partial<SupabaseSessionState['metadata']>
+    metadata: Partial<SupabaseSessionState["metadata"]>
   ): Promise<void> {
     try {
       const { data: current, error: loadError } = await this.supabase
-        .from('workflow_sessions')
-        .select('state')
-        .eq('session_id', sessionId)
+        .from("workflow_sessions")
+        .select("state")
+        .eq("session_id", sessionId)
         .single();
 
       if (loadError) {
@@ -336,18 +341,18 @@ export class SessionManager {
       state.metadata = { ...state.metadata, ...metadata };
 
       const { error: updateError } = await this.supabase
-        .from('workflow_sessions')
+        .from("workflow_sessions")
         .update({
           state,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('session_id', sessionId);
+        .eq("session_id", sessionId);
 
       if (updateError) {
         throw new Error(`Failed to update metadata: ${updateError.message}`);
       }
     } catch (error) {
-      this.logger.error('Error updating metadata:', error);
+      this.logger.error("Error updating metadata:", error);
       throw error;
     }
   }
@@ -358,12 +363,12 @@ export class SessionManager {
   async archiveSession(sessionId: string): Promise<void> {
     try {
       const { error } = await this.supabase
-        .from('workflow_sessions')
+        .from("workflow_sessions")
         .update({
           archived: true,
-          archived_at: new Date().toISOString()
+          archived_at: new Date().toISOString(),
         })
-        .eq('session_id', sessionId);
+        .eq("session_id", sessionId);
 
       if (error) {
         throw new Error(`Failed to archive session: ${error.message}`);
@@ -371,7 +376,7 @@ export class SessionManager {
 
       this.logger.debug(`Archived session ${sessionId}`);
     } catch (error) {
-      this.logger.error('Error archiving session:', error);
+      this.logger.error("Error archiving session:", error);
       throw error;
     }
   }
@@ -385,11 +390,11 @@ export class SessionManager {
       expiryDate.setHours(expiryDate.getHours() - 24);
 
       const { data, error } = await this.supabase
-        .from('workflow_sessions')
+        .from("workflow_sessions")
         .delete()
-        .lt('updated_at', expiryDate.toISOString())
-        .eq('archived', false)
-        .select('session_id');
+        .lt("updated_at", expiryDate.toISOString())
+        .eq("archived", false)
+        .select("session_id");
 
       if (error) {
         throw new Error(`Failed to cleanup sessions: ${error.message}`);
@@ -399,7 +404,7 @@ export class SessionManager {
       this.logger.debug(`Cleaned up ${count} expired sessions`);
       return count;
     } catch (error) {
-      this.logger.error('Error cleaning up sessions:', error);
+      this.logger.error("Error cleaning up sessions:", error);
       throw error;
     }
   }
@@ -410,7 +415,7 @@ export class SessionManager {
   async cleanupSession(sessionId: string): Promise<void> {
     // Flush any pending operations
     await this.flush(sessionId);
-    
+
     // Clear resources
     this.clearAutoSave(sessionId);
     this.pendingOperations.delete(sessionId);
@@ -421,19 +426,20 @@ export class SessionManager {
    * Check if operation is a phase transition
    */
   private isPhaseTransition(operation: WorkflowOperation): boolean {
-    return operation.type === 'setPhase' || 
-           operation.type === 'completePhase';
+    return operation.type === "setPhase" || operation.type === "completePhase";
   }
 
   /**
    * Check if operation is critical (should save immediately)
    */
   private isCriticalOperation(operation: WorkflowOperation): boolean {
-    return operation.type === 'requestClarification' ||
-           operation.type === 'clarificationResponse' ||
-           operation.type === 'addToWorkflow' ||
-           operation.type === 'configureNode' ||
-           operation.type === 'addConnection';
+    return (
+      operation.type === "requestClarification" ||
+      operation.type === "clarificationResponse" ||
+      operation.type === "addToWorkflow" ||
+      operation.type === "configureNode" ||
+      operation.type === "addConnection"
+    );
   }
 
   /**
@@ -442,9 +448,11 @@ export class SessionManager {
   private isNodeFullyConfigured(operation: any): boolean {
     // Save when a node has all required fields configured
     const config = operation.config;
-    return config && 
-           Object.keys(config).length > 2 && 
-           (config.resource || config.operation || config.httpMethod);
+    return (
+      config &&
+      Object.keys(config).length > 2 &&
+      (config.resource || config.operation || config.httpMethod)
+    );
   }
 
   /**
@@ -468,7 +476,7 @@ export class SessionManager {
       try {
         await this.flush(sessionId);
       } catch (error) {
-        this.logger.error('Auto-save failed:', error);
+        this.logger.error("Auto-save failed:", error);
       }
     }, this.SAVE_INTERVAL);
 
@@ -501,40 +509,40 @@ export class SessionManager {
 
       // Apply operation based on type
       switch (op.type) {
-        case 'discoverNode':
+        case "discoverNode":
           updatedState.discovered.push(op.node);
           break;
-        
-        case 'selectNode':
+
+        case "selectNode":
           if (!updatedState.selected.includes(op.nodeId)) {
             updatedState.selected.push(op.nodeId);
           }
           break;
-        
-        case 'deselectNode':
+
+        case "deselectNode":
           updatedState.selected = updatedState.selected.filter(
-            id => id !== op.nodeId
+            (id) => id !== op.nodeId
           );
           break;
-        
-        case 'configureNode':
+
+        case "configureNode":
           updatedState.configured[op.nodeId] = {
             nodeId: op.nodeId,
-            nodeType: op.nodeType || '', // Use nodeType from operation, fallback to empty
-            purpose: op.purpose || '', // Use purpose from operation, fallback to empty
-            parameters: op.config
+            nodeType: op.nodeType || "", // Use nodeType from operation, fallback to empty
+            purpose: op.purpose || "", // Use purpose from operation, fallback to empty
+            parameters: op.config,
           };
           break;
-        
-        case 'validateNode':
+
+        case "validateNode":
           updatedState.validated[op.nodeId] = op.result;
           break;
-        
-        case 'setPhase':
+
+        case "setPhase":
           updatedState.phase = op.phase;
           break;
-        
-        case 'completePhase':
+
+        case "completePhase":
           // Use PhaseManager to get the next phase
           const phaseManager = new PhaseManager();
           const nextPhase = phaseManager.getNextPhase(updatedState.phase);
@@ -542,39 +550,52 @@ export class SessionManager {
             updatedState.phase = nextPhase;
           }
           break;
-        
-        case 'requestClarification':
+
+        case "requestClarification":
           updatedState.pendingClarifications.push({
             questionId: op.questionId,
             question: op.question,
             context: op.context,
-            timestamp: new Date()
+            timestamp: new Date(),
           });
           break;
-        
-        case 'clarificationResponse':
+
+        case "clarificationResponse":
           // Move from pending to history
           const clarification = updatedState.pendingClarifications.find(
-            c => c.questionId === op.questionId
+            (c) => c.questionId === op.questionId
           );
           if (clarification) {
             updatedState.clarificationHistory.push({
               questionId: op.questionId,
               question: clarification.question,
               response: op.response,
-              timestamp: new Date()
+              timestamp: new Date(),
             });
-            updatedState.pendingClarifications = 
+            updatedState.pendingClarifications =
               updatedState.pendingClarifications.filter(
-                c => c.questionId !== op.questionId
+                (c) => c.questionId !== op.questionId
               );
           }
           break;
-        
-        case 'setWorkflow':
+
+        case "setUserPrompt":
+          // Preserve initial prompt if not already stored
+          if (!updatedState.metadata) updatedState.metadata = {} as any;
+          if (
+            !(updatedState as any).metadata.initialPrompt &&
+            updatedState.userPrompt
+          ) {
+            (updatedState as any).metadata.initialPrompt =
+              updatedState.userPrompt;
+          }
+          updatedState.userPrompt = op.prompt;
+          break;
+
+        case "setWorkflow":
           updatedState.workflow = op.workflow;
           break;
-        
+
         // Add more operation types as needed
       }
     }
@@ -582,7 +603,7 @@ export class SessionManager {
     // Update metadata
     updatedState.metadata = {
       ...updatedState.metadata,
-      operationCount: updatedState.operationHistory.length
+      operationCount: updatedState.operationHistory.length,
     };
 
     return updatedState;
@@ -596,7 +617,7 @@ export class SessionManager {
     data: any
   ): WorkflowSession {
     const state = data.state as SupabaseSessionState;
-    
+
     return {
       sessionId,
       createdAt: new Date(data.created_at),
@@ -610,8 +631,8 @@ export class SessionManager {
         workflow: state.workflow,
         operationHistory: state.operationHistory,
         pendingClarifications: state.pendingClarifications,
-        clarificationHistory: state.clarificationHistory
-      }
+        clarificationHistory: state.clarificationHistory,
+      },
     };
   }
 

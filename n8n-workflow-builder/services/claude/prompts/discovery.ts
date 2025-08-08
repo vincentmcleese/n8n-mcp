@@ -96,6 +96,18 @@ DO NOT ASK when implementation details are missing:
 - "Notify team" → ASSUME: Slack, use "send_slack_message"
 - "Call API" → ASSUME: HTTP POST, use "post_json_request"
 
+## Search Term Guidelines
+When generating searchTerms for unmatched_capabilities, use SIMPLE terms:
+- For MongoDB operations → searchTerms: ["mongodb", "mongo", "database"]
+- For schema validation → searchTerms: ["schema", "validate", "validation", "json"]
+- For Stripe payments → searchTerms: ["stripe", "payment", "checkout"]
+- For calendar sync → searchTerms: ["calendar", "google", "outlook"]
+- For FTP operations → searchTerms: ["ftp", "sftp", "file"]
+- For compression → searchTerms: ["zip", "compress", "archive"]
+
+AVOID compound terms like "mongodb_operations", "schema_validation", "json_schema_validator"
+PREFER simple node names that actually exist in n8n
+
 ## Output JSON Structure
 
 ### Normal Case - Clear Intent
@@ -122,14 +134,14 @@ You must complete this JSON structure:
     {
       "name": "capability needed but not in task list",
       "description": "why it's needed",
-      "searchTerms": ["primary_search", "alternative1", "alternative2"]
+      "searchTerms": ["simple_node_name", "alternative1", "alternative2"]
     }
   ],
   "search_suggestions": [
     {
       "capability": "what we're looking for",
-      "primary": "best search term",
-      "alternatives": ["fallback1", "fallback2"]
+      "primary": "simple single-word search term (e.g., 'mongodb' not 'mongodb_operations')",
+      "alternatives": ["simpler_term1", "simpler_term2"]
     }
   ],
   "workflow_pattern": "e.g., trigger-validate-process-notify",
@@ -177,279 +189,14 @@ Analyze this request:
   );
 }
 
-// ==========================================
-// Discovery Phase Main Prompts
-// ==========================================
 
-interface DiscoveryContext extends PromptContext {
-  mcpDiscoveredNodes?: any[];
-  searchKeywords?: string[];
-  isIncremental?: boolean;
-  existingNodes?: any[];
-  existingSelectedIds?: string[];
-  newNodes?: any[];
-  clarificationResponse?: string;
-  // New fields for task-based discovery
-  taskNodes?: any[]; // Pre-configured nodes from tasks
-  searchedNodes?: any[]; // Nodes found via search for gaps
-  matchedTasks?: string[]; // Tasks already fetched
-  unmatchedCapabilities?: any[]; // Capabilities that need searching
-}
 
-/**
- * Generate prompt for discovery phase operations (optimized for task-based flow)
- */
-export function getDiscoveryPrompt(context: DiscoveryContext): PromptParts {
-  const {
-    userIntent,
-    mcpDiscoveredNodes = [],
-    searchKeywords = [],
-    isIncremental = false,
-    existingNodes = [],
-    existingSelectedIds = [],
-    newNodes = [],
-    clarificationResponse = "",
-    taskNodes = [],
-    searchedNodes = [],
-    matchedTasks = [],
-    unmatchedCapabilities = [],
-  } = context;
-
-  const systemPrompt = `${BASE_N8N_CONTEXT}
-
-Continue the started JSON: {"operations":[...complete array...],"reasoning":[...steps...]}
-
-${
-  isIncremental
-    ? `INCREMENTAL MODE: User clarified: "${clarificationResponse}"
-Existing: ${existingNodes.length} nodes discovered, ${existingSelectedIds.length} selected
-Only add NEW nodes based on clarification.`
-    : `TASK-BASED DISCOVERY: Converting pre-configured tasks and searched nodes into operations.`
-}
-
-${
-  taskNodes.length > 0
-    ? `PRE-CONFIGURED TASK NODES (already fetched from MCP):
-${taskNodes
-  .map(
-    (n: any, i: number) => `- ${n.taskName} → ${n.nodeType} (ID: ${n.nodeId})`
-  )
-  .join("\n")}`
-    : ""
-}
-
-${
-  searchedNodes.length > 0
-    ? `SEARCHED NODES (found for unmatched capabilities):
-${searchedNodes
-  .map((n: any) => `- ${n.nodeType}: ${n.displayName} (ID: ${n.nodeId})`)
-  .join("\n")}`
-    : ""
-}
-
-OPERATIONS TO GENERATE:
-1. For EACH task node: Create discoverNode + selectNode operations
-2. For SEARCHED nodes: Only select the ones you need
-3. If still missing critical functionality: requestClarification
-
-OPERATION FORMATS:
-- discoverNode: {"type":"discoverNode","node":{"id":"node_X","type":"nodes-base.nodeName","purpose":"why needed"}}
-- selectNode: {"type":"selectNode","nodeId":"node_X"}
-- requestClarification: {"type":"requestClarification","questionId":"qX","question":"text","context":{"reason":"why"}}
-
-RULES:
-1. Task nodes are pre-configured - just discover and select them
-2. Searched nodes need evaluation - select only what's needed
-3. Preserve node IDs as provided
-4. Only ask clarification if critical functionality is still missing
-
-${JSON_OUTPUT_RULES}`;
-
-  // Build the user message based on mode
-  const userMessage = buildDiscoveryUserMessage(
-    userIntent,
-    isIncremental,
-    mcpDiscoveredNodes,
-    newNodes,
-    existingNodes,
-    existingSelectedIds,
-    clarificationResponse,
-    searchKeywords,
-    taskNodes,
-    searchedNodes
-  );
-
-  return addVersionMetadata(
-    {
-      system: systemPrompt,
-      user: userMessage,
-      prefill: PREFILLS.DISCOVERY,
-    },
-    "discovery"
-  );
-}
-
-/**
- * Build the user message for discovery phase (task-based)
- */
-function buildDiscoveryUserMessage(
-  userIntent: string,
-  isIncremental: boolean,
-  mcpDiscoveredNodes: any[],
-  newNodes: any[],
-  existingNodes: any[],
-  existingSelectedIds: string[],
-  clarificationResponse: string,
-  searchKeywords: string[],
-  taskNodes?: any[],
-  searchedNodes?: any[]
-): string {
-  let nodeListInfo = "";
-
-  if (isIncremental) {
-    // For incremental mode, show existing and new nodes separately
-    nodeListInfo = `\n\nEXISTING discovered nodes (DO NOT re-discover these):\n`;
-    existingNodes.forEach((node: any, index: number) => {
-      const isSelected = existingSelectedIds.includes(node.id);
-      nodeListInfo += `${index + 1}. ${node.type} - ${node.displayName} (ID: ${
-        node.id
-      })${isSelected ? " [ALREADY SELECTED]" : ""}\n`;
-    });
-
-    if (newNodes.length > 0) {
-      nodeListInfo += `\n\nNEW nodes found based on clarification "${clarificationResponse}":\n`;
-      nodeListInfo += formatNodeList(newNodes);
-    } else {
-      nodeListInfo += `\n\nNo new nodes were found based on the clarification. You may need to work with existing nodes.`;
-    }
-
-    return `Original request: "${userIntent}"
-Clarification provided: "${clarificationResponse}"
-${nodeListInfo}
-
-Based on the clarification, generate ONLY the additional operations needed:
-1. Only discover NEW nodes that help address the clarification
-2. Only select additional nodes if needed based on the clarification
-3. Use sequential node IDs starting from node_${existingNodes.length + 1}
-4. DO NOT re-discover or re-select existing nodes
-
-Remember: Focus only on what the clarification adds to the workflow.`;
-  } else {
-    // Task-based discovery mode
-    if (taskNodes && taskNodes.length > 0) {
-      nodeListInfo = `\n\nTASK-BASED NODES (pre-configured from MCP):\n`;
-      taskNodes.forEach((node: any, index: number) => {
-        nodeListInfo += `${index + 1}. ${node.taskName} → ${
-          node.nodeType
-        } (ID: ${node.nodeId})\n`;
-        nodeListInfo += `   Purpose: ${
-          node.purpose || "Pre-configured task"
-        }\n`;
-        nodeListInfo += `   Status: Ready to use (pre-configured)\n\n`;
-      });
-    }
-
-    if (searchedNodes && searchedNodes.length > 0) {
-      nodeListInfo += `\n\nSEARCHED NODES (found for gaps):\n`;
-      searchedNodes.forEach((node: any, index: number) => {
-        nodeListInfo += `${index + 1}. ${node.nodeType} - ${
-          node.displayName
-        } (ID: ${node.nodeId})\n`;
-        nodeListInfo += `   Purpose: ${node.purpose}\n`;
-        nodeListInfo += `   Needs configuration: Yes\n\n`;
-      });
-    }
-
-    // @deprecated - Remove this fallback after Phase 5 complete
-    // @removal-target After full migration to task-based discovery
-    if (
-      !taskNodes?.length &&
-      !searchedNodes?.length &&
-      mcpDiscoveredNodes.length > 0
-    ) {
-      // LEGACY: Fallback to old format if no task-based data
-      nodeListInfo = `\n\nMCP-Discovered Nodes (based on keywords: ${searchKeywords.join(
-        ", "
-      )}):\n`;
-      nodeListInfo += formatNodeList(mcpDiscoveredNodes);
-    } else {
-      nodeListInfo =
-        "\n\nNOTE: No nodes were discovered from MCP. You may need to request clarification or suggest the user refines their request.";
-    }
-
-    return `User wants to: "${userIntent}"
-${nodeListInfo}
-
-Generate the discovery phase operations to:
-1. Select relevant nodes from the MCP-discovered list above
-2. Create discoverNode operations for each selected node
-3. Create selectNode operations for nodes to include in the workflow
-4. Request clarification if the discovered nodes don't match the user's intent
-
-IMPORTANT: Only use nodes from the MCP-discovered list. Do NOT invent node types.
-Remember to use sequential node IDs (node_1, node_2, etc.) and include clear purpose descriptions.`;
-  }
-}
-
-// ==========================================
-// Clarification Prompts
-// ==========================================
-
-/**
- * Generate prompt for handling clarification responses
- */
-export function getClarificationHandlingPrompt(
-  originalIntent: string,
-  questionId: string,
-  question: string,
-  response: string,
-  existingState: any
-): PromptParts {
-  const systemPrompt = `${BASE_N8N_CONTEXT}
-
-You previously asked for clarification:
-Question ID: ${questionId}
-Question: "${question}"
-
-The user has now provided a response. Based on this new information, continue building the workflow discovery.
-
-Continue the started JSON: {"operations":[...complete array...],"reasoning":[...steps...]}
-
-Remember:
-- Only add NEW operations based on the clarification
-- Don't repeat operations for nodes already discovered
-- Use the clarification to refine or expand the workflow design
-- Continue with sequential node IDs from where you left off
-
-${JSON_OUTPUT_RULES}`;
-
-  const userMessage = `Original request: "${originalIntent}"
-
-Your question: "${question}"
-User's response: "${sanitizeUserInput(response)}"
-
-Current state:
-- Nodes discovered: ${existingState.discovered || 0}
-- Nodes selected: ${existingState.selected || 0}
-
-Based on the clarification, generate additional discovery operations as needed.`;
-
-  return addVersionMetadata(
-    {
-      system: systemPrompt,
-      user: userMessage,
-      prefill: PREFILLS.DISCOVERY,
-    },
-    "discovery"
-  );
-}
 
 // ==========================================
 // Export Discovery Prompts
 // ==========================================
 
+// Export for use by DiscoveryRunner and DiscoveryPhaseService
 export const DiscoveryPrompts = {
   getIntentAnalysisPrompt,
-  getDiscoveryPrompt,
-  getClarificationHandlingPrompt,
 };

@@ -29,18 +29,8 @@ export interface DiscoveryInput {
   prompt: string;
   sessionId: string;
   mode?: 'fresh' | 'incremental';
-  context?: DiscoveryContext;
 }
 
-export interface DiscoveryContext {
-  mcpDiscoveredNodes?: any[];
-  searchKeywords?: string[];
-  analysisIntent?: string;
-  existingNodes?: any[];
-  existingSelectedIds?: string[];
-  newlyDiscoveredNodes?: any[];
-  clarificationResponse?: string;
-}
 
 export interface DiscoveryOutput {
   operations: WorkflowOperation[];
@@ -77,40 +67,83 @@ export class DiscoveryPhaseService extends BasePhaseService<DiscoveryInput, Disc
     return 'discovery';
   }
 
+
   /**
-   * Execute the discovery phase
+   * Select nodes from gap search results
    */
-  async execute(
-    input: DiscoveryInput,
-    context: PhaseContext
-  ): Promise<PhaseResult<DiscoveryOutput>> {
-    const { prompt, mode = 'fresh', context: discoveryContext } = input;
+  async selectFromGapResults(input: {
+    prompt: string;
+    sessionId: string;
+    intentAnalysis: ClaudeAnalysisResponse;
+    gapResults: any;
+    formattedResults: string; // Pre-formatted by GapSearchService
+  }): Promise<PhaseResult<DiscoveryOperationsResponse>> {
+    this.logger.debug('Selecting nodes from gap search results');
     
-    this.logger.debug(`Starting ${mode} discovery phase`);
-    
-    try {
-      if (mode === 'incremental' && discoveryContext?.clarificationResponse) {
-        // Handle incremental discovery for clarification
-        return await this.handleIncrementalDiscovery(
-          prompt,
-          discoveryContext,
-          context
-        );
-      } else {
-        // Fresh discovery
-        return await this.handleFreshDiscovery(
-          prompt,
-          discoveryContext || {},
-          context
-        );
+    // Create selection prompt - EXACT same structure as before
+    const selectionPrompt = `Based on the user's request: "${input.prompt}"
+
+We've already fetched ${input.intentAnalysis.matched_tasks.length} pre-configured task templates.
+
+Now select the BEST node for each capability gap from these search results:
+
+${input.formattedResults}
+
+For each capability, select ONE node that best matches the requirement.
+Generate discoverNode and selectNode operations for your selections.
+
+Selection criteria:
+1. Exact functionality match
+2. Popularity and reliability
+3. Configuration simplicity
+4. Integration with existing task nodes
+
+Return operations in the standard format.`;
+
+    // Use the same prompt structure as other discovery prompts
+    const promptParts = {
+      system: `You are a workflow automation expert. Select the best nodes from search results to fulfill capability gaps.
+
+Return a JSON object with an "operations" array containing discoverNode and selectNode operations.
+
+Example format:
+{
+  "operations": [
+    {
+      "type": "discoverNode",
+      "node": {
+        "id": "node-id",
+        "type": "node-type",
+        "displayName": "Display Name",
+        "purpose": "What this node does"
       }
-    } catch (error) {
-      this.logError('discovery phase', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error : new Error(String(error)),
-      };
+    },
+    {
+      "type": "selectNode", 
+      "nodeId": "node-id"
     }
+  ],
+  "reasoning": ["Why these nodes were selected"]
+}`,
+      user: selectionPrompt,
+      prefill: '{"operations":['
+    };
+    
+    // Call Claude for selection
+    const result = await this.callClaude<DiscoveryOperationsResponse>(
+      promptParts,
+      TOKEN_LIMITS.discovery,
+      discoveryOperationsResponseSchema as any,
+      'selectFromGapResults'
+    );
+    
+    if (result.success && result.data) {
+      this.logSuccess('Gap node selection', {
+        operationsCount: result.data.operations?.length || 0
+      });
+    }
+    
+    return result;
   }
 
   /**
@@ -173,192 +206,6 @@ export class DiscoveryPhaseService extends BasePhaseService<DiscoveryInput, Disc
     return result;
   }
 
-  /**
-   * Handle fresh discovery
-   */
-  private async handleFreshDiscovery(
-    prompt: string,
-    discoveryContext: DiscoveryContext,
-    phaseContext: PhaseContext
-  ): Promise<PhaseResult<DiscoveryOutput>> {
-    this.logger.debug('Processing fresh discovery');
-    
-    // Build the discovery prompt
-    const promptParts = DiscoveryPrompts.getDiscoveryPrompt({
-      userIntent: prompt,
-      sessionId: phaseContext.sessionId,
-      mcpDiscoveredNodes: discoveryContext.mcpDiscoveredNodes || [],
-      searchKeywords: discoveryContext.searchKeywords || [],
-      isIncremental: false,
-    });
-    
-    // Call Claude for discovery operations
-    const result = await this.callClaude<DiscoveryOperationsResponse>(
-      promptParts,
-      TOKEN_LIMITS.discovery,
-      discoveryOperationsResponseSchema as any,
-      'discovery'
-    );
-    
-    if (!result.success || !result.data) {
-      return {
-        success: false,
-        error: result.error || new Error('Failed to generate discovery operations'),
-        usage: result.usage,
-      };
-    }
-    
-    // Process and enhance operations
-    const enhancedOperations = this.attachReasoningToOperations(
-      result.data.operations || [],
-      result.data.reasoning || []
-    );
-    
-    this.logSuccess('Discovery phase', {
-      operations: enhancedOperations.length,
-      discoverOps: enhancedOperations.filter(op => op.type === 'discoverNode').length,
-      selectOps: enhancedOperations.filter(op => op.type === 'selectNode').length,
-      clarifications: enhancedOperations.filter(op => op.type === 'requestClarification').length,
-    });
-    
-    return {
-      success: true,
-      data: {
-        operations: enhancedOperations,
-        reasoning: result.data.reasoning || [],
-        usage: result.usage,
-      },
-      usage: result.usage,
-      reasoning: result.data.reasoning,
-    };
-  }
-
-  /**
-   * Handle incremental discovery for clarification responses
-   */
-  private async handleIncrementalDiscovery(
-    originalPrompt: string,
-    discoveryContext: DiscoveryContext,
-    phaseContext: PhaseContext
-  ): Promise<PhaseResult<DiscoveryOutput>> {
-    this.logger.debug('Processing incremental discovery for clarification');
-    
-    if (!discoveryContext.clarificationResponse) {
-      return {
-        success: false,
-        error: new Error('No clarification response provided for incremental discovery'),
-      };
-    }
-    
-    // Build the incremental discovery prompt
-    const promptParts = DiscoveryPrompts.getDiscoveryPrompt({
-      userIntent: originalPrompt,
-      sessionId: phaseContext.sessionId,
-      isIncremental: true,
-      existingNodes: discoveryContext.existingNodes || [],
-      existingSelectedIds: discoveryContext.existingSelectedIds || [],
-      newNodes: discoveryContext.newlyDiscoveredNodes || [],
-      clarificationResponse: discoveryContext.clarificationResponse,
-    });
-    
-    // Call Claude for additional operations
-    const result = await this.callClaude<DiscoveryOperationsResponse>(
-      promptParts,
-      TOKEN_LIMITS.discovery,
-      discoveryOperationsResponseSchema as any,
-      'incrementalDiscovery'
-    );
-    
-    if (!result.success || !result.data) {
-      return {
-        success: false,
-        error: result.error || new Error('Failed to generate incremental discovery operations'),
-        usage: result.usage,
-      };
-    }
-    
-    // Process and enhance operations
-    const enhancedOperations = this.attachReasoningToOperations(
-      result.data.operations || [],
-      result.data.reasoning || []
-    );
-    
-    const newDiscoverOps = enhancedOperations.filter(op => op.type === 'discoverNode').length;
-    const newSelectOps = enhancedOperations.filter(op => op.type === 'selectNode').length;
-    
-    this.logSuccess('Incremental discovery', {
-      newOperations: enhancedOperations.length,
-      newDiscoverOps,
-      newSelectOps,
-    });
-    
-    return {
-      success: true,
-      data: {
-        operations: enhancedOperations,
-        reasoning: result.data.reasoning || [],
-        usage: result.usage,
-      },
-      usage: result.usage,
-      reasoning: result.data.reasoning,
-    };
-  }
-
-  /**
-   * Handle clarification response
-   */
-  async handleClarification(
-    input: ClarificationInput
-  ): Promise<PhaseResult<DiscoveryOutput>> {
-    this.logger.debug(`Handling clarification response for question ${input.questionId}`);
-    
-    // Get the clarification handling prompt
-    const promptParts = DiscoveryPrompts.getClarificationHandlingPrompt(
-      input.originalPrompt,
-      input.questionId,
-      input.question,
-      input.response,
-      input.existingState
-    );
-    
-    // Call Claude for additional operations based on clarification
-    const result = await this.callClaude<DiscoveryOperationsResponse>(
-      promptParts,
-      TOKEN_LIMITS.discovery,
-      discoveryOperationsResponseSchema as any,
-      'clarificationHandling'
-    );
-    
-    if (!result.success || !result.data) {
-      return {
-        success: false,
-        error: result.error || new Error('Failed to process clarification response'),
-        usage: result.usage,
-      };
-    }
-    
-    // Process and enhance operations
-    const enhancedOperations = this.attachReasoningToOperations(
-      result.data.operations || [],
-      result.data.reasoning || []
-    );
-    
-    this.logSuccess('Clarification handling', {
-      operations: enhancedOperations.length,
-      reasoning: result.data.reasoning?.length || 0,
-    });
-    
-    return {
-      success: true,
-      data: {
-        operations: enhancedOperations,
-        reasoning: result.data.reasoning || [],
-        usage: result.usage,
-      },
-      usage: result.usage,
-      reasoning: result.data.reasoning,
-    };
-  }
 
   /**
    * Validate discovery output

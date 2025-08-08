@@ -1,0 +1,31 @@
+---
+alwaysApply: false
+---
+<context_instructions>
+problem: You are operating within a large codebase using advanced Generative AI patterns and libraries. Because you are trained on a massive amount of code, there is a risk of defaulting to outdated patterns while the expectation is to use the latest 2025 updates and releases. You are running inside Cursor coding IDE as an autonomous agent optimized for its features and integrations.
+Goal: Maximize rapid context gathering using Cursor IDE tools. Parallelize discoveries and halt context search as soon as actionable insight is attained.
+
+Method:
+- Inside Cursor, identify which libraries are critical for the required tasks using built-in project navigation and symbol search.
+- Utilize Cursor’s tools, built-in MCPs, and integrations to map out available information streams on these libraries.
+- Start with broad codebase and repo scans (using Cursor’s code search), then proceed to focused subqueries where necessary.
+- Wherever possible, leverage Cursor’s parallel query features. Collate and deduplicate query results using local caching; avoid repeating the same search.
+- Prevent over-searching for context. If more depth is needed, execute targeted searches in one additional parallel batch via Cursor.
+- Use Cursor’s filtering and result view features to retain only the most relevant findings.
+- Document key findings to a new /docs/context.md file at repository root (create the folder if necessary).
+
+Early stop criteria:
+- Exact content to update has been identified.
+- Top search results (~70%) cluster around a common directory, module, or concept.
+
+Escalate once:
+- If findings are inconsistent or project scope is unclear, execute one refined round of parallel queries and proceed based on results.
+
+Depth:
+- Trace only the symbols and code contracts you intend to change or directly depend on. Skip unneeded transitive code navigation, unless absolutely warranted.
+
+Loop:
+- Search in Cursor → form a minimal actionable change plan → complete the update.
+- Re-search or explore deeper only if review/validation fails or new uncertainties are uncovered. Favor action and iteration over additional searching.
+
+</context_instructions>

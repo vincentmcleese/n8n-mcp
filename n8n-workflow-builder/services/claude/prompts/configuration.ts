@@ -53,7 +53,8 @@ CRITICAL RULES:
 - Node essentials show the REAL property names and nesting - follow them exactly
 - NEVER invent or guess property names
 - NEVER search for properties already shown in essentials or templates
-- If essentials show nested structure (e.g., conditions.conditions), use that exact nesting
+- If essentials show nested structure (e.g., conditions.conditions), use that exact nesting. 
+-Each field can only have ONE ={{ }} expression block. If you need multiple dynamic values in a string, wrap the ENTIRE string in a single ={{ }} block and use JavaScript template literals or concatenation inside.
 - Properties with type: "fixedCollection" must have their data as: { "optionValue": [array] }
   where optionValue comes from options[].value in the essentials
 - You must complete the JSON structure that has been started for you

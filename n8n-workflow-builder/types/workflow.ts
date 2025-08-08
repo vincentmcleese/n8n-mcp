@@ -14,8 +14,8 @@ import type {
   AddNodeOperation,
   UpdateWorkflowSettingsOperation,
   SetWorkflowNameOperation,
-  AddStickyNoteOperation
-} from './claude';
+  AddStickyNoteOperation,
+} from "./claude";
 
 // ==========================================
 // Core Types
@@ -54,13 +54,13 @@ export interface WorkflowSettings {
 /**
  * Workflow phase states
  */
-export type WorkflowPhase = 
-  | 'discovery' 
-  | 'configuration' 
-  | 'validation' 
-  | 'building' 
-  | 'documentation'
-  | 'complete';
+export type WorkflowPhase =
+  | "discovery"
+  | "configuration"
+  | "validation"
+  | "building"
+  | "documentation"
+  | "complete";
 
 // ==========================================
 // State Types
@@ -118,18 +118,18 @@ export interface ClientWorkflowState {
  * Base operation type with narrative fields
  */
 export interface BaseOperation {
-  timestamp?: string;     // When the operation occurred
-  reasoning?: string;     // Why this operation was performed
+  timestamp?: string; // When the operation occurred
+  reasoning?: string; // Why this operation was performed
   operationIndex?: number; // Index in the operation sequence
 }
 
 /**
  * Extended operation types for session management
  * These extend the Claude operation types with additional session-specific operations
- * 
+ *
  * @see Claude operation types in @/types/claude/operations.ts
  */
-export type SessionOperation = 
+export type SessionOperation =
   // Use imported Claude operation types
   | DiscoverNodeOperation
   | SelectNodeOperation
@@ -145,17 +145,32 @@ export type SessionOperation =
   | UpdateWorkflowSettingsOperation
   | SetWorkflowNameOperation
   | AddStickyNoteOperation
-  
+
   // Additional session-specific operations not in Claude types
-  | { type: 'clarificationResponse'; questionId: string; response: string }
-  | { type: 'updateNodeConfig'; nodeId: string; path: string; value: any }
-  | { type: 'validateNode'; nodeId: string; result: ValidationResult }
-  | { type: 'addValidationError'; nodeId: string; error: ValidationError }
-  | { type: 'validationHistory'; nodeId: string; nodeType: string; history: any[]; finalValid: boolean; totalAttempts: number }
-  | { type: 'addToWorkflow'; nodeId: string; position: [number, number] }
-  | { type: 'setWorkflow'; workflow: { nodes: any[]; connections: any; settings: any } }
-  | { type: 'setPhase'; phase: WorkflowPhase }
-  | { type: 'completePhase'; phase: WorkflowPhase };
+  | { type: "clarificationResponse"; questionId: string; response: string }
+  | {
+      type: "setUserPrompt";
+      prompt: string;
+      reason?: "clarification" | "user_edit";
+    }
+  | { type: "updateNodeConfig"; nodeId: string; path: string; value: any }
+  | { type: "validateNode"; nodeId: string; result: ValidationResult }
+  | { type: "addValidationError"; nodeId: string; error: ValidationError }
+  | {
+      type: "validationHistory";
+      nodeId: string;
+      nodeType: string;
+      history: any[];
+      finalValid: boolean;
+      totalAttempts: number;
+    }
+  | { type: "addToWorkflow"; nodeId: string; position: [number, number] }
+  | {
+      type: "setWorkflow";
+      workflow: { nodes: any[]; connections: any; settings: any };
+    }
+  | { type: "setPhase"; phase: WorkflowPhase }
+  | { type: "completePhase"; phase: WorkflowPhase };
 
 /**
  * Workflow operation with metadata
@@ -178,9 +193,9 @@ export interface DiscoveredNode {
   description?: string;
   category?: string;
   // New flags for task-based discovery
-  isPreConfigured?: boolean;     // True for task nodes with pre-configured settings
-  needsConfiguration?: boolean;  // True for searched nodes that need configuration
-  config?: any;                  // Pre-configured settings from task template
+  isPreConfigured?: boolean; // True for task nodes with pre-configured settings
+  needsConfiguration?: boolean; // True for searched nodes that need configuration
+  config?: any; // Pre-configured settings from task template
 }
 
 /**
@@ -189,8 +204,8 @@ export interface DiscoveredNode {
 export interface StickyNote {
   id: string;
   content: string;
-  nodeGroupIds: string[];  // IDs of nodes this note documents
-  color?: number;          // 1-7 for different colors in n8n
+  nodeGroupIds: string[]; // IDs of nodes this note documents
+  color?: number; // 1-7 for different colors in n8n
 }
 
 /**
@@ -217,7 +232,7 @@ export interface ValidationError {
   nodeId: string;
   field?: string;
   message: string;
-  severity: 'error' | 'warning';
+  severity: "error" | "warning";
 }
 
 /**
@@ -249,7 +264,7 @@ export interface ClarificationResponse {
  */
 export interface ErrorResponse {
   error: {
-    type: 'claude_api' | 'mcp_server' | 'database' | 'validation' | 'client';
+    type: "claude_api" | "mcp_server" | "database" | "validation" | "client";
     code: string;
     message: string;
     userMessage: string;
@@ -259,7 +274,7 @@ export interface ErrorResponse {
     context?: any; // Flexible for debugging
   };
   fallback?: {
-    action: 'use_cache' | 'skip_step' | 'simplified_mode' | 'offline_mode';
+    action: "use_cache" | "skip_step" | "simplified_mode" | "offline_mode";
     data?: any;
   };
 }

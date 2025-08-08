@@ -95,24 +95,6 @@ export interface ClaudeAnalysisResponse extends BaseClaudeResponse {
   };
 }
 
-/**
- * @deprecated Since 2024-01-06 - Phase 1 of discovery refactor
- * @removal-target After Phase 5 complete and tested
- * @todo Remove after full migration to task-based discovery
- * @see ClaudeAnalysisResponse for the new implementation
- * 
- * Legacy intent analysis response (for backward compatibility)
- */
-export interface LegacyClaudeAnalysisResponse extends BaseClaudeResponse {
-  intent: string;
-  requiredCapabilities: string[];
-  suggestedSearchTerms: string[];
-  nodeRecommendations: Array<{
-    type: string;
-    purpose: string;
-    priority: "essential" | "recommended" | "optional";
-  }>;
-}
 
 /**
  * Discovery phase operations response
@@ -163,12 +145,8 @@ export interface DiscoveryOperationsResponse extends BaseClaudeResponse {
  *   "reasoning": ["Slack requires auth", "Channel property not in essentials"]
  * }
  */
-export interface NodeRequirementsResponse extends BaseClaudeResponse {
-  needsAuth: boolean;
-  needsProperties: string[];
-  suggestedTask?: string;
-  needsDocumentation: boolean;
-}
+// Deprecated in optimized configuration flow (MVP). Retained for compatibility but unused.
+// (Removed) NodeRequirementsResponse – replaced by essentials-based configuration flow.
 
 /**
  * Configuration phase operations response
@@ -194,22 +172,6 @@ export interface NodeRequirementsResponse extends BaseClaudeResponse {
 export interface ConfigurationOperationsResponse extends BaseClaudeResponse {
   operations: ConfigureNodeOperation[];
 }
-
-/**
- * Fixed node configuration response
- * Used in: fixNodeConfig()
- * Returns just the fixed configuration object
- * 
- * @example
- * {
- *   "resource": "message",
- *   "operation": "post",
- *   "select": "channel",
- *   "channelId": "#general",
- *   "text": "Message text"
- * }
- */
-export type FixedNodeConfigResponse = Record<string, any>;
 
 // ==========================================
 // Building Phase Types

@@ -1,0 +1,51 @@
+---
+alwaysApply: false
+---
+<code_editing_rules>
+
+<guiding_principles>
+- Clarity and Reuse: Ensure all modules, services, and components are modular and reusable across the large codebase. Refactor duplicated logic or UI patterns into shared modules or components.
+- Consistency: Maintain strict adherence to a unified design and code convention system—including consistent use of color tokens, typography, spacing, component patterns (in the frontend), and API schemas (in the backend).
+- Simplicity: Favor small, focused components, services, and endpoints. Avoid unnecessary complexity in business logic, state handling, or styling.
+- Demo-Oriented: Structure the refactor to enable rapid prototyping and clear demonstration of complex capabilities like OpenAI Agent SDK integrations or Pydantic AI Agents SDK, streaming, multi-turn conversations, and tool or plugin integrations.
+- Visual Quality: Achieve a high visual quality bar following shared OSS guidelines (proper spacing, padding, accessible states, etc.) across both frontend (React/Next.js/Vite) and API documentation (FastAPI).
+</guiding_principles>
+
+<refactor_stack_defaults>
+- Model: All model usage must leverage gpt-5 (as this is the most powerful model available to us, much better than gpt-4o, or gpt-4-turbo)
+- Backend: FastAPI (Python, using Pydantic 2.11 for data models and validation, or with the Pydantic Agent SDK)
+- Frontend: Next.js (TypeScript), React, Vite (when required for client-side apps)
+- Styling: TailwindCSS
+- UI Components: shadcn/ui
+- Icons: Lucide
+- State Management: Zustand (for React apps)
+- Directory Structure:
+```
+/backend
+  /api                  # FastAPI endpoints
+  /agents               # OpenAI agent SDK pipelining
+  /schemas              # Pydantic 2.11 models and validation
+  /utils                # Shared backend utilities
+/frontend
+  /src
+    /app                # Next.js, React or Vite page routes
+    /components         # UI building blocks
+    /hooks              # Reusable React hooks
+    /lib                # Shared utilities (fetchers, helpers)
+    /stores             # Zustand stores
+    /types              # Shared TypeScript types
+    /styles             # Tailwind config
+```
+</refactor_stack_defaults>
+
+<below only for frontend, else ignore>
+
+<ui_ux_best_practices>
+- Visual Hierarchy: Limit typography to 4–5 font sizes/weights for consistent hierarchy; use `text-xs` for captions and annotations; use `text-xl` only for hero sections/major headings (which can be appropriately sized for the context)
+- Color Usage: Use a single neutral base (e.g., `zinc`) and up to 2 accent colors consistently across frontend modules.
+- Spacing and Layout: Use multiples of 4 for padding/margin. In long content/streaming flows, use fixed-height containers with internal scrolling.
+- Voice-Only App: The application must not allow any user interaction via screen, keyboard, or mouse—voice is the only permitted input modality.
+- Accessibility: Use semantic HTML and ARIA roles where appropriate in React/Next.js; leverage accessible FastAPI documentation and schemas; favor Radix/shadcn prebuilt components.
+</ui_ux_best_practices>
+
+<code_editing_rules>

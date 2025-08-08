@@ -1,23 +1,20 @@
 /**
- * Configuration Phase Service
+ * Configuration Phase Service (OPTIMIZED)
  * 
- * Handles the configuration phase of workflow generation, including:
- * - Node configuration generation
- * - Node requirements analysis
- * - Configuration fixing based on validation errors
+ * Handles the configuration phase using node essentials for 95% token reduction:
+ * - Node configuration generation with essentials
+ * - Category-based rules application
+ * - Simplified single-pass configuration
  */
 
 import { BasePhaseService, type PhaseContext, type PhaseResult } from './base';
 import { TOKEN_LIMITS } from '../constants';
 import { 
-  configurationOperationsResponseSchema,
-  nodeRequirementsResponseSchema,
-  type z
+  configurationOperationsResponseSchema
 } from '../validation/schemas';
 import { ConfigurationPrompts } from '../prompts/configuration';
 import type { 
   ConfigurationOperationsResponse,
-  NodeRequirementsResponse,
   WorkflowOperation
 } from '@/types';
 
@@ -50,23 +47,7 @@ export interface ConfigurationOutput {
   };
 }
 
-export interface NodeRequirementsInput {
-  node: any;
-  userPrompt: string;
-  nodeEssentials: any;
-}
-
-export interface NodeConfigFixInput {
-  node: any;
-  config: any;
-  validationErrors: string[];
-  nodeContext: {
-    essentials?: any;
-    authProperties?: any;
-    taskTemplate?: any;
-    documentation?: string;
-  };
-}
+// Removed NodeRequirementsInput and NodeConfigFixInput - no longer needed
 
 // ==========================================
 // Configuration Phase Service Implementation
@@ -89,17 +70,29 @@ export class ConfigurationPhaseService extends BasePhaseService<ConfigurationInp
     this.logger.debug(`Starting configuration generation for ${selectedNodes.length} nodes`);
     
     try {
-      // Generate the configuration prompt
-      const promptParts = ConfigurationPrompts.getConfigurationPrompt(
-        prompt,
-        selectedNodes,
-        configContext.nodeSchemas || {},
-        configContext.nodeTemplates || {},
-        configContext.nodeProperties || {},
-        configContext.nodeDocumentation || {},
-        configContext.enrichedContext || {},
-        configContext.discoveredNodes || []
-      );
+      // Check if we have a custom prompt (from ConfigurationPromptBuilder)
+      let promptParts: any;
+      if (configContext.enrichedContext?.customPrompt) {
+        // Use the custom prompt directly as a PromptParts object
+        promptParts = {
+          system: "You are an n8n workflow configuration expert. Configure nodes based on the user's requirements.",
+          user: prompt,
+          prefill: '{"operations":['
+        };
+        this.logger.debug('Using custom configuration prompt from ConfigurationPromptBuilder');
+      } else {
+        // Generate the OPTIMIZED configuration prompt using essentials
+        promptParts = ConfigurationPrompts.getConfigurationPrompt(
+          prompt,
+          selectedNodes,
+          configContext.nodeSchemas || {}, // This now contains essentials (5KB)
+          {}, // No templates needed - essentials are sufficient
+          {}, // No property searches - essentials have everything
+          {}, // No documentation needed - essentials include examples
+          { optimized: true, essentialsOnly: true },
+          configContext.discoveredNodes || []
+        );
+      }
       
       // Call Claude for configuration operations
       const result = await this.callClaude<ConfigurationOperationsResponse>(
@@ -150,74 +143,7 @@ export class ConfigurationPhaseService extends BasePhaseService<ConfigurationInp
     }
   }
 
-  /**
-   * Analyze what information is needed to configure a node
-   */
-  async analyzeNodeRequirements(
-    input: NodeRequirementsInput
-  ): Promise<PhaseResult<NodeRequirementsResponse>> {
-    this.logger.debug(`Analyzing information requirements for ${input.node.type}`);
-    
-    // Generate the requirements analysis prompt
-    const promptParts = ConfigurationPrompts.getNodeRequirementsPrompt(
-      input.node,
-      input.userPrompt,
-      input.nodeEssentials
-    );
-    
-    // Call Claude for requirements analysis
-    const result = await this.callClaude<NodeRequirementsResponse>(
-      promptParts,
-      TOKEN_LIMITS.nodeRequirements,
-      nodeRequirementsResponseSchema as any,
-      'analyzeNodeRequirements'
-    );
-    
-    if (result.success && result.data) {
-      this.logSuccess('Node requirements analysis', {
-        nodeType: input.node.type,
-        needsAuth: result.data.needsAuth,
-        propertiesNeeded: result.data.needsProperties?.length || 0,
-      });
-    }
-    
-    return result;
-  }
-
-  /**
-   * Fix node configuration based on validation errors
-   */
-  async fixNodeConfig(
-    input: NodeConfigFixInput
-  ): Promise<PhaseResult<any>> {
-    this.logger.debug(
-      `Fixing configuration for ${input.node.type} with ${input.validationErrors.length} errors`
-    );
-    
-    // Generate the fix prompt
-    const promptParts = ConfigurationPrompts.getFixNodeConfigPrompt(
-      input.node,
-      input.config,
-      input.validationErrors,
-      input.nodeContext
-    );
-    
-    // Call Claude to fix the configuration
-    const result = await this.callClaude<any>(
-      promptParts,
-      TOKEN_LIMITS.nodeConfigFix,
-      undefined, // No specific schema for fixed config
-      'fixNodeConfig'
-    );
-    
-    if (result.success && result.data) {
-      this.logSuccess('Node configuration fixed', {
-        nodeType: input.node.type,
-        errorsFixed: input.validationErrors.length,
-      });
-    }
-    
-    return result;
-  }
+  // Removed analyzeNodeRequirements - not needed with essentials
+  // Removed fixNodeConfig - single-pass configuration is accurate enough
 
 }

@@ -72,6 +72,28 @@ Analyze all points where state needs to be persisted:
 - Error states
 - Clarification requests/responses
 
+
+
+  1. Session Initialization
+    - runDiscoveryPhase() - Create session in Supabase when starting
+    - Add session recovery logic to check Supabase before creating new
+  2. Operation Persistence
+    - applyOperations() - Currently a stub, needs implementation
+    - Queue operations after each state change for batched saving
+  3. Phase Transitions
+    - End of each phase method - Force save pending operations
+    - runConfigurationPhase(), runValidationPhase(), runBuildingPhase(), runDocumentationPhase()
+  4. Error Handling
+    - All catch blocks - Record errors with phase context
+    - Maintain error history in Supabase metadata
+  5. Token Tracking
+    - After Claude API calls in each phase
+    - Track cumulative token usage per session
+  6. Clarification Handling
+    - handleClarificationResponse() - Persist clarification exchanges
+    - Mark clarification operations as critical for immediate save
+
+
 ### Phase 2: Session Manager Implementation
 ```bash
 /implement session-manager-class \

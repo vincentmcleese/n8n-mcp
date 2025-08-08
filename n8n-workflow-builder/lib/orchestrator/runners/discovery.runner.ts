@@ -14,7 +14,7 @@ import type { ClaudeAnalysisResponse } from "@/types/claude";
 
 /**
  * Runner for the discovery phase (OPTIMIZED with task-based flow)
- * 
+ *
  * New flow:
  * 1. Intent analysis -> exact task names + unmatched capabilities
  * 2. Direct task fetching from MCP (no Claude)
@@ -22,14 +22,19 @@ import type { ClaudeAnalysisResponse } from "@/types/claude";
  * 4. Claude selection only for gaps (if any)
  * 5. Hybrid assembly with pre-configured flags
  */
-export class DiscoveryRunner implements PhaseRunner<DiscoveryInput, DiscoveryOutput> {
+export class DiscoveryRunner
+  implements PhaseRunner<DiscoveryInput, DiscoveryOutput>
+{
   private taskService: TaskService;
   private gapSearchService: GapSearchService;
-  
+
   constructor(private deps: DiscoveryRunnerDeps) {
     // Initialize services with MCP client from deps or node context
     // Prefer the one from deps if available as it's more likely to be fresh
-    const mcpClient = this.deps.mcpClient || this.deps.nodeContextService.getMCPClient?.() || undefined;
+    const mcpClient =
+      this.deps.mcpClient ||
+      this.deps.nodeContextService.getMCPClient?.() ||
+      undefined;
     this.taskService = new TaskService(mcpClient);
     this.gapSearchService = new GapSearchService(mcpClient);
   }
@@ -39,33 +44,41 @@ export class DiscoveryRunner implements PhaseRunner<DiscoveryInput, DiscoveryOut
    */
   run = wrapPhase<DiscoveryInput, DiscoveryOutput>(
     "discovery",
-    async (input: DiscoveryInput, context: PhaseContext): Promise<DiscoveryOutput> => {
+    async (
+      input: DiscoveryInput,
+      context: PhaseContext
+    ): Promise<DiscoveryOutput> => {
       const { sessionId, prompt } = input;
       const { operationLogger } = context;
-      
+
       this.deps.loggers.orchestrator.info(
         "Starting OPTIMIZED discovery phase with task-based flow"
       );
 
       // Initialize Supabase session if enabled
       await this.deps.sessionRepo.initialize(sessionId, prompt);
-      
+
       // Try to load existing session from Supabase
       const existingSession = await this.deps.sessionRepo.load(sessionId);
       if (existingSession) {
         this.deps.loggers.orchestrator.info(
           `Recovered existing session ${sessionId} from phase: ${existingSession.state.phase}`
         );
-        
+
         // If session exists and is past discovery, return existing discovery results
-        if (existingSession.state.phase !== 'discovery' && existingSession.state.discovered.length > 0) {
+        if (
+          existingSession.state.phase !== "discovery" &&
+          existingSession.state.discovered.length > 0
+        ) {
           return {
             success: true,
             operations: [],
             phase: existingSession.state.phase,
             discoveredNodes: existingSession.state.discovered,
             selectedNodeIds: existingSession.state.selected,
-            reasoning: [`Recovered from existing session in ${existingSession.state.phase} phase`]
+            reasoning: [
+              `Recovered from existing session in ${existingSession.state.phase} phase`,
+            ],
           };
         }
       }
@@ -73,61 +86,73 @@ export class DiscoveryRunner implements PhaseRunner<DiscoveryInput, DiscoveryOut
       // ====================================================================
       // STEP 1: Intent Analysis with exact task names
       // ====================================================================
-      
-      const { logger: _logger, onTokenUsage } = operationLogger.withTokenTracking();
+
+      const { logger: _logger, onTokenUsage } =
+        operationLogger.withTokenTracking();
       if (this.deps.claudeService.setOnUsageCallback) {
         this.deps.claudeService.setOnUsageCallback(onTokenUsage);
       }
-      
-      this.deps.loggers.orchestrator.debug("Step 1: Analyzing intent for task-based discovery");
-      const analysisResult = await this.deps.claudeService.analyzeIntent({ prompt });
-      
+
+      this.deps.loggers.orchestrator.debug(
+        "Step 1: Analyzing intent for task-based discovery"
+      );
+      const analysisResult = await this.deps.claudeService.analyzeIntent({
+        prompt,
+      });
+
       if (!analysisResult.success || !analysisResult.data) {
         // Log more details about the failure
         this.deps.loggers.orchestrator.error("Intent analysis failed", {
           success: analysisResult.success,
           hasData: !!analysisResult.data,
-          error: analysisResult.error?.message || 'Unknown error',
-          usage: analysisResult.usage
+          error: analysisResult.error?.message || "Unknown error",
+          usage: analysisResult.usage,
         });
-        throw new Error(`Failed to analyze workflow intent: ${analysisResult.error?.message || 'Invalid response'}`);
+        throw new Error(
+          `Failed to analyze workflow intent: ${
+            analysisResult.error?.message || "Invalid response"
+          }`
+        );
       }
-      
+
       const intentAnalysis = analysisResult.data as ClaudeAnalysisResponse;
-      
+
       // Log what Claude identified
       this.deps.loggers.orchestrator.debug("Intent analysis results", {
         matchedTasks: intentAnalysis.matched_tasks,
         unmatchedCount: intentAnalysis.unmatched_capabilities?.length || 0,
         searchSuggestions: intentAnalysis.search_suggestions?.length || 0,
         unmatchedCapabilities: intentAnalysis.unmatched_capabilities,
-        searchSuggestionsDetail: intentAnalysis.search_suggestions
+        searchSuggestionsDetail: intentAnalysis.search_suggestions,
       });
-      
+
       // Log task selection reasoning if available
-      if (intentAnalysis.task_selection_reasoning && intentAnalysis.task_selection_reasoning.length > 0) {
+      if (
+        intentAnalysis.task_selection_reasoning &&
+        intentAnalysis.task_selection_reasoning.length > 0
+      ) {
         this.deps.loggers.orchestrator.info("Task selection reasoning:");
         intentAnalysis.task_selection_reasoning.forEach(({ task, reason }) => {
           this.deps.loggers.orchestrator.info(`  📦 ${task}: ${reason}`);
         });
       }
-      
+
       // Check if clarification is needed
       if (intentAnalysis.clarification_needed && intentAnalysis.clarification) {
         this.deps.loggers.orchestrator.info(
           "Clarification needed from intent analysis"
         );
-        
+
         const clarificationOp: WorkflowOperation = {
           type: "requestClarification",
           questionId: `q_${Date.now()}`,
           question: intentAnalysis.clarification.question,
           context: {
             reason: intentAnalysis.clarification.context,
-            suggestions: intentAnalysis.clarification.suggestions
-          }
+            suggestions: intentAnalysis.clarification.suggestions,
+          },
         };
-        
+
         return {
           success: true,
           operations: [clarificationOp],
@@ -136,132 +161,135 @@ export class DiscoveryRunner implements PhaseRunner<DiscoveryInput, DiscoveryOut
           selectedNodeIds: [],
           pendingClarification: {
             questionId: clarificationOp.questionId,
-            question: clarificationOp.question
+            question: clarificationOp.question,
           },
-          reasoning: intentAnalysis.reasoning || []
+          reasoning: intentAnalysis.reasoning || [],
         };
       }
-      
+
       this.deps.loggers.orchestrator.info(
         `Intent analysis complete: ${intentAnalysis.matched_tasks.length} tasks, ` +
-        `${intentAnalysis.unmatched_capabilities.length} gaps`
+          `${intentAnalysis.unmatched_capabilities.length} gaps`
       );
-      
+
       // ====================================================================
       // STEP 2: Fetch task nodes directly (NO CLAUDE NEEDED!)
       // ====================================================================
-      
+
       let taskNodes: DiscoveredNode[] = [];
       let taskOperations: WorkflowOperation[] = [];
-      
+
       if (intentAnalysis.matched_tasks.length > 0) {
         this.deps.loggers.orchestrator.debug(
           `Step 2: Fetching ${intentAnalysis.matched_tasks.length} task templates: ` +
-          intentAnalysis.matched_tasks.join(', ')
+            intentAnalysis.matched_tasks.join(", ")
         );
-        
-        const taskResult = await this.taskService.fetchTaskNodes(intentAnalysis.matched_tasks);
-        
+
+        const taskResult = await this.taskService.fetchTaskNodes(
+          intentAnalysis.matched_tasks
+        );
+
         // Convert successful task fetches to discovered nodes
-        taskNodes = taskResult.successful.map(task => ({
+        taskNodes = taskResult.successful.map((task) => ({
           id: task.nodeId,
           type: task.nodeType,
-          displayName: task.taskName.replace(/_/g, ' '),
+          displayName: task.taskName.replace(/_/g, " "),
           purpose: task.purpose || `Pre-configured: ${task.taskName}`,
           isPreConfigured: true,
-          config: task.config
+          config: task.config,
         }));
-        
+
         // Generate operations for task nodes
-        taskOperations = taskResult.successful.flatMap(task => [
+        taskOperations = taskResult.successful.flatMap((task) => [
           {
             type: "discoverNode" as const,
             node: {
               id: task.nodeId,
               type: task.nodeType,
               purpose: task.purpose || `Pre-configured: ${task.taskName}`,
-              displayName: task.taskName.replace(/_/g, ' ')
-            }
+              displayName: task.taskName.replace(/_/g, " "),
+            },
           },
           {
             type: "selectNode" as const,
-            nodeId: task.nodeId
-          }
+            nodeId: task.nodeId,
+          },
         ]);
-        
+
         this.deps.loggers.orchestrator.info(
           `✅ Fetched ${taskResult.successful.length}/${intentAnalysis.matched_tasks.length} task templates`
         );
-        
+
         // Convert failed tasks to unmatched capabilities
         if (taskResult.failed.length > 0) {
-          const additionalGaps = this.taskService.convertFailedTasksToCapabilities(taskResult.failed);
+          const additionalGaps =
+            this.taskService.convertFailedTasksToCapabilities(
+              taskResult.failed
+            );
           intentAnalysis.unmatched_capabilities.push(...additionalGaps);
-          
+
           this.deps.loggers.orchestrator.warn(
             `Failed to fetch ${taskResult.failed.length} tasks, added to gaps`
           );
         }
       }
-      
+
       // ====================================================================
       // STEP 3: Search for gaps (NO CLAUDE NEEDED!)
       // ====================================================================
-      
+
       let gapNodes: DiscoveredNode[] = [];
       let gapOperations: WorkflowOperation[] = [];
-      
+
       if (intentAnalysis.unmatched_capabilities.length > 0) {
         this.deps.loggers.orchestrator.debug(
           `Step 3: Searching for ${intentAnalysis.unmatched_capabilities.length} capability gaps`
         );
-        
+
         const gapResults = await this.gapSearchService.searchForGaps(
           intentAnalysis.unmatched_capabilities
         );
-        
+
         this.deps.loggers.orchestrator.info(
           `Gap search complete: ${gapResults.summary.found}/${gapResults.summary.totalCapabilities} found, ` +
-          `${gapResults.summary.totalNodes} total nodes`
+            `${gapResults.summary.totalNodes} total nodes`
         );
-        
+
         // ====================================================================
         // STEP 4: Claude selects from pre-searched results (ONLY IF GAPS EXIST)
         // ====================================================================
-        
+
         if (gapResults.summary.totalNodes > 0) {
           this.deps.loggers.orchestrator.debug(
             "Step 4: Having Claude select best nodes from search results"
           );
-          
-          const selectionPrompt = this.createGapSelectionPrompt(
-            prompt,
-            intentAnalysis,
-            gapResults
-          );
-          
-          // Call Claude for gap selection
-          const selectionResult = await this.deps.claudeService.execute(
-            {
-              prompt: selectionPrompt,
+
+          // Format the results for selection
+          const formattedResults =
+            this.gapSearchService.formatResultsForSelection(gapResults);
+
+          // Call Claude for gap selection using the new method
+          const selectionResult =
+            await this.deps.claudeService.selectFromGapResults({
+              prompt,
               sessionId,
-              mode: 'selection',
-              context: {
-                taskNodes,
-                searchResults: gapResults,
-                originalIntent: intentAnalysis.intent
-              }
-            },
-            { sessionId }
-          );
-          
+              intentAnalysis,
+              gapResults,
+              formattedResults,
+            });
+
           if (selectionResult.success && selectionResult.data) {
-            const { discoveredNodes: selectedGapNodes, operations: selectedGapOps } = 
-              this.processGapSelections(selectionResult.data.operations, gapResults);
-            
+            const {
+              discoveredNodes: selectedGapNodes,
+              operations: selectedGapOps,
+            } = this.processGapSelections(
+              selectionResult.data.operations,
+              gapResults
+            );
+
             gapNodes = selectedGapNodes;
             gapOperations = selectedGapOps;
-            
+
             this.deps.loggers.orchestrator.info(
               `Claude selected ${gapNodes.length} nodes from search results`
             );
@@ -272,35 +300,37 @@ export class DiscoveryRunner implements PhaseRunner<DiscoveryInput, DiscoveryOut
           );
         }
       }
-      
+
       // ====================================================================
       // STEP 5: Assemble hybrid output
       // ====================================================================
-      
+
       const allDiscoveredNodes = [...taskNodes, ...gapNodes];
       const allOperations = [...taskOperations, ...gapOperations];
-      const selectedNodeIds = allDiscoveredNodes.map(n => n.id);
-      
+      const selectedNodeIds = allDiscoveredNodes.map((n) => n.id);
+
       // Log operations via OperationLogger
       if (allOperations.length > 0) {
         await operationLogger.logBatch(allOperations);
       }
-      
+
       // Log phase completion
       await operationLogger.logPhaseCompletion(
         analysisResult.usage?.totalTokens || 0
       );
-      
+
       // Log summary
       this.deps.loggers.orchestrator.info(
         `Discovery completed: ${allDiscoveredNodes.length} nodes (${taskNodes.length} tasks, ${gapNodes.length} searched)`
       );
-      
+
       if (allDiscoveredNodes.length > 0 && allDiscoveredNodes.length <= 5) {
-        const nodeTypes = allDiscoveredNodes.map(n => n.type).join(', ');
-        this.deps.loggers.orchestrator.info(`   Discovered nodes: ${nodeTypes}`);
+        const nodeTypes = allDiscoveredNodes.map((n) => n.type).join(", ");
+        this.deps.loggers.orchestrator.info(
+          `   Discovered nodes: ${nodeTypes}`
+        );
       }
-      
+
       return {
         success: true,
         operations: allOperations,
@@ -311,15 +341,15 @@ export class DiscoveryRunner implements PhaseRunner<DiscoveryInput, DiscoveryOut
           `Analyzed intent: ${intentAnalysis.intent}`,
           `Found ${taskNodes.length} pre-configured task templates`,
           `Searched for ${intentAnalysis.unmatched_capabilities.length} capability gaps`,
-          `Total nodes discovered: ${allDiscoveredNodes.length}`
+          `Total nodes discovered: ${allDiscoveredNodes.length}`,
         ],
         // Include metadata for configuration phase
         metadata: {
-          taskNodes: taskNodes.map(n => n.id),
-          searchedNodes: gapNodes.map(n => n.id),
+          taskNodes: taskNodes.map((n) => n.id),
+          searchedNodes: gapNodes.map((n) => n.id),
           workflow_pattern: intentAnalysis.workflow_pattern,
-          complexity: intentAnalysis.complexity
-        }
+          complexity: intentAnalysis.complexity,
+        },
       };
     }
   );
@@ -327,13 +357,15 @@ export class DiscoveryRunner implements PhaseRunner<DiscoveryInput, DiscoveryOut
   /**
    * Handle clarification response
    */
-  async handleClarification(input: ClarificationInput): Promise<DiscoveryOutput> {
+  async handleClarification(
+    input: ClarificationInput
+  ): Promise<DiscoveryOutput> {
     const { sessionId, questionId, response } = input;
-    
+
     this.deps.loggers.orchestrator.debug(
       `Processing clarification response for question: ${questionId}`
     );
-    
+
     // Load session state
     const supabaseSession = await this.deps.sessionRepo.load(sessionId);
     if (!supabaseSession) {
@@ -352,55 +384,33 @@ export class DiscoveryRunner implements PhaseRunner<DiscoveryInput, DiscoveryOut
         },
       };
     }
-    
+
     const originalPrompt = supabaseSession.state.userPrompt || "";
-    
-    // Re-run intent analysis with clarification
-    // Important: The session already exists, so we don't need to re-initialize it
-    const clarifiedPrompt = `${originalPrompt}\n\nClarification: ${response}`;
-    
-    // Update the prompt in the existing session instead of creating a new one
-    // This prevents the duplicate key error
+
+    // Compose clarified prompt in a structured way
+    const clarifiedPrompt = `${originalPrompt}\n\nClarification[${questionId}]: ${response}`;
+
     this.deps.loggers.orchestrator.debug(
       `Updating existing session ${sessionId} with clarified prompt`
     );
-    
-    // Run the full discovery with the clarified prompt
-    // The session already exists, so initialization will be skipped
+
+    // Persist clarification response and updated user prompt as operations
+    const ops: WorkflowOperation[] = [
+      { type: "clarificationResponse", questionId, response },
+      {
+        type: "setUserPrompt",
+        prompt: clarifiedPrompt,
+        reason: "clarification" as const,
+      },
+    ];
+    await this.deps.sessionRepo.persistOperations(sessionId, ops);
+    await this.deps.sessionRepo.save(sessionId);
+
+    // Re-run discovery with clarified prompt (session already exists)
     return this.run(
       { sessionId, prompt: clarifiedPrompt },
-      { sessionId, operationLogger: null as any } // Will be provided by wrapPhase
+      { sessionId, operationLogger: null as any } // Provided by wrapPhase
     );
-  }
-
-  /**
-   * Create prompt for Claude to select from gap search results
-   */
-  private createGapSelectionPrompt(
-    originalPrompt: string,
-    intentAnalysis: ClaudeAnalysisResponse,
-    gapResults: any
-  ): string {
-    const formattedResults = this.gapSearchService.formatResultsForSelection(gapResults);
-    
-    return `Based on the user's request: "${originalPrompt}"
-
-We've already fetched ${intentAnalysis.matched_tasks.length} pre-configured task templates.
-
-Now select the BEST node for each capability gap from these search results:
-
-${formattedResults}
-
-For each capability, select ONE node that best matches the requirement.
-Generate discoverNode and selectNode operations for your selections.
-
-Selection criteria:
-1. Exact functionality match
-2. Popularity and reliability
-3. Configuration simplicity
-4. Integration with existing task nodes
-
-Return operations in the standard format.`;
   }
 
   /**
@@ -415,7 +425,7 @@ Return operations in the standard format.`;
   } {
     const discoveredNodes: DiscoveredNode[] = [];
     const processedOps: WorkflowOperation[] = [];
-    
+
     for (const operation of operations) {
       if (operation.type === "discoverNode") {
         const node: DiscoveredNode = {
@@ -423,7 +433,7 @@ Return operations in the standard format.`;
           type: operation.node.type,
           displayName: operation.node.displayName || operation.node.type,
           purpose: operation.node.purpose,
-          needsConfiguration: true // Gap nodes need configuration
+          needsConfiguration: true, // Gap nodes need configuration
         };
         discoveredNodes.push(node);
         processedOps.push(operation);
@@ -431,7 +441,7 @@ Return operations in the standard format.`;
         processedOps.push(operation);
       }
     }
-    
+
     return { discoveredNodes, operations: processedOps };
   }
 }

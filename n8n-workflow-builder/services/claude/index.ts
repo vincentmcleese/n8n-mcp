@@ -9,11 +9,6 @@
 // Backward Compatibility Export
 // ==========================================
 
-// For now, continue exporting the existing ClaudeService
-// This ensures no breaking changes during the refactoring
-export { ClaudeService } from '@/lib/services/claude-service';
-export { createClaudeService } from '@/lib/services/claude-service';
-
 // ==========================================
 // New Modular Exports
 // ==========================================
@@ -94,7 +89,6 @@ export {
   intentAnalysisSchema,
   discoveryOperationsResponseSchema,
   configurationOperationsResponseSchema,
-  nodeRequirementsResponseSchema,
   workflowBuildResponseSchema,
   validationFixesResponseSchema,
   validatedWorkflowResponseSchema,
@@ -121,9 +115,7 @@ export { ConfigurationPhaseService } from './phases/configuration';
 export type { 
   ConfigurationInput, 
   ConfigurationOutput, 
-  ConfigurationContext,
-  NodeRequirementsInput,
-  NodeConfigFixInput
+  ConfigurationContext
 } from './phases/configuration';
 
 export { BuildingPhaseService } from './phases/building';

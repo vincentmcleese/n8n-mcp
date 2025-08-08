@@ -53,23 +53,23 @@
    - [Recovery Strategies](#recovery-strategies)
    - [UI Components](#ui-components)
 
-8. [UI Components](#8-ui-components)
+9. [UI Components](#8-ui-components)
 
    - [Component List](#component-list)
    - [Phase Indicator](#phase-indicator)
    - [Clarification Dialog](#clarification-dialog)
 
-9. [Implementation Guide](#9-implementation-guide)
+10. [Implementation Guide](#9-implementation-guide)
 
-   - [Phase 1: Infrastructure](#phase-1-infrastructure)
-   - [Phase 2: Core Features](#phase-2-core-features)
-   - [Phase 3: UI & Polish](#phase-3-ui--polish)
+    - [Phase 1: Infrastructure](#phase-1-infrastructure)
+    - [Phase 2: Core Features](#phase-2-core-features)
+    - [Phase 3: UI & Polish](#phase-3-ui--polish)
 
-10. [Type Definitions](#10-type-definitions)
+11. [Type Definitions](#10-type-definitions)
 
     - [Complete Type Reference](#complete-type-reference)
 
-11. [Appendices](#11-appendices)
+12. [Appendices](#11-appendices)
     - [A. Operation Types Quick Reference](#a-operation-types-quick-reference)
     - [B. Token Optimization](#b-token-optimization)
     - [C. Performance Benchmarks](#c-performance-benchmarks)
@@ -301,17 +301,17 @@ The system uses a modular orchestrator pattern with specialized phase runners:
 
 ```
 WorkflowOrchestrator
-├── ClaudeService (AI integration)
-├── MCPClient (n8n node integration)
-├── PhaseManager (transition logic)
-├── SessionRepo (persistence layer)
-├── NodeContextService (MCP context)
+├── Claude Phase Services (per-phase AI integration)
+├── MCPClient (n8n MCP tool integration)
+├── PhaseManager (transition rules/validation)
+├── SessionRepo (persistence via orchestratorHooks → Supabase)
+├── NodeContextService (MCP context + JSON parsing)
 └── Phase Runners
-    ├── DiscoveryRunner
-    ├── ConfigurationRunner
-    ├── BuildingRunner
-    ├── ValidationRunner
-    └── DocumentationRunner
+    ├── DiscoveryRunner (task-first discovery + gap search)
+    ├── ConfigurationRunner (essentials-first, validate-fix loop)
+    ├── BuildingRunner (AI-built draft + persisted via setWorkflow)
+    ├── ValidationRunner (MCP validate_workflow + AI fixes)
+    └── DocumentationRunner (AI sticky notes positioning)
 ```
 
 Each runner encapsulates phase-specific logic and returns standardized output interfaces.
@@ -319,17 +319,20 @@ Each runner encapsulates phase-specific logic and returns standardized output in
 ### State Management
 
 **Server State (Canonical)**:
-- Stored in PostgreSQL as JSONB for flexibility
-- In-memory representation uses `WorkflowSession` type with Maps
-- Database storage converts Maps to plain objects for JSON serialization
-- Session hooks system for persistence and state synchronization
+
+- Stored in PostgreSQL (Supabase) as JSONB
+- In-memory representation uses `WorkflowSession`; DB storage converts Maps to plain objects
+- State mutated via delta operations and persisted in batches by `SessionManager`
+- `userPrompt` is the effective prompt for all phases; it updates via `setUserPrompt` operations (e.g., after clarifications)
 
 **Client State (Minimal)**:
+
 - UI-specific state in `ClientWorkflowState`
 - Receives state updates through delta operations
 - No business logic, purely presentational
 
 **State Synchronization**:
+
 ```typescript
 // In-memory state uses Maps for type safety
 state: {
@@ -341,12 +344,14 @@ state: {
 state: {
   configured: { [nodeId: string]: NodeConfiguration };
   validated: { [nodeId: string]: ValidationResult };
+  userPrompt: string; // updated via setUserPrompt
 }
 ```
 
 ### Delta Operations
 
 Operations are atomic units of change that enable:
+
 - 80-90% token reduction vs full state transfers
 - Complete audit trail and undo/redo capability
 - Atomic batch transactions
@@ -401,8 +406,8 @@ orchestratorHooks = {
   persistOperations: async (sessionId, operations) => {},
   forceSave: async (sessionId) => {},
   recordError: async (sessionId, error, phase) => {},
-  updateTokenUsage: async (sessionId, tokens) => {}
-}
+  updateTokenUsage: async (sessionId, tokens) => {},
+};
 ```
 
 This enables flexible persistence strategies and monitoring.
@@ -413,36 +418,39 @@ This enables flexible persistence strategies and monitoring.
 
 ### Phase Reference Table
 
-| Phase              | Description              | Available Tools                                                                   | Allowed Operations                                                                            | Clarifications | Auto-Transition |
-| ------------------ | ------------------------ | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | -------------- | --------------- |
-| **Discovery**      | Find relevant nodes      | `search_nodes`, `get_node_info`, `list_node_types`                                | `discoverNode`, `selectNode`, `deselectNode`, `requestClarification`, `clarificationResponse` | ✅ Allowed     | ❌ Manual       |
-| **Configuration**  | Configure selected nodes | `get_node_essentials`, `get_node_schema`, `validate_params`                       | `configureNode`, `updateNodeConfig`                                                           | ❌ Not allowed | ✅ Auto         |
-| **Validation**     | Validate configurations  | `validate_workflow`, `check_connections`, `get_input_schema`, `get_output_schema` | `validateNode`, `addValidationError`                                                          | ❌ Not allowed | ✅ Auto         |
-| **Building**       | Connect nodes            | `generate_workflow`, `optimize_workflow`                                          | `addToWorkflow`, `addConnection`, `updateWorkflowSettings`                                    | ❌ Not allowed | ✅ Auto         |
-| **Documentation**  | Add explanatory notes    | None (uses Claude's understanding)                                                | `addStickyNote`                                                                               | ❌ Not allowed | ✅ Auto         |
-| **Complete**       | Export workflow          | None                                                                              | None                                                                                          | ❌ Not allowed | N/A             |
+| Phase             | Description              | Available Tools                                                                                                                                                       | Allowed Operations                                                                                             | Clarifications | Auto-Transition |
+| ----------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------- | --------------- |
+| **Discovery**     | Find relevant nodes      | `search_nodes`, `get_node_info`, `list_node_types`                                                                                                                    | `discoverNode`, `selectNode`, `deselectNode`, `requestClarification`, `clarificationResponse`, `setUserPrompt` | ✅ Allowed     | ✅ Auto         |
+| **Configuration** | Configure selected nodes | `get_node_essentials`, `get_node_schema`, `validate_node_minimal`, `validate_node_operation`, `search_node_properties`, `get_node_documentation`, `get_node_for_task` | `configureNode`, `updateNodeConfig`, `setUserPrompt`                                                           | ❌ Not allowed | ✅ Auto         |
+| **Building**      | Assemble workflow        | `generate_workflow`, `optimize_workflow`                                                                                                                              | `addToWorkflow`, `addConnection`, `updateWorkflowSettings`, `setUserPrompt`                                    | ❌ Not allowed | ✅ Auto         |
+| **Validation**    | Validate and fix         | `validate_workflow`, `check_connections`, `get_input_schema`, `get_output_schema`                                                                                     | `validateNode`, `addValidationError`, `setUserPrompt`                                                          | ❌ Not allowed | ✅ Auto         |
+| **Documentation** | Add explanatory notes    | None (uses Claude's understanding)                                                                                                                                    | `addStickyNote`, `setUserPrompt`                                                                               | ❌ Not allowed | ✅ Auto         |
+| **Complete**      | Export workflow          | None                                                                                                                                                                  | None                                                                                                           | ❌ Not allowed | N/A             |
 
 ### Detailed Phase Descriptions
 
 #### Discovery Phase
-The discovery phase is the initial stage where Claude analyzes the user's prompt and identifies relevant n8n nodes needed to build the workflow.
+
+The discovery phase is optimized to minimize AI and MCP usage by using task templates first, then gap search only if necessary.
 
 **Process Flow**:
-1. **Intent Analysis**: Claude analyzes the user prompt using `analyzeWorkflowIntent()` to understand the workflow requirements
-2. **Search Term Generation**: AI suggests relevant search terms based on the prompt (e.g., "webhook", "slack", "database")
-3. **Node Search**: Uses MCP `search_nodes` with suggested terms, limiting results to 3-5 per search for efficiency
-4. **Node Details**: Fetches basic information for relevant nodes using `get_node_info`
-5. **AI-Driven Selection**: Claude generates operations to discover and select appropriate nodes
-6. **Clarification Handling**: If the prompt is ambiguous, Claude can request clarification from the user
+
+1. **Intent Analysis**: Claude analyzes the prompt and returns `matched_tasks`, `unmatched_capabilities`, and optional `clarification`.
+2. **Task Templates (fast path)**: Fetch pre-configured nodes for `matched_tasks` via MCP `get_node_for_task` through `TaskService`.
+3. **Gap Search (only if needed)**: For `unmatched_capabilities`, run MCP `search_nodes` via `GapSearchService`.
+4. **Selection for Gaps**: Claude selects from pre-fetched gap results.
+5. **Clarification**: If needed, prompt the user; upon response, persist `clarificationResponse` and `setUserPrompt` and re-run discovery.
 
 **Key Features**:
-- Trust-based AI decisions - no complex scoring algorithms
-- Minimal MCP calls (2-3 searches vs 10+)
-- Support for clarification requests when user intent is unclear
-- Deduplication of discovered nodes
-- Session state tracking with operation history
+
+- Task-first retrieval via MCP reduces configuration work later
+- Minimal MCP calls: selective gap search; no exhaustive scanning
+- Clarifications persist and update `state.userPrompt` via `setUserPrompt`
+- Deduplication of discovered nodes and immediate selection for task nodes
+- Full operation history via `OperationLogger` and `SessionManager`
 
 **Example Operations**:
+
 ```typescript
 { type: "discoverNode", node: { id: "node_1", type: "nodes-base.webhook", purpose: "Receive webhook data" }}
 { type: "selectNode", nodeId: "node_1" }
@@ -450,38 +458,43 @@ The discovery phase is the initial stage where Claude analyzes the user's prompt
 ```
 
 #### Configuration Phase
-The configuration phase sets up the parameters for each selected node based on user requirements and node schemas.
+
+The configuration phase configures selected nodes using an essentials-first strategy and a bounded validate-fix loop.
 
 **Process Flow**:
-1. **Schema Retrieval**: Fetches essential parameters for selected nodes using `get_node_essentials`
-2. **AI Configuration**: Claude extracts configuration values from the user prompt and applies them
-3. **Smart Property Search**: Only searches for additional properties if Claude determines it's necessary
-4. **Pre-Validation**: Basic validation of configurations before moving to validation phase
-5. **Batch Configuration**: All selected nodes are configured in a single Claude interaction
+
+1. **Essentials Retrieval**: Fetch node essentials via MCP `get_node_essentials`.
+2. **Requirements Analysis**: Claude identifies if auth/docs/properties are needed; fetch via MCP only when necessary (`search_node_properties`, `get_node_documentation`, `get_node_for_task`).
+3. **Initial Config**: Claude generates `configureNode` ops using essentials and any enriched context.
+4. **Validate-Fix Loop**: Up to 3 attempts using MCP `validate_node_minimal` and Claude `fixNodeConfig` responses.
+5. **Normalization**: Ensure `fixedCollection` fields match n8n’s structure.
 
 **Key Features**:
+
 - Trust Claude to extract configuration from user prompts (e.g., Bearer auth, retry logic)
 - Minimal schema fetching - just essentials unless more is needed
 - Support for complex configurations like authentication, headers, and data transformations
 - Automatic detection of required vs optional parameters
 
 **Example Configurations**:
+
 - Webhook: HTTP method, path, authentication type
 - Slack: Channel, message format, attachments
 - Database: Connection string, query, operation type
 
-#### Validation Phase  
-The validation phase ensures all node configurations are correct and the workflow will function properly.
+#### Validation Phase
+
+The validation phase validates the entire draft workflow with MCP tools and applies AI-generated fixes iteratively.
 
 **Process Flow**:
-1. **Configuration Validation**: Validates each node's configuration using MCP `validate_params`
-2. **Connection Validation**: Checks node connections are valid using `check_connections`
-3. **Schema Compatibility**: Verifies input/output schemas match between connected nodes
-4. **Error Collection**: Aggregates all validation errors with clear descriptions
-5. **Auto-Fix Attempt**: Claude attempts to fix validation errors automatically
-6. **Iterative Fixing**: May cycle back to configuration phase if errors need user input
+
+1. **Comprehensive Validation**: Use MCP `validate_workflow` to perform node, connection, and expression checks.
+2. **Error Aggregation**: Group errors and record `validateNode` ops.
+3. **AI Fixes**: Claude generates a minimal set of fix operations (e.g., `updateParameter`, `addConnection`), which are applied to the draft.
+4. **Re-Validation**: Repeat up to 3 times. If unresolved, auto-transition to configuration with error context.
 
 **Key Features**:
+
 - Comprehensive validation using MCP tools
 - Automatic error correction where possible
 - Clear error messages with field-level details
@@ -489,6 +502,7 @@ The validation phase ensures all node configurations are correct and the workflo
 - Validation state tracking per node
 
 **Validation Checks**:
+
 - Required fields presence
 - Data type compatibility
 - Connection validity
@@ -496,16 +510,17 @@ The validation phase ensures all node configurations are correct and the workflo
 - Rate limits and quotas
 
 #### Building Phase
-The building phase assembles the final workflow JSON from validated configurations.
+
+The building phase uses Claude to propose a draft workflow from validated nodes, then persists it to state for validation.
 
 **Process Flow**:
-1. **Node Positioning**: Calculates optimal positions for nodes in the workflow canvas
-2. **Connection Creation**: Establishes connections between nodes based on data flow
-3. **Workflow Generation**: Uses MCP `generate_workflow` to create the n8n JSON structure
-4. **Settings Configuration**: Adds workflow metadata (name, execution order, timezone)
-5. **Optimization**: Optional workflow optimization for performance
+
+1. **AI Draft**: Claude builds nodes/connections/settings based on configured nodes and `userPrompt`.
+2. **Persist Draft**: Save via `setWorkflow` operation to session state.
+3. **Optional**: MCP optimization can be applied later.
 
 **Key Features**:
+
 - Automatic node positioning algorithm
 - Smart connection routing
 - Workflow metadata generation
@@ -513,6 +528,7 @@ The building phase assembles the final workflow JSON from validated configuratio
 - Support for complex branching workflows
 
 **Generated Structure**:
+
 ```typescript
 {
   name: "User's Workflow Name",
@@ -527,9 +543,11 @@ The building phase assembles the final workflow JSON from validated configuratio
 ```
 
 #### Documentation Phase
+
 The documentation phase adds explanatory sticky notes to the workflow to help users understand each section.
 
 **Process Flow**:
+
 1. **Node Group Identification**: Analyzes workflow to identify logical groups of connected nodes
 2. **Context Understanding**: Claude understands the purpose of each node group based on types and connections
 3. **Sticky Note Generation**: Creates explanatory notes for each logical section
@@ -537,6 +555,7 @@ The documentation phase adds explanatory sticky notes to the workflow to help us
 5. **Color Coding**: Uses different colors to categorize note types (informational, warnings, tips)
 
 **Key Features**:
+
 - Automatic node grouping based on connections
 - Context-aware explanations that reference user's original intent
 - Strategic positioning to avoid overlapping with nodes
@@ -544,6 +563,7 @@ The documentation phase adds explanatory sticky notes to the workflow to help us
 - Enhances workflow readability and maintainability
 
 **Generated Sticky Notes Include**:
+
 - Section purpose explanations
 - Data flow descriptions
 - Configuration highlights
@@ -551,9 +571,11 @@ The documentation phase adds explanatory sticky notes to the workflow to help us
 - Integration points
 
 #### Complete Phase
+
 The final phase where the workflow is ready for export and use.
 
 **Features**:
+
 - Workflow JSON available for download
 - Import instructions for n8n
 - Token usage statistics
@@ -566,14 +588,14 @@ See [lib/phase-manager.ts] for implementation. Core logic checks required condit
 
 ### Auto-Transition Rules
 
-| Current Phase  | Condition              | Next Phase     | Auto   |
-| -------------- | ---------------------- | -------------- | ------ |
-| Discovery      | Nodes selected by user | Configuration  | Manual |
-| Configuration  | All nodes configured   | Validation     | Auto   |
-| Validation     | All nodes valid        | Building       | Auto   |
-| Validation     | Errors found           | Configuration  | Auto   |
-| Building       | Workflow complete      | Documentation  | Auto   |
-| Documentation  | Notes added            | Complete       | Auto   |
+| Current Phase | Condition                    | Next Phase    | Auto |
+| ------------- | ---------------------------- | ------------- | ---- |
+| Discovery     | Discovery completes          | Configuration | Yes  |
+| Configuration | Nodes configured (attempted) | Building      | Yes  |
+| Building      | Draft workflow created       | Validation    | Yes  |
+| Validation    | All checks pass              | Documentation | Yes  |
+| Validation    | Errors found                 | Configuration | Yes  |
+| Documentation | Notes added/applied          | Complete      | Yes  |
 
 ---
 
@@ -830,12 +852,14 @@ interface RetryOptions {
 The system is designed to leverage Claude's natural language understanding and reasoning capabilities without overengineering. This principle applies across all phases:
 
 #### Discovery Phase
+
 - **Let Claude suggest search terms**: Claude analyzes the user's intent and suggests relevant search keywords
 - **Simple searches yield good results**: Use small limits (3-5) and trust that good search terms find the right nodes
 - **Minimal filtering**: Only fetch details for nodes that match Claude's recommendations or search terms
 - **No complex scoring**: Avoid relevance scoring algorithms - let Claude decide which nodes are needed
 
-#### Configuration Phase  
+#### Configuration Phase
+
 - **Provide essentials only**: Just give Claude the node schemas/essentials, not exhaustive property searches
 - **Trust configuration choices**: Claude can extract values from user prompts and apply them correctly
 - **Avoid over-fetching**: Don't search for every possible property or fetch all documentation
@@ -845,6 +869,7 @@ The system is designed to leverage Claude's natural language understanding and r
 #### Implementation Pattern
 
 **Good Practice (Simplified)**:
+
 ```typescript
 // Discovery Phase - Let Claude analyze what to search for
 const analysis = await claudeService.analyzeWorkflowIntent(prompt);
@@ -856,10 +881,8 @@ for (const term of analysis.suggestedSearchTerms) {
 }
 
 // Only get details for relevant nodes
-const relevantNodes = nodes.filter(n => 
-  analysis.nodeRecommendations.some(rec => 
-    n.type.includes(rec.type)
-  )
+const relevantNodes = nodes.filter((n) =>
+  analysis.nodeRecommendations.some((rec) => n.type.includes(rec.type))
 );
 
 // Configuration Phase - Trust Claude with minimal guidance
@@ -871,7 +894,7 @@ for (const nodeType of selectedNodeTypes) {
 
 // Let Claude configure based on user requirements
 const config = await claudeService.processWorkflowPhase(
-  'configuration',
+  "configuration",
   userPrompt,
   sessionId,
   selectedNodeIds,
@@ -880,6 +903,7 @@ const config = await claudeService.processWorkflowPhase(
 ```
 
 **Avoid (Overengineered)**:
+
 ```typescript
 // Discovery - Complex relevance scoring
 const relevanceScore = calculateRelevance(node, searchTerms, position);
@@ -887,7 +911,10 @@ const relevanceScore = calculateRelevance(node, searchTerms, position);
 const keywords = extractPropertyKeywords(prompt);
 
 // Configuration - Over-analyzing what properties to search
-const configAnalysis = await claudeService.analyzeConfigurationNeeds(prompt, nodes);
+const configAnalysis = await claudeService.analyzeConfigurationNeeds(
+  prompt,
+  nodes
+);
 // Fetching everything
 const allProperties = await searchAllNodeProperties(node);
 const allDocs = await getNodeDocumentation(node);
@@ -906,6 +933,7 @@ const mappedConfig = mapUserIntentToProperties(prompt, allProperties);
 ### Performance Benefits
 
 This trust-based approach results in:
+
 - **Fewer MCP calls**: Only searching for what's needed (2-3 searches vs 10+)
 - **Smaller context**: Only relevant nodes passed to Claude (2-5 nodes vs 20+)
 - **Faster responses**: Less data to process means quicker decisions
@@ -1193,48 +1221,57 @@ export interface ClientWorkflowState {
 
 // Operation Types
 export interface BaseOperation {
-  timestamp?: string;     // When the operation occurred
-  reasoning?: string;     // Why this operation was performed
+  timestamp?: string; // When the operation occurred
+  reasoning?: string; // Why this operation was performed
   operationIndex?: number; // Index in the operation sequence
 }
 
-export type WorkflowOperation = BaseOperation & (
+export type WorkflowOperation = BaseOperation &
   // Discovery operations
-  | {
-      type: "discoverNode";
-      node: { id: string; type: string; purpose: string };
-    }
-  | { type: "selectNode"; nodeId: string }
-  | { type: "deselectNode"; nodeId: string }
-  | {
-      type: "requestClarification";
-      questionId: string;
-      question: string;
-      context: any;
-    }
-  | { type: "clarificationResponse"; questionId: string; response: string }
+  (| {
+        type: "discoverNode";
+        node: { id: string; type: string; purpose: string };
+      }
+    | { type: "selectNode"; nodeId: string }
+    | { type: "deselectNode"; nodeId: string }
+    | {
+        type: "requestClarification";
+        questionId: string;
+        question: string;
+        context: any;
+      }
+    | { type: "clarificationResponse"; questionId: string; response: string }
 
-  // Configuration operations
-  | { type: "configureNode"; nodeId: string; nodeType: string; purpose: string; config: any }
-  | { type: "updateNodeConfig"; nodeId: string; path: string; value: any }
+    // Configuration operations
+    | {
+        type: "configureNode";
+        nodeId: string;
+        nodeType: string;
+        purpose: string;
+        config: any;
+      }
+    | { type: "updateNodeConfig"; nodeId: string; path: string; value: any }
 
-  // Validation operations
-  | { type: "validateNode"; nodeId: string; result: ValidationResult }
-  | { type: "addValidationError"; nodeId: string; error: ValidationError }
+    // Validation operations
+    | { type: "validateNode"; nodeId: string; result: ValidationResult }
+    | { type: "addValidationError"; nodeId: string; error: ValidationError }
 
-  // Building operations
-  | { type: "addToWorkflow"; nodeId: string; position: [number, number] }
-  | { type: "addConnection"; source: string; target: string }
-  | { type: "updateWorkflowSettings"; settings: Partial<WorkflowSettings> }
-  | { type: "setWorkflow"; workflow: { nodes: any[]; connections: any; settings: any } }
+    // Building operations
+    | { type: "addToWorkflow"; nodeId: string; position: [number, number] }
+    | { type: "addConnection"; source: string; target: string }
+    | { type: "updateWorkflowSettings"; settings: Partial<WorkflowSettings> }
+    | {
+        type: "setWorkflow";
+        workflow: { nodes: any[]; connections: any; settings: any };
+      }
 
-  // Documentation operations
-  | { type: "addStickyNote"; note: StickyNote }
+    // Documentation operations
+    | { type: "addStickyNote"; note: StickyNote }
 
-  // Phase operations
-  | { type: "setPhase"; phase: WorkflowPhase }
-  | { type: "completePhase"; phase: WorkflowPhase }
-);
+    // Phase operations
+    | { type: "setPhase"; phase: WorkflowPhase }
+    | { type: "completePhase"; phase: WorkflowPhase }
+  );
 
 // Supporting Types
 export interface DiscoveredNode {
@@ -1249,8 +1286,8 @@ export interface DiscoveredNode {
 export interface StickyNote {
   id: string;
   content: string;
-  nodeGroupIds: string[];  // IDs of nodes this note documents
-  color?: number;          // 1-7 for different colors in n8n
+  nodeGroupIds: string[]; // IDs of nodes this note documents
+  color?: number; // 1-7 for different colors in n8n
 }
 
 export interface NodeConfiguration {
@@ -1358,12 +1395,14 @@ export interface ErrorResponse {
 #### Testing Framework
 
 **Jest Configuration**:
+
 - Next.js optimized setup with `next/jest`
 - Node test environment for API routes
 - Custom matchers for workflow operations
 - 80% coverage thresholds for all metrics
 
 **Test Structure**:
+
 ```
 __tests__/
 ├── unit/
@@ -1379,6 +1418,7 @@ __tests__/
 ##### Discovery Phase Tests
 
 **1. WorkflowOrchestrator Tests**:
+
 - Node discovery and selection
 - Clarification request handling
 - Error recovery and retries
@@ -1386,6 +1426,7 @@ __tests__/
 - AI reasoning extraction
 
 **2. ClaudeService Tests**:
+
 - Prompt processing for each phase
 - Response parsing and validation
 - Node naming convention compliance
@@ -1393,6 +1434,7 @@ __tests__/
 - Error handling with retry flags
 
 **3. API Route Tests**:
+
 - Session creation and validation
 - Operation application and state updates
 - Phase status checks
@@ -1400,6 +1442,7 @@ __tests__/
 - Integration flow tests
 
 **4. PhaseManager Tests**:
+
 - Phase transition logic
 - Operation validation per phase
 - Tool availability checks
@@ -1408,27 +1451,31 @@ __tests__/
 #### Testing Best Practices
 
 **1. Mock Strategy**:
+
 ```typescript
 // Consistent mocking for external dependencies
-jest.mock('@anthropic-ai/sdk')
-jest.mock('@modelcontextprotocol/sdk')
-jest.mock('@supabase/supabase-js')
+jest.mock("@anthropic-ai/sdk");
+jest.mock("@modelcontextprotocol/sdk");
+jest.mock("@supabase/supabase-js");
 ```
 
 **2. Test Data Factories**:
+
 ```typescript
 // Reusable test data creation
-createMockSession(overrides)
-createMockOperations()
-mockSuccessResponse(data)
-mockErrorResponse(status, error)
+createMockSession(overrides);
+createMockOperations();
+mockSuccessResponse(data);
+mockErrorResponse(status, error);
 ```
 
 **3. Coverage Requirements**:
+
 - **Unit Tests**: Each phase component tested in isolation with mocks
 - **Integration Tests**: Real API testing with live Claude and MCP services
 
 **4. Phase Testing Checklist**:
+
 - [ ] Discovery: Node search, selection, clarification
 - [ ] Configuration: Parameter setting, validation
 - [ ] Validation: Error detection, auto-correction
@@ -1438,12 +1485,14 @@ mockErrorResponse(status, error)
 #### Discovery Phase Integration Testing
 
 **Real API Testing Strategy**:
+
 - Integration tests use live Anthropic Claude API and MCP services
 - Custom test runner bypasses Jest ESM issues with `tsx`
 - Test execution time optimized with claude-3-haiku model (~1-3s per call)
 - Environment variables loaded from `.env.local`
 
 **Test Structure**:
+
 ```
 scripts/
 ├── run-integration-tests.ts           # Main integration runner
@@ -1454,29 +1503,34 @@ scripts/
 
 **Core Discovery Test Scenarios**:
 
-1. **Simple Workflow Creation**: 
+1. **Simple Workflow Creation**:
+
    - Basic webhook → Slack workflows
    - Node discovery and selection validation
    - Operation sequence verification
 
 2. **Complex Multi-Step Workflows**:
+
    - 7-step workflows with multiple node types
    - Webhook → Transform → Multi-channel Slack → Database → Email
    - Comprehensive node type validation
 
 3. **Clarification Request Handling**:
+
    - Ambiguous prompts trigger `requestClarification` operations
    - Database type clarification ("store data in database")
    - Slack channel clarification ("send to Slack")
    - Multi-question clarification scenarios
 
 4. **Clarification Response Processing**:
+
    - `handleClarificationResponse()` with user inputs
    - Operation sequence: `clarificationResponse` → updated discovery
    - Context preservation across clarification cycles
    - Database-independent operation for test compatibility
 
 5. **Error Recovery & Resilience**:
+
    - Invalid API key handling with graceful error responses
    - Concurrent discovery operations (5 parallel requests)
    - MCP connection health validation
@@ -1488,12 +1542,13 @@ scripts/
    - Data Processing: ETL pipelines
 
 **Clarification Flow Testing**:
+
 ```typescript
 // Example clarification test pattern
 const result = await orchestrator.runDiscoveryPhase(sessionId, ambiguousPrompt);
 if (result.pendingClarification) {
   const clarified = await orchestrator.handleClarificationResponse(
-    sessionId, 
+    sessionId,
     result.pendingClarification.questionId,
     "PostgreSQL database for user profiles"
   );
@@ -1502,6 +1557,7 @@ if (result.pendingClarification) {
 ```
 
 **Performance Characteristics**:
+
 - 8-9 integration tests complete in ~80 seconds
 - Each Claude API call: 1-3 seconds (claude-3-haiku)
 - Concurrent operations: 40-70% time savings
@@ -1530,6 +1586,7 @@ npm run test:coverage
 ```
 
 **Test Environment Requirements**:
+
 ```bash
 # Required environment variables in .env.local
 ANTHROPIC_API_KEY=sk-ant-...        # For Claude API calls
@@ -1540,16 +1597,17 @@ MCP_SERVER_URL=...                  # MCP server endpoint
 #### Continuous Integration
 
 **GitHub Actions Workflow**:
+
 ```yaml
 - name: Run Unit Tests
   run: npm test -- --ci --coverage
-  
+
 - name: Run Discovery Integration Tests
   run: npm run test:integration
   env:
     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     MCP_API_KEY: ${{ secrets.MCP_API_KEY }}
-    
+
 - name: Upload Coverage
   uses: codecov/codecov-action@v3
 ```
