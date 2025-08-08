@@ -8,13 +8,18 @@ import {
 } from "@/lib/orchestrator/contracts/building.types";
 import { WorkflowOperation } from "@/types/workflow";
 import { ConfiguredNode } from "@/lib/orchestrator/contracts/configuration.types";
+import { BuildingPromptBuilder } from "@/services/claude/config/building-prompt-builder";
 
 /**
  * Runner for the building phase
  * Handles workflow assembly from configured nodes
  */
 export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput> {
-  constructor(private deps: BuildingRunnerDeps) {}
+  private promptBuilder: BuildingPromptBuilder;
+  
+  constructor(private deps: BuildingRunnerDeps) {
+    this.promptBuilder = new BuildingPromptBuilder();
+  }
 
   /**
    * Run the building phase
@@ -71,9 +76,16 @@ export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput
       // Add phase transition operation
       operations.push({ type: 'setPhase', phase: 'building' });
 
-      // Have Claude build the complete workflow
+      // Build the prompt using the prompt builder
+      const prompt = this.promptBuilder.buildPrompt({
+        userIntent: userPrompt,
+        configuredNodes: validatedNodes,
+      });
+
+      // Have Claude build the complete workflow with the built prompt
       const claudeResult = await this.deps.claudeService.execute(
         {
+          prompt,  // Pass the built prompt
           userPrompt,
           configuredNodes: validatedNodes,
         },
@@ -191,14 +203,14 @@ export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput
         } else if (validated && typeof validated === 'object') {
           validationResult = validated[nodeId];
         }
+        
         const mappedNode = {
           id: node.nodeId || node.id,
-          type: node.nodeType || node.type || '', // Handle both old and new structures
-          purpose: node.purpose || '', // Handle missing purpose field
-          config: node.parameters || node.config, // Handle both parameter names
-          validated: validationResult ? validationResult.valid : true // Default to true if no validation result
+          type: node.nodeType || node.type || '', 
+          purpose: node.purpose || '', 
+          config: node.parameters || node.config || {}, // Just pass config as-is
+          validated: validationResult ? validationResult.valid : true
         };
-        
         
         return mappedNode;
       });

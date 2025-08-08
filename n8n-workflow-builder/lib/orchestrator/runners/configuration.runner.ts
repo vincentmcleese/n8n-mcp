@@ -370,7 +370,9 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
       }
 
       // Step 4: Simple validation (no retry loop)
-      const validation = await this.validateConfig(node.type, nodeConfig);
+      // Extract parameters from nested structure if present
+      const configToValidate = nodeConfig.parameters || nodeConfig;
+      const validation = await this.validateConfig(node.type, configToValidate);
       
       if (validation.isValid) {
         reasoning.push(`✅ ${node.type} configured successfully with essentials`);

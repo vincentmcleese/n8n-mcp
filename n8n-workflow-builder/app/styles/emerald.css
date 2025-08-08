@@ -5,17 +5,18 @@
 @layer base {
   :root {
     --emerald: #1bc88c;
-    --emerald-50: #ecfdf5;
-    --emerald-100: #d1fae5;
-    --emerald-200: #a7f3d0;
-    --emerald-300: #6ee7b7;
-    --emerald-400: #34d399;
-    --emerald-500: #10b981;
-    --emerald-600: #059669;
-    --emerald-700: #047857;
-    --emerald-800: #065f46;
-    --emerald-900: #064e3b;
-    --emerald-950: #022c22;
+    /* Emerald scale as space-separated RGB for alpha-aware Tailwind */
+    --emerald-50: 236 253 245;
+    --emerald-100: 209 250 229;
+    --emerald-200: 167 243 208;
+    --emerald-300: 110 231 183;
+    --emerald-400: 52 211 153;
+    --emerald-500: 16 185 129;
+    --emerald-600: 5 150 105;
+    --emerald-700: 4 120 87;
+    --emerald-800: 6 95 70;
+    --emerald-900: 6 78 59;
+    --emerald-950: 2 44 34;
 
     --primary: var(--emerald);
     --primary-foreground: #ffffff;
@@ -246,7 +247,8 @@
     @apply bg-white/20 text-white;
   }
   .card-dark .card-icon {
-    @apply bg-emerald-500/15 text-emerald-400;
+    @apply text-emerald-400;
+    background-color: rgba(16, 185, 129, 0.15);
   }
 
   .stats {
@@ -274,7 +276,11 @@
   .tag:hover {
     @apply bg-emerald-100 -translate-y-0.5;
   }
-  .dark .tag { @apply text-emerald-400; background-color: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.30); }
+  .dark .tag {
+    @apply text-emerald-400;
+    background-color: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.3);
+  }
   .dark .tag:hover {
     @apply bg-emerald-500/25;
   }
@@ -292,7 +298,10 @@
   .feature-list .icon {
     @apply w-4 h-4 text-emerald-600 bg-emerald-100 p-1 rounded flex-shrink-0;
   }
-  .dark .feature-list .icon { @apply text-emerald-400; background-color: rgba(16, 185, 129, 0.20); }
+  .dark .feature-list .icon {
+    @apply text-emerald-400;
+    background-color: rgba(16, 185, 129, 0.2);
+  }
 
   .text-gradient {
     @apply bg-gradient-to-r from-emerald-600 to-emerald-400 bg-clip-text text-transparent;

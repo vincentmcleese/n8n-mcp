@@ -40,49 +40,57 @@ export default function StartPage() {
   return (
     <div className="min-h-[calc(100vh-60px)]">
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(1200px_400px_at_50%_-100px,rgba(99,102,241,0.25),transparent_60%)]" />
         <div className="max-w-screen-md mx-auto container-padding section-padding">
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-neutral-900">
-            What would you like to automate?
-          </h1>
-          <div className="mt-2 text-sm text-neutral-600">
-            Describe your workflow.
-          </div>
-
-          <div className="mt-6">
-            <div className="group relative rounded-2xl border border-neutral-200 bg-white/80 backdrop-blur-sm shadow-sm transition-spring ring-0 focus-within:ring-1 focus-within:ring-neutral-300">
-              <Textarea
-                placeholder="e.g., Send a Slack message when a new GitHub issue is created"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={onKeyDown}
-                className="min-h-[112px] w-full resize-none bg-transparent border-0 focus:outline-none focus:ring-0 text-base sm:text-lg leading-relaxed placeholder-neutral-400"
-              />
-            </div>
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <div
-                className="flex flex-wrap gap-1.5 animate-slide-in"
-                style={{ animationDelay: "80ms" }}
-              >
-                {outcomes.map((ex) => (
-                  <button
-                    key={ex.label}
-                    onClick={() => onUseExample(ex.prompt)}
-                    className="px-2.5 py-1 rounded-full text-[11px] bg-white text-neutral-800 border border-neutral-200 shadow-sm hover:border-neutral-300 hover:shadow transition-spring"
-                    type="button"
-                    aria-label={`Use example: ${ex.label}`}
-                  >
-                    {ex.label}
-                  </button>
-                ))}
+          <div className="card-glass text-center p-8 sm:p-10">
+            <div className="flex justify-center">
+              <div className="card-icon">
+                <i className="fa-solid fa-rocket" />
               </div>
-              <button
-                className="btn btn-primary"
-                onClick={onSubmit}
-                disabled={disabled}
-              >
-                <i className="fa-solid fa-bolt icon-sm" /> Start
-              </button>
+            </div>
+            <h1 className="hero-title mt-4">Build your workflow</h1>
+            <p className="hero-subtitle mt-2">
+              Describe what you want to automate — we’ll find nodes, configure
+              them, and assemble a workflow for you.
+            </p>
+
+            <div className="mt-6 text-left">
+              <div className="group relative rounded-2xl border border-neutral-200 bg-white/80 backdrop-blur-sm shadow-sm transition-spring ring-0 focus-within:ring-1 focus-within:ring-neutral-300">
+                <Textarea
+                  placeholder="e.g., Send a Slack message when a new GitHub issue is created"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  onKeyDown={onKeyDown}
+                  className="min-h-[112px] w-full resize-none bg-transparent border-0 focus:outline-none focus:ring-0 text-base sm:text-lg leading-relaxed placeholder-neutral-400"
+                />
+              </div>
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div
+                  className="flex flex-wrap justify-center sm:justify-start gap-2 animate-slide-in"
+                  style={{ animationDelay: "80ms" }}
+                >
+                  {outcomes.map((ex) => (
+                    <button
+                      key={ex.label}
+                      onClick={() => onUseExample(ex.prompt)}
+                      className="tag"
+                      type="button"
+                      aria-label={`Use example: ${ex.label}`}
+                    >
+                      <i className="fa-solid fa-wand-magic-sparkles icon-sm" />{" "}
+                      {ex.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex justify-center sm:justify-end">
+                  <button
+                    className="btn btn-primary"
+                    onClick={onSubmit}
+                    disabled={disabled}
+                  >
+                    <i className="fa-solid fa-bolt icon-sm" /> Start
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -10,18 +10,19 @@
 
 import { BasePhaseService, type PhaseContext, type PhaseResult } from './base';
 import { TOKEN_LIMITS } from '../constants';
-import { BuildingPrompts } from '../prompts/building';
 import { 
   workflowBuildResponseSchema,
   type z
 } from '../validation/schemas';
 import type { ClaudeBuildingResponse } from '@/types';
+import { PromptParts } from '../prompts/common';
 
 // ==========================================
 // Type Definitions
 // ==========================================
 
 export interface BuildingInput {
+  prompt?: string;  // Pre-built prompt from runner
   userIntent: string;
   configuredNodes: ConfiguredNode[];
 }
@@ -54,13 +55,25 @@ export class BuildingPhaseService extends BasePhaseService<BuildingInput, Buildi
     input: BuildingInput,
     context: PhaseContext
   ): Promise<PhaseResult<BuildingOutput>> {
-    const { userIntent, configuredNodes } = input;
+    const { prompt, userIntent, configuredNodes } = input;
     
     this.logger.debug('Building workflow structure from configured nodes');
     
     try {
-      // Generate the building prompt
-      const promptParts = BuildingPrompts.getBuildingPrompt(userIntent, configuredNodes);
+      // Use pre-built prompt or create one
+      let promptParts: PromptParts;
+      
+      if (prompt) {
+        // Use the pre-built prompt from runner
+        promptParts = {
+          system: prompt,
+          user: '',  // All content is in the system prompt
+          prefill: '{\n  "name": "'
+        };
+      } else {
+        // Shouldn't happen with new pattern, but provide fallback
+        throw new Error('Building phase requires a pre-built prompt');
+      }
       
       // Call Claude for workflow building
       const result = await this.callClaude<BuildingOutput>(
