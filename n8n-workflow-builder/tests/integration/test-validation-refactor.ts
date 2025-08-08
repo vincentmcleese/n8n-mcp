@@ -248,9 +248,9 @@ const TEST_SCENARIOS = [
         settings: {}
       }
     },
-    expectedAttempts: 1,
+    expectedAttempts: 2, // Slack node has multiple interdependent fields
     expectedValid: true,
-    expectedFixes: ["addConnection"]
+    expectedFixes: ["addConnection", "select", "channelId"]
   },
 
   // === LEVEL 3: EXPRESSION ERRORS ===

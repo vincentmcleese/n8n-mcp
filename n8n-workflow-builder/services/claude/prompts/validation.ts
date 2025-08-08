@@ -192,11 +192,10 @@ Connection structure example:
   }
 }
 
-Common fixes needed:
-- Missing required fields: Add them with appropriate values
-- Wrong connection keys: Replace entire connections object with NAME-based keys
-- Invalid values: Replace with valid alternatives
-- Missing nodes: Return complete node objects to add
+For missing connections:
+- Connect nodes in logical flow (trigger → process → output)
+- Webhook/Schedule should typically be first
+- Connect each node to the next logical step
 
 Response format:
 {
@@ -221,7 +220,8 @@ Remember: Connection keys must use node NAMES, not IDs!
 Available nodes in workflow:
 ${workflow.nodes?.map((n: any) => `- Name: "${n.name}", ID: "${n.id}"`).join('\n')}` : ''}
 
-Fix the entities and return complete, corrected versions.`;
+Fix the reported issues in these entities.
+Return complete, corrected versions.`;
 
   return addVersionMetadata({
     system: systemPrompt,
