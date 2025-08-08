@@ -132,10 +132,13 @@ Build workflow JSON from validated nodes that achieves: "[USER_INTENT]"
 ## Rules
 
 1. **Node Types**: Use EXACT types from provided nodes - DO NOT modify
-2. **Connections**: Connect based on data flow logic
-3. **Positioning**: Space nodes 300px apart horizontally, align vertically
-4. **Names**: Use descriptive node names in connections object
-5. **Error Handling**: Add onError property (NOT continueOnFail):
+2. **Node IDs**: MUST be unique! Use pattern like \`httpRequest_1\`, \`httpRequest_2\`, \`set_1\`, etc.
+   - Convert node type to camelCase (e.g., "HTTP Request" → "httpRequest")
+   - Add underscore and number suffix starting from 1
+3. **Connections**: Connect based on data flow logic
+4. **Positioning**: Space nodes 300px apart horizontally, align vertically
+5. **Names**: Use descriptive node names in connections object
+6. **Error Handling**: Add onError property (NOT continueOnFail):
    - Triggers/webhooks: "stopWorkflow"
    - Processing: "continueRegularOutput"
    - External APIs: "continueErrorOutput"

@@ -66,7 +66,7 @@ These pre-configured tasks cover common workflow patterns:
 
 ### Data Processing (4 tasks)
 - transform_data - Transform/modify data structure or format using JavaScript
-- filter_data - Filter items based on conditions - ALWAYS use this for "if", "when", "only if", conditional logic
+- filter_data - Filter arrays/lists to keep only items matching conditions 
 - process_webhook_data - Process incoming webhook data with Code node
 - fault_tolerant_processing - Data processing that continues despite individual item failures
 
@@ -85,6 +85,52 @@ Before identifying capabilities, trace through:
 - What transformations must occur?
 - What is the final output/action?
 - What error handling is required?
+
+## CRITICAL: Control Flow Nodes
+**IF, Switch, Merge nodes are NOT in the task list - add them to unmatched_capabilities when needed**
+
+### Distinguish Filtering vs Branching
+
+Analyze conditional logic carefully:
+
+### Use filter_data task when:
+- Processing arrays/lists to keep/remove items
+- Output is a filtered subset of the input array
+
+Examples:
+"filter orders where amount > 100"
+"get only active users"
+"remove invalid entries"
+
+### Use IF node when:
+
+- Routing workflow to different paths based on conditions
+- Different actions based on conditions (if/then/else)
+- Output goes to different nodes/branches
+
+Examples:
+"if amount > 100 send to Slack, else send email"
+"check if user exists, then update or create"
+"when status is approved, do X, otherwise do Y"
+
+###   Use Switch node when:
+
+- Need 3+ different output paths
+- Category-based routing (department, priority, type)
+
+Examples:
+- Route by department: Sales, Marketing, Support
+- Priority: High → Immediate, Medium → Queue, Low → Batch
+
+### Quick Decision Tree
+- Working with array/list? → Filter (filter_data)
+- Need 2 workflow paths? → IF node  
+- Need 3+ workflow paths? → Switch node
+
+### Key Recognition Patterns
+Filter: "only", "where", "keep items that..." → Data reduction
+IF: "if...then...else", "when...do" → Two-path branching
+Switch: "route by", "depending on category" → Multi-path branching
 
 ## When to Ask for Clarification
 ASK only when the END GOAL is unclear:
@@ -188,9 +234,6 @@ Analyze this request:
     "discovery"
   );
 }
-
-
-
 
 // ==========================================
 // Export Discovery Prompts

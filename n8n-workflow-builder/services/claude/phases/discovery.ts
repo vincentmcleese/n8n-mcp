@@ -106,21 +106,28 @@ Return operations in the standard format.`;
 
 Return a JSON object with an "operations" array containing discoverNode and selectNode operations.
 
+CRITICAL FIELD DEFINITIONS:
+- Operation "type": Always "discoverNode" or "selectNode" (the operation being performed)
+- Node "type": The exact nodeType from search results (e.g., "nodes-base.if", "nodes-base.slack")
+  - Always follows pattern: "nodes-base.nodeName" or "@n8n/n8n-nodes-langchain.nodeName"
+  - NEVER use the category (like "transform", "trigger", "output")
+- Node "id": Always use "gap_node_placeholder" (will be assigned in build phase)
+
 Example format:
 {
   "operations": [
     {
       "type": "discoverNode",
       "node": {
-        "id": "node-id",
-        "type": "node-type",
-        "displayName": "Display Name",
-        "purpose": "What this node does"
+        "id": "gap_node_placeholder",
+        "type": "nodes-base.if",
+        "displayName": "If",
+        "purpose": "Route items based on conditions"
       }
     },
     {
       "type": "selectNode", 
-      "nodeId": "node-id"
+      "nodeId": "gap_node_placeholder"
     }
   ],
   "reasoning": ["Why these nodes were selected"]
@@ -138,6 +145,27 @@ Example format:
     );
     
     if (result.success && result.data) {
+      // Log the actual operations Claude is returning
+      this.logger.debug('Claude gap selection operations:', 
+        JSON.stringify(result.data.operations, null, 2)
+      );
+      
+      // Specifically log any IF node selections
+      result.data.operations?.forEach((op: any) => {
+        if (op.type === 'discoverNode' && op.node) {
+          if (op.node.type?.toLowerCase().includes('if') || 
+              op.node.type === 'transform' ||
+              op.node.displayName?.toLowerCase().includes('if')) {
+            this.logger.info('Claude selected node details:', {
+              nodeId: op.node.id,
+              nodeType: op.node.type,
+              displayName: op.node.displayName,
+              purpose: op.node.purpose
+            });
+          }
+        }
+      });
+      
       this.logSuccess('Gap node selection', {
         operationsCount: result.data.operations?.length || 0
       });

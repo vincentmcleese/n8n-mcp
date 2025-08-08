@@ -313,9 +313,9 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
         }
       });
 
-      // Log the prompt being created
-      this.deps.loggers.orchestrator.info(
-        `\n📝 Configuration Prompt for ${node.type}:\n${'-'.repeat(60)}\n${prompt}\n${'-'.repeat(60)}`
+      // Log that a prompt was created (without showing the full content)
+      this.deps.loggers.orchestrator.debug(
+        `Configuration prompt created for ${node.type}`
       );
 
       // Step 3: Get configuration from Claude (single call, no retries)

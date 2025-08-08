@@ -91,6 +91,14 @@ const TEST_SCENARIOS = [
     expectedGaps: 0,
     description: "Should use AI-specific task templates"
   },
+  // Conditional logic test - CRITICAL for understanding IF node discovery
+  {
+    name: "Conditional Logic - Amount Check",
+    prompt: "Receive webhook with order data, check if amount is greater than 100, if yes send to Slack channel #high-value, if no send email to admin@example.com",
+    expectedTasks: ["receive_webhook", "send_slack_message", "send_email"],
+    expectedGaps: 1, // IF node should be identified as a gap that needs searching
+    description: "Should identify need for conditional/IF node for routing logic"
+  },
   // Partial task coverage scenarios
   {
     name: "Partial Coverage - Email Workflow",

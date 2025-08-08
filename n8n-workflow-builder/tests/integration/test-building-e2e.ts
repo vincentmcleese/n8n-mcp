@@ -222,7 +222,25 @@ class BuildingE2ETest {
       }
       
       const nodeCount = buildResult.workflow?.nodes?.length || 0;
-      const connectionCount = Object.keys(buildResult.workflow?.connections || {}).length;
+      
+      // Count all connection paths (including multi-output nodes like IF/Switch)
+      const countAllConnections = (connections: any): number => {
+        if (!connections) return 0;
+        let totalPaths = 0;
+        
+        for (const nodeConnections of Object.values(connections)) {
+          const mainOutputs = (nodeConnections as any)?.main || [];
+          for (const outputBranch of mainOutputs) {
+            if (Array.isArray(outputBranch) && outputBranch.length > 0) {
+              totalPaths += outputBranch.length; // Count each connection in this output
+            }
+          }
+        }
+        
+        return totalPaths;
+      };
+      
+      const connectionCount = countAllConnections(buildResult.workflow?.connections);
       
       if (nodeCount < scenario.expectedMinNodes) {
         failureReasons.push(`Expected at least ${scenario.expectedMinNodes} nodes, got ${nodeCount}`);

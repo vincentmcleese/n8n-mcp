@@ -242,6 +242,21 @@ export class GapSearchService {
       const primaryResult = await this.searchNodes(searchTerms[0]);
       if (primaryResult.length > 0) {
         this.logger.debug(`✅ Found ${primaryResult.length} nodes with primary term: ${searchTerms[0]}`);
+        
+        // Debug log IF nodes in raw search results
+        primaryResult.forEach((node: any) => {
+          if (node.nodeType && node.nodeType.toLowerCase().includes('if')) {
+            this.logger.debug(`Raw IF node from search:`, {
+              nodeType: node.nodeType,
+              type: node.type,
+              displayName: node.displayName,
+              name: node.name,
+              category: node.category,
+              description: node.description?.substring(0, 50)
+            });
+          }
+        });
+        
         return {
           capability: name,
           nodes: primaryResult,
@@ -396,6 +411,11 @@ export class GapSearchService {
       for (const [category, nodes] of Object.entries(byCategory)) {
         sections.push(`### ${category}:`);
         nodes.slice(0, 5).forEach((node, i) => {
+          // Debug log for IF node
+          if (node.nodeType && node.nodeType.toLowerCase().includes('if')) {
+            this.logger.debug(`IF node in search results: nodeType="${node.nodeType}", displayName="${node.displayName}", category="${category}"`);
+          }
+          
           sections.push(`${i + 1}. **${node.nodeType}** - ${node.displayName}`);
           if (node.description) {
             sections.push(`   ${node.description}`);

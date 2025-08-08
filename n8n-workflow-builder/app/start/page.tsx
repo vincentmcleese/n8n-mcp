@@ -41,14 +41,16 @@ export default function StartPage() {
     <div className="min-h-[calc(100vh-60px)]">
       <section className="relative overflow-hidden">
         <div className="max-w-screen-md mx-auto container-padding section-padding">
-          <div className="card-glass text-center p-8 sm:p-10">
+          <div className="card text-center p-8 sm:p-10 rounded-2xl">
             <div className="flex justify-center">
-              <div className="card-icon">
+              <div className="card-icon bg-[rgba(27,200,140,0.12)] text-emerald-700">
                 <i className="fa-solid fa-rocket" />
               </div>
             </div>
-            <h1 className="hero-title mt-4">Build your workflow</h1>
-            <p className="hero-subtitle mt-2">
+            <h1 className="mt-4 text-3xl sm:text-4xl font-semibold tracking-tight text-neutral-900">
+              Build your workflow
+            </h1>
+            <p className="mt-2 text-sm sm:text-base text-neutral-700">
               Describe what you want to automate — we’ll find nodes, configure
               them, and assemble a workflow for you.
             </p>

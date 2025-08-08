@@ -270,6 +270,11 @@ export class DiscoveryRunner
           const formattedResults =
             this.gapSearchService.formatResultsForSelection(gapResults);
 
+          // Debug log the formatted results Claude will see
+          this.deps.loggers.orchestrator.debug(
+            "Formatted search results for Claude:\n" + formattedResults
+          );
+
           // Call Claude for gap selection using the new method
           const selectionResult =
             await this.deps.claudeService.selectFromGapResults({
@@ -281,6 +286,12 @@ export class DiscoveryRunner
             });
 
           if (selectionResult.success && selectionResult.data) {
+            // Debug log Claude's selection
+            this.deps.loggers.orchestrator.debug(
+              "Claude's selection operations:",
+              JSON.stringify(selectionResult.data.operations, null, 2)
+            );
+
             const {
               discoveredNodes: selectedGapNodes,
               operations: selectedGapOps,
@@ -295,6 +306,13 @@ export class DiscoveryRunner
             this.deps.loggers.orchestrator.info(
               `Claude selected ${gapNodes.length} nodes from search results`
             );
+            
+            // Log what nodes were actually selected
+            gapNodes.forEach(node => {
+              this.deps.loggers.orchestrator.debug(
+                `Selected gap node: ${node.type} - ${node.displayName} (${node.purpose})`
+              );
+            });
           }
         } else {
           this.deps.loggers.orchestrator.warn(

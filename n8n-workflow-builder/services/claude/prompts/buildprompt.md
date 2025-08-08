@@ -12,11 +12,17 @@ Build workflow JSON from validated nodes that achieves: "[USER_INTENT]"
 
 ### 1. Node Structure
 - **Node Types**: Use EXACT types from provided nodes - DO NOT modify
-- **Node IDs**: Preserve original node IDs
+- **Node IDs**: MUST be unique! Use pattern like `httpRequest_1`, `httpRequest_2`, `set_1`, `set_2`, etc.
+  - Convert node type to camelCase (e.g., "HTTP Request" → "httpRequest")
+  - Add underscore and number suffix starting from 1
+  - If multiple nodes of same type, increment the number
 - **Node Names**: Use descriptive names that reflect purpose
 - **TypeVersion**: Include typeVersion field (usually 1 or 2)
 
 ### 2. Connections
+- **CRITICAL**: Connection keys MUST use node NAMES, not IDs!
+  - ✅ CORRECT: `"Webhook": { main: [[{ node: "Code", ... }]] }`
+  - ❌ WRONG: `"webhook_1": { main: [[{ node: "code_1", ... }]] }`
 - Connect nodes based on data flow logic
 - Triggers/webhooks connect to processing nodes
 - Processing nodes connect to output/action nodes
@@ -59,7 +65,7 @@ Return ONLY a JSON object with this structure:
   "name": "Descriptive Workflow Name",
   "nodes": [
     {
-      "id": "node_1",
+      "id": "webhook_1",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,

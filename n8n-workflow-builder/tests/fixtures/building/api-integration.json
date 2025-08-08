@@ -1,0 +1,67 @@
+{
+  "prompt": "Make HTTP GET request to https://api.example.com/users, filter to only active users where status equals 'active', then send summary to Slack",
+  "configuredNodes": [
+    {
+      "id": "node_1",
+      "type": "nodes-base.httpRequest",
+      "purpose": "Pre-configured task: get_api_data",
+      "config": {
+        "url": "",
+        "method": "GET",
+        "onError": "continueRegularOutput",
+        "maxTries": 3,
+        "retryOnFail": true,
+        "authentication": "none",
+        "alwaysOutputData": true,
+        "waitBetweenTries": 1000
+      },
+      "validated": true
+    },
+    {
+      "id": "node_3",
+      "type": "nodes-base.code",
+      "purpose": "Pre-configured task: transform_data",
+      "config": {
+        "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+        "language": "javaScript"
+      },
+      "validated": true
+    },
+    {
+      "id": "node_4",
+      "type": "nodes-base.slack",
+      "purpose": "Pre-configured task: send_slack_message",
+      "config": {
+        "text": "",
+        "channel": "",
+        "onError": "continueRegularOutput",
+        "maxTries": 2,
+        "resource": "message",
+        "operation": "post",
+        "retryOnFail": true,
+        "waitBetweenTries": 2000
+      },
+      "validated": true
+    },
+    {
+      "id": "node_2",
+      "type": "nodes-base.if",
+      "purpose": "Filter items based on conditions",
+      "config": {
+        "conditions": {
+          "conditions": [
+            {
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "",
+              "rightValue": ""
+            }
+          ]
+        }
+      },
+      "validated": true
+    }
+  ]
+}

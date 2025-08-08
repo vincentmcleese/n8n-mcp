@@ -1,10 +1,10 @@
 {
-  "prompt": "Receive webhook data and send a message to Slack channel #general saying 'New webhook received'",
+  "prompt": "Receive webhook with order data, check if amount is greater than 100, if yes send to Slack channel #high-value, if no send email to admin@example.com",
   "configuredNodes": [
     {
       "id": "node_1",
       "type": "nodes-base.webhook",
-      "purpose": "Set up a webhook to receive data from external services",
+      "purpose": "Pre-configured task: receive_webhook",
       "config": {
         "path": "webhook",
         "onError": "continueRegularOutput",
@@ -18,7 +18,7 @@
     {
       "id": "node_2",
       "type": "nodes-base.slack",
-      "purpose": "Send a message to Slack channel",
+      "purpose": "Pre-configured task: send_slack_message",
       "config": {
         "text": "",
         "channel": "",
@@ -28,6 +28,23 @@
         "operation": "post",
         "retryOnFail": true,
         "waitBetweenTries": 2000
+      },
+      "validated": true
+    },
+    {
+      "id": "node_3",
+      "type": "nodes-base.emailSend",
+      "purpose": "Send an email notification",
+      "config": {
+        "text": "",
+        "onError": "continueRegularOutput",
+        "subject": "",
+        "toEmail": "",
+        "maxTries": 3,
+        "fromEmail": "",
+        "retryOnFail": true,
+        "alwaysOutputData": true,
+        "waitBetweenTries": 3000
       },
       "validated": true
     }
