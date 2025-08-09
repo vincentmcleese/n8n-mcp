@@ -135,6 +135,7 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
           config: finalConfig,
           validated: isValid,
           validationErrors: isValid ? undefined : validationErrors,
+          category: node.category, // Preserve category from discovery
         });
 
         // Add validation operation for tracking

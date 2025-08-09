@@ -79,13 +79,20 @@ export function categorizeNode(node: {
   type: string;
   category?: string;
 }): PhaseName {
-  // Primary category mapping
-  if (node.category === "trigger") return "triggers";
-  if (node.category === "input") return "inputs";
-  if (node.category === "output") return "outputs";
-  if (node.category === "transform") return "transforms";
+  // Use category from MCP if available (primary source of truth)
+  if (node.category) {
+    switch (node.category) {
+      case "trigger": return "triggers";
+      case "input": return "inputs";
+      case "output": return "outputs";
+      case "transform": return "transforms";
+      default: 
+        // Log unexpected category but don't fail
+        console.warn(`Unexpected node category: ${node.category} for node type ${node.type}`);
+    }
+  }
 
-  // Special case handling based on node type
+  // Fallback: Special case handling based on node type
   const nodeTypeBase = node.type.split(".").pop() || "";
   if (TRANSFORM_NODE_TYPES.includes(nodeTypeBase)) {
     return "transforms";

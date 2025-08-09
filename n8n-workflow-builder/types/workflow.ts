@@ -29,6 +29,7 @@ export interface WorkflowNode {
   type: string;
   position: [number, number];
   parameters: Record<string, any>; // Flexible for MCP integration
+  category?: string; // Node category: trigger, input, transform, output
 }
 
 /**

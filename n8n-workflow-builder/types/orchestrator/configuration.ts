@@ -24,6 +24,7 @@ export interface ConfiguredNode {
   config: any;
   validated: boolean;
   validationErrors?: string[];
+  category?: string; // Node category from MCP: trigger, input, transform, output
 }
 
 /**

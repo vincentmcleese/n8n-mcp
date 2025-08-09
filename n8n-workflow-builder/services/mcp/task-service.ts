@@ -19,6 +19,7 @@ export interface TaskNodeConfig {
   nodeId: string;
   config: any;
   purpose?: string;
+  category?: string; // Node category from MCP: trigger, input, transform, output
   isPreConfigured: true;
 }
 
@@ -55,6 +56,7 @@ export interface UnmatchedCapability {
 interface CachedTaskTemplate {
   config: any;
   nodeType: string;
+  category?: string;
   timestamp: number;
 }
 
@@ -181,6 +183,7 @@ export class TaskService {
             nodeId: `node_${index + 1}`,
             config: cached.config,
             purpose: `Pre-configured task: ${taskName}`,
+            category: cached.category,
             isPreConfigured: true
           });
           return;
@@ -191,13 +194,14 @@ export class TaskService {
         
         if (result) {
           // Cache the result
-          this.cacheTask(taskName, result.nodeType, result.config);
+          this.cacheTask(taskName, result.nodeType, result.config, result.category);
           
           successful.push({
             taskName,
             nodeType: result.nodeType,
             nodeId: `node_${index + 1}`,
             config: result.config,
+            category: result.category,
             purpose: result.purpose || `Pre-configured task: ${taskName}`,
             isPreConfigured: true
           });
@@ -243,6 +247,7 @@ export class TaskService {
     nodeType: string;
     config: any;
     purpose?: string;
+    category?: string;
   } | null> {
     if (!this.mcpClient) {
       this.logger.warn(`MCP client not available for fetching task: ${taskName}`);
@@ -271,7 +276,8 @@ export class TaskService {
             return {
               nodeType: data.nodeType,
               config: data.configuration || data.config,
-              purpose: data.description
+              purpose: data.description,
+              category: data.category
             };
           }
         }
@@ -328,10 +334,11 @@ export class TaskService {
   /**
    * Cache a task template
    */
-  private cacheTask(taskName: string, nodeType: string, config: any): void {
+  private cacheTask(taskName: string, nodeType: string, config: any, category?: string): void {
     this.taskCache.set(taskName, {
       config,
       nodeType,
+      category,
       timestamp: Date.now()
     });
   }

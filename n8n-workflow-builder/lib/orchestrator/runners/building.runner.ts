@@ -110,6 +110,13 @@ export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput
         },
       };
 
+      // Enrich nodes with categories from configured nodes
+      const categoryMap = new Map(validatedNodes.map(n => [n.id, n.category]));
+      workflow.nodes = workflow.nodes.map((node: any) => ({
+        ...node,
+        category: categoryMap.get(node.id) || undefined
+      }));
+
       this.deps.loggers.orchestrator.debug(
         `Built workflow with ${workflow.nodes.length} nodes`
       );

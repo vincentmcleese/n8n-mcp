@@ -15,6 +15,10 @@ export interface DiscoverNodeOperation {
     id: string;
     type: string;
     purpose: string;
+    displayName?: string;
+    category?: string; // trigger, input, transform, output
+    isPreConfigured?: boolean;
+    config?: any;
   };
 }
 

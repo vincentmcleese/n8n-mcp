@@ -195,6 +195,7 @@ export class DiscoveryRunner
           type: task.nodeType,
           displayName: task.taskName.replace(/_/g, " "),
           purpose: task.purpose || `Pre-configured: ${task.taskName}`,
+          category: task.category, // Preserve category from MCP
           isPreConfigured: true,
           config: task.config,
         }));
@@ -208,6 +209,7 @@ export class DiscoveryRunner
               type: task.nodeType,
               purpose: task.purpose || `Pre-configured: ${task.taskName}`,
               displayName: task.taskName.replace(/_/g, " "),
+              category: task.category, // Include category in operation
               isPreConfigured: true,
               config: task.config,
             },
@@ -453,6 +455,7 @@ export class DiscoveryRunner
           type: operation.node.type,
           displayName: operation.node.displayName || operation.node.type,
           purpose: operation.node.purpose,
+          category: operation.node.category, // Preserve category from Claude's selection
           needsConfiguration: true, // Gap nodes need configuration
         };
         discoveredNodes.push(node);
