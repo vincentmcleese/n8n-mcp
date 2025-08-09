@@ -1,0 +1,257 @@
+{
+  "name": "AI-Powered Social Media Content Strategy System",
+  "nodes": [
+    {
+      "id": "twitter_1",
+      "type": "n8n-nodes-base.twitter",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "limit": 50,
+        "resource": "tweet",
+        "operation": "search",
+        "searchText": "trending topics OR viral content OR social media trends"
+      },
+      "name": "Monitor Trending Topics",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "notes": "Monitor trending topics and track engagement metrics on X (Twitter) for content strategy optimization"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform trending topics data\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      id: item.json.id,\n      topic: item.json.text,\n      engagement: item.json.public_metrics,\n      processedAt: new Date().toISOString(),\n      hashtags: item.json.entities?.hashtags || [],\n      mentions: item.json.entities?.mentions || [],\n      relevanceScore: Math.random() * 100 // Placeholder for actual scoring\n    }\n  });\n}\n\nreturn results;"
+      },
+      "name": "Process Trending Data",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "resource": "chat",
+        "modelId": "gpt-3.5-turbo",
+        "messages": {
+          "values": [
+            {
+              "role": "user",
+              "content": "{{ 'Based on this trending topic: ' + ($json.topic || $json.text || 'trending content') + ', generate 3 engaging content ideas for social media. Include suggestions for Twitter, LinkedIn, and Instagram formats. Consider the engagement metrics: ' + ($json.engagement || 'high engagement potential') }}"
+            }
+          ]
+        }
+      },
+      "name": "Generate Content Ideas",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "langchainAgent_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "resource": "chat",
+        "modelId": "gpt-3.5-turbo",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a social media content strategist. Create platform-specific posts that maximize engagement. Consider character limits, audience preferences, and optimal posting times for each platform."
+            },
+            {
+              "role": "user",
+              "content": "{{ 'Create optimized social media posts for Twitter, LinkedIn, and Instagram based on these content ideas: ' + ($json.message?.content || $json.content || 'trending content') + '. Include hashtags, optimal posting times, and engagement strategies.' }}"
+            }
+          ]
+        }
+      },
+      "name": "Create Multi-Platform Posts",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "postgres_1",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        1450,
+        300
+      ],
+      "parameters": {
+        "operation": "insert",
+        "table": "content_strategy",
+        "columns": "topic, content_ideas, platform_posts, created_at, engagement_prediction",
+        "returnFields": "*",
+        "schema": "public"
+      },
+      "name": "Store Content Strategy",
+      "typeVersion": 2,
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1150,
+        500
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.socialmedia-scheduler.com/schedule",
+        "authentication": "none",
+        "body": {
+          "posts": "={{ $json.output }}",
+          "schedule_time": "optimal"
+        }
+      },
+      "name": "Schedule Posts API",
+      "typeVersion": 4,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "sticky_1",
+      "name": "Sticky Note sticky_1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "parameters": {
+        "content": "## 🎯 Trend Monitoring & Data Processing\n\nMonitors Twitter for trending topics and processes the raw data to identify relevant content opportunities for your brand.",
+        "height": 150,
+        "width": 400,
+        "color": 1
+      }
+    },
+    {
+      "id": "sticky_2",
+      "name": "Sticky Note sticky_2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        850,
+        100
+      ],
+      "parameters": {
+        "content": "## 🤖 AI Content Generation\n\nUses AI to generate creative content ideas based on trending topics, then creates platform-specific social media posts optimized for different channels.",
+        "height": 150,
+        "width": 400,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_3",
+      "name": "Sticky Note sticky_3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1150,
+        100
+      ],
+      "parameters": {
+        "content": "## 💾 Strategy Storage & Scheduling\n\nStores your content strategy in the database and schedules posts at optimal times using external scheduling APIs for maximum engagement.",
+        "height": 150,
+        "width": 400,
+        "color": 3
+      }
+    }
+  ],
+  "connections": {
+    "Monitor Trending Topics": {
+      "main": [
+        [
+          {
+            "node": "Process Trending Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Trending Data": {
+      "main": [
+        [
+          {
+            "node": "Generate Content Ideas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Content Ideas": {
+      "main": [
+        [
+          {
+            "node": "Create Multi-Platform Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Multi-Platform Posts": {
+      "main": [
+        [
+          {
+            "node": "Store Content Strategy",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Schedule Posts API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T12:49:42.518Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Create a system that monitors trending topics, generates relevant content ideas using AI, creates social media posts in different formats for different platforms, schedules them at optimal times, monitors engagement, and adjusts future content strategy based on performance metrics",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T12:49:42.518Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 3
+  }
+}

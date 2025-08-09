@@ -1,0 +1,210 @@
+{
+  "name": "Weekly Website Scraper - Monday 8AM",
+  "nodes": [
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "rule": "interval",
+        "interval": [
+          {
+            "field": "cronExpression",
+            "cronExpression": "0 8 * * 1"
+          }
+        ]
+      },
+      "name": "Monday 8AM Trigger",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "url": "https://your-website.com",
+        "method": "GET",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "name": "Scrape Website",
+      "typeVersion": 4,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "set_1",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "html_content",
+              "name": "html_content",
+              "value": "={{ $json.body }}",
+              "type": "string"
+            },
+            {
+              "id": "filename",
+              "name": "filename",
+              "value": "website_scrape_{{ $now.format('yyyy-MM-dd') }}.html",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Prepare Email Data",
+      "typeVersion": 3,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "text": "Please find attached the HTML content from your website scraped on {{ $now.format('yyyy-MM-dd') }} at 8:00 AM.",
+        "subject": "Weekly Website Scrape - {{ $now.format('yyyy-MM-dd') }}",
+        "toEmail": "your-email@example.com",
+        "fromEmail": "noreply@your-domain.com",
+        "attachments": "={{ [{\"name\": $json.filename, \"content\": $json.html_content, \"type\": \"text/html\"}] }}"
+      },
+      "name": "Send HTML Email",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3,
+      "retryOnFail": true,
+      "alwaysOutputData": true,
+      "waitBetweenTries": 300
+    },
+    {
+      "id": "sticky_1",
+      "name": "Sticky Note sticky_1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "parameters": {
+        "content": "## 🎯 Weekly Schedule Trigger\n\nAutomatically starts the workflow every Monday at 8:00 AM to begin the website scraping process.",
+        "height": 150,
+        "width": 250,
+        "color": 1
+      }
+    },
+    {
+      "id": "sticky_2",
+      "name": "Sticky Note sticky_2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        550,
+        100
+      ],
+      "parameters": {
+        "content": "## 📊 Website Scraping\n\nFetches the complete HTML content from your website and prepares it for email delivery.",
+        "height": 150,
+        "width": 400,
+        "color": 3
+      }
+    },
+    {
+      "id": "sticky_3",
+      "name": "Sticky Note sticky_3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1150,
+        100
+      ],
+      "parameters": {
+        "content": "## 📧 Email Delivery\n\nSends the scraped HTML content to you as an email attachment for easy review and archiving.",
+        "height": 150,
+        "width": 250,
+        "color": 2
+      }
+    }
+  ],
+  "connections": {
+    "Monday 8AM Trigger": {
+      "main": [
+        [
+          {
+            "node": "Scrape Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Website": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email Data": {
+      "main": [
+        [
+          {
+            "node": "Send HTML Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T10:45:30.696Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "on monday at 8am, scrape my website and send the HTML to me via email attachment",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T10:45:30.696Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 2,
+    "stickyNotesAdded": 3
+  }
+}

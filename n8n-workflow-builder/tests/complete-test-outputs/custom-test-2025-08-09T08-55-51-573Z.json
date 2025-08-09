@@ -1,0 +1,115 @@
+{
+  "name": "Webhook to Slack Notification",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "webhook",
+        "httpMethod": "POST",
+        "responseData": "allEntries",
+        "responseMode": "lastNode"
+      },
+      "name": "Webhook",
+      "typeVersion": 1,
+      "onError": "stopWorkflow",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "text": "{{ JSON.stringify($json) }}",
+        "channel": "#general",
+        "channelId": "#general",
+        "resource": "message",
+        "operation": "post",
+        "select": "channel"
+      },
+      "name": "Send to Slack",
+      "typeVersion": 1,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "sticky_1",
+      "name": "Sticky Note sticky_1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "parameters": {
+        "content": "## 🎯 Webhook Entry Point\n\nReceives incoming webhook data from external systems or applications. This acts as the trigger that starts the workflow whenever data is sent to the webhook URL.",
+        "height": 150,
+        "width": 250,
+        "color": 1
+      }
+    },
+    {
+      "id": "sticky_2",
+      "name": "Sticky Note sticky_2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        550,
+        100
+      ],
+      "parameters": {
+        "content": "## 📧 Slack Notification\n\nSends the received webhook data as a message to a designated Slack channel. This completes the workflow by delivering the information to your team.",
+        "height": 150,
+        "width": 250,
+        "color": 2
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T08:55:51.573Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Create a simple webhook that sends data to Slack",
+    "testName": "Custom Test",
+    "generatedAt": "2025-08-09T08:55:51.573Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 2
+  }
+}

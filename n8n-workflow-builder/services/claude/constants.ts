@@ -85,7 +85,7 @@ export const TOKEN_LIMITS = {
   documentation: 1000,
   
   // Analysis operations
-  intentAnalysis: 1000,
+  intentAnalysis: 4000, // Increased from 1000 to handle complex prompts
   nodeRequirements: 500,
   nodeConfigFix: 1000,
   validationFixes: 2000,

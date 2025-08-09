@@ -1,0 +1,203 @@
+{
+  "name": "Weekly Website PDF Report",
+  "nodes": [
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "rule": "interval",
+        "interval": [
+          {
+            "field": "cronExpression",
+            "cronExpression": "0 8 * * 1"
+          }
+        ]
+      },
+      "name": "Monday 8AM Trigger",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "url": "https://your-website.com",
+        "method": "GET",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "name": "Scrape Website",
+      "typeVersion": 4,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "htmlToPdf_1",
+      "type": "n8n-nodes-base.convertToFile",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "operation": "html",
+        "html": "={{ $json.data }}",
+        "binaryPropertyName": "data",
+        "options": {
+          "format": "A4",
+          "margin": {
+            "top": "20mm",
+            "right": "20mm",
+            "bottom": "20mm",
+            "left": "20mm"
+          }
+        }
+      },
+      "name": "Convert HTML to PDF",
+      "typeVersion": 1,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "text": "Please find attached your weekly website report generated on {{ $now.format('YYYY-MM-DD') }}.",
+        "subject": "Weekly Website Report - {{ $now.format('YYYY-MM-DD') }}",
+        "toEmail": "your-email@example.com",
+        "fromEmail": "reports@your-domain.com",
+        "attachments": "={{ [{\"name\": \"website-report-\" + $now.format('YYYY-MM-DD') + \".pdf\", \"data\": $json.data, \"type\": \"application/pdf\"}] }}"
+      },
+      "name": "Send PDF Report",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 300,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "sticky_1",
+      "name": "Sticky Note sticky_1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "parameters": {
+        "content": "## 🎯 Weekly Schedule Trigger\n\nAutomatically starts the workflow every Monday at 8:00 AM to generate your weekly website report.",
+        "height": 150,
+        "width": 250,
+        "color": 1
+      }
+    },
+    {
+      "id": "sticky_2",
+      "name": "Sticky Note sticky_2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        550,
+        100
+      ],
+      "parameters": {
+        "content": "## 📊 Website Data Collection\n\nScrapes your website content and converts the HTML into a clean PDF format for easy reading and archiving.",
+        "height": 150,
+        "width": 400,
+        "color": 3
+      }
+    },
+    {
+      "id": "sticky_3",
+      "name": "Sticky Note sticky_3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1150,
+        100
+      ],
+      "parameters": {
+        "content": "## 📧 Email Delivery\n\nSends the generated PDF report directly to your email inbox so you can review your website content weekly.",
+        "height": 150,
+        "width": 250,
+        "color": 2
+      }
+    }
+  ],
+  "connections": {
+    "Monday 8AM Trigger": {
+      "main": [
+        [
+          {
+            "node": "Scrape Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Website": {
+      "main": [
+        [
+          {
+            "node": "Convert HTML to PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert HTML to PDF": {
+      "main": [
+        [
+          {
+            "node": "Send PDF Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T11:52:50.440Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "on monday at 8am, scrape my website, put the HTML in a PDF, and send it to me via email.",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T11:52:50.440Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 4,
+    "stickyNotesAdded": 3
+  }
+}

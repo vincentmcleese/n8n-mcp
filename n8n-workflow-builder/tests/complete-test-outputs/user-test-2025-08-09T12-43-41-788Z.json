@@ -1,0 +1,219 @@
+{
+  "name": "Weekly Product Pricing Report",
+  "nodes": [
+    {
+      "id": "schedule_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "cronExpression": "0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "name": "Monday 8AM Schedule",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "url": "",
+        "method": "GET",
+        "authentication": "none"
+      },
+      "name": "Scrape Product Pricing",
+      "typeVersion": 4,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString(),\n      productName: item.json.name || 'Unknown Product',\n      price: item.json.price || 0,\n      currency: item.json.currency || 'USD',\n      category: item.json.category || 'General',\n      inStock: item.json.stock > 0 ? 'Yes' : 'No',\n      lastUpdated: item.json.updated_at || new Date().toISOString()\n    }\n  });\n}\n\nreturn results;"
+      },
+      "name": "Transform Pricing Data",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "apiTemplateIo_1",
+      "type": "n8n-nodes-base.apiTemplateIo",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "resource": "pdf",
+        "operation": "create",
+        "pdfTemplateId": "pricing-report-template",
+        "data": "={{ $json }}"
+      },
+      "name": "Generate PDF Report",
+      "typeVersion": 1,
+      "onError": "continueErrorOutput",
+      "notes": "Generates a PDF report containing the scraped product pricing data in table format for email delivery"
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1450,
+        300
+      ],
+      "parameters": {
+        "text": "{{ 'Please find attached the weekly product pricing report generated on ' + new Date().toLocaleDateString() + '.\\n\\nThis report contains current pricing information for all products on your ecommerce website.\\n\\nBest regards,\\nAutomated Pricing System' }}",
+        "subject": "{{ 'Weekly Product Pricing Report - ' + new Date().toLocaleDateString() }}",
+        "toEmail": "",
+        "fromEmail": "",
+        "attachments": "={{ $binary }}"
+      },
+      "name": "Send Pricing Report",
+      "typeVersion": 2,
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "sticky_1",
+      "name": "Sticky Note sticky_1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "parameters": {
+        "content": "## 🎯 Weekly Schedule Trigger\n\nAutomatically starts the pricing report workflow every Monday at 8 AM. This ensures your team gets fresh pricing data at the start of each week.",
+        "height": 150,
+        "width": 250,
+        "color": 1
+      }
+    },
+    {
+      "id": "sticky_2",
+      "name": "Sticky Note sticky_2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        550,
+        100
+      ],
+      "parameters": {
+        "content": "## 📊 Data Collection & Processing\n\nScrapes all product pricing from your ecommerce website and transforms the raw data into a clean, structured format ready for reporting.",
+        "height": 150,
+        "width": 400,
+        "color": 3
+      }
+    },
+    {
+      "id": "sticky_3",
+      "name": "Sticky Note sticky_3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1150,
+        100
+      ],
+      "parameters": {
+        "content": "## 📧 Report Generation & Delivery\n\nCreates a professional PDF table with all pricing data and emails it directly to your inbox. Perfect for quick review and sharing with your team.",
+        "height": 150,
+        "width": 400,
+        "color": 2
+      }
+    }
+  ],
+  "connections": {
+    "Monday 8AM Schedule": {
+      "main": [
+        [
+          {
+            "node": "Scrape Product Pricing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Product Pricing": {
+      "main": [
+        [
+          {
+            "node": "Transform Pricing Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Pricing Data": {
+      "main": [
+        [
+          {
+            "node": "Generate PDF Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate PDF Report": {
+      "main": [
+        [
+          {
+            "node": "Send Pricing Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T12:43:41.789Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "monday 8am scrape all the product pricing from my ecommerce website and send them as a table in a pdf to my email",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T12:43:41.789Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 3
+  }
+}

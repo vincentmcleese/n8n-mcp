@@ -1,0 +1,376 @@
+{
+  "name": "Comprehensive Identity Management Workflow",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook",
+        "responseMode": "lastNode",
+        "responseData": "allEntries"
+      },
+      "name": "Identity Event Webhook",
+      "typeVersion": 1,
+      "onError": "stopWorkflow",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// ⚠️ CRITICAL: Webhook data is nested under 'body' property!\n// Connect this Code node after a Webhook node\n\n// Access webhook payload data - it's under .body, not directly under .json\nconst webhookData = $input.first().body;\n\n// Parse identity management events\nconst eventType = webhookData.eventType; // 'user_join', 'access_request', 'user_leave', 'violation_detected'\nconst userData = webhookData.user;\nconst requestData = webhookData.request;\n\n// Route based on event type\nreturn [{\n  json: {\n    eventType: eventType,\n    userId: userData?.id,\n    email: userData?.email,\n    department: userData?.department,\n    role: userData?.role,\n    requestedSystems: requestData?.systems || [],\n    approvalRequired: requestData?.requiresApproval || false,\n    timestamp: new Date().toISOString(),\n    originalData: webhookData\n  }\n}];"
+      },
+      "name": "Parse Identity Event",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "postgres_1",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        850,
+        200
+      ],
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "identity_events",
+        "columns": "event_type,user_id,email,department,role,requested_systems,approval_required,timestamp,raw_data",
+        "returnFields": "*"
+      },
+      "name": "Log Identity Event",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "postgres_2",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        850,
+        400
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ 'SELECT u.*, r.permissions, r.systems_access FROM users u LEFT JOIN roles r ON u.role = r.role_name WHERE u.user_id = \\'' + $json.userId + '\\' OR u.email = \\'' + $json.email + '\\'' }}"
+      },
+      "name": "Check User Access Rights",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "code_2",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform each item based on identity event type\nconst results = [];\n\nfor (const item of $input.all()) {\n  const eventType = item.json.eventType;\n  const userData = item.json;\n  \n  // Determine action based on event type\n  let action = 'unknown';\n  let priority = 'normal';\n  let systemsToProvision = [];\n  \n  switch(eventType) {\n    case 'user_join':\n      action = 'provision_user';\n      priority = 'high';\n      systemsToProvision = userData.requestedSystems || ['office365', 'slack', 'jira'];\n      break;\n    case 'access_request':\n      action = userData.approvalRequired ? 'require_approval' : 'grant_access';\n      priority = 'normal';\n      systemsToProvision = userData.requestedSystems;\n      break;\n    case 'user_leave':\n      action = 'deprovision_user';\n      priority = 'critical';\n      systemsToProvision = ['all_systems'];\n      break;\n    case 'violation_detected':\n      action = 'investigate_violation';\n      priority = 'critical';\n      break;\n  }\n  \n  results.push({\n    json: {\n      ...userData,\n      action: action,\n      priority: priority,\n      systemsToProvision: systemsToProvision,\n      processedAt: new Date().toISOString(),\n      needsApproval: action === 'require_approval'\n    }\n  });\n}\n\nreturn results;"
+      },
+      "name": "Route Identity Action",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "microsoftEntra_1",
+      "type": "n8n-nodes-base.microsoftEntra",
+      "position": [
+        1450,
+        200
+      ],
+      "parameters": {
+        "resource": "user",
+        "operation": "create",
+        "userPrincipalName": "{{ $json.email }}",
+        "displayName": "{{ $json.firstName + ' ' + $json.lastName }}",
+        "mailNickname": "{{ $json.email.split('@')[0] }}",
+        "password": "{{ $json.temporaryPassword || 'TempPass123!' }}",
+        "forceChangePasswordNextSignIn": true,
+        "accountEnabled": true,
+        "department": "{{ $json.department }}",
+        "jobTitle": "{{ $json.role }}"
+      },
+      "name": "Provision in Microsoft Entra",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "notes": "Manages user provisioning, role assignments, and access control in Microsoft Entra ID as part of comprehensive identity management workflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1450,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.identity-hub.company.com/provision",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Request-ID",
+              "value": "{{ $json.userId + '-' + $json.timestamp }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.identityHubToken }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "body": {
+          "user": {
+            "id": "{{ $json.userId }}",
+            "email": "{{ $json.email }}",
+            "department": "{{ $json.department }}",
+            "role": "{{ $json.role }}"
+          },
+          "action": "{{ $json.action }}",
+          "systems": "{{ $json.systemsToProvision }}",
+          "priority": "{{ $json.priority }}"
+        }
+      },
+      "name": "Provision Across Systems",
+      "typeVersion": 4,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1750,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": "C1234567890",
+        "text": "{{ `🔐 Identity Management Alert\n\n*Event:* ${$json.eventType}\n*User:* ${$json.email}\n*Action:* ${$json.action}\n*Priority:* ${$json.priority}\n*Systems:* ${$json.systemsToProvision.join(', ')}\n*Status:* ${$json.action === 'require_approval' ? '⏳ Pending Approval' : '✅ Processed'}\n\n*Timestamp:* ${$json.timestamp}` }}"
+      },
+      "name": "Notify Identity Team",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "sticky_1",
+      "name": "Sticky Note sticky_1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "parameters": {
+        "content": "## 🎯 Identity Event Processing\n\nReceives identity management events via webhook and parses the incoming data to determine what type of identity action needs to be performed (provisioning, deprovisioning, role changes, etc.).",
+        "height": 150,
+        "width": 400,
+        "color": 1
+      }
+    },
+    {
+      "id": "sticky_2",
+      "name": "Sticky Note sticky_2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        850,
+        0
+      ],
+      "parameters": {
+        "content": "## 💾 Access Control & Logging\n\nLogs all identity events for audit purposes and checks the user's current access rights against the database to determine what systems they should have access to based on their role.",
+        "height": 150,
+        "width": 250,
+        "color": 3
+      }
+    },
+    {
+      "id": "sticky_3",
+      "name": "Sticky Note sticky_3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1150,
+        100
+      ],
+      "parameters": {
+        "content": "## 🤖 Identity Action Router\n\nAnalyzes the parsed event data and user access rights to determine the appropriate provisioning actions needed across all connected systems.",
+        "height": 150,
+        "width": 250,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_4",
+      "name": "Sticky Note sticky_4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        0
+      ],
+      "parameters": {
+        "content": "## 🔄 Multi-System Provisioning\n\nExecutes user provisioning and deprovisioning across Microsoft Entra ID and 10+ other connected systems via API calls to maintain consistent access across the entire infrastructure.",
+        "height": 150,
+        "width": 250,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_5",
+      "name": "Sticky Note sticky_5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1750,
+        100
+      ],
+      "parameters": {
+        "content": "## 📧 Identity Team Notifications\n\nSends notifications to the identity management team via Slack to keep them informed of provisioning activities, access violations, and any issues that require manual intervention.",
+        "height": 150,
+        "width": 250,
+        "color": 2
+      }
+    }
+  ],
+  "connections": {
+    "Identity Event Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Identity Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Identity Event": {
+      "main": [
+        [
+          {
+            "node": "Log Identity Event",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check User Access Rights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Identity Event": {
+      "main": [
+        [
+          {
+            "node": "Route Identity Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check User Access Rights": {
+      "main": [
+        [
+          {
+            "node": "Route Identity Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Identity Action": {
+      "main": [
+        [
+          {
+            "node": "Provision in Microsoft Entra",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Provision Across Systems",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Provision in Microsoft Entra": {
+      "main": [
+        [
+          {
+            "node": "Notify Identity Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Provision Across Systems": {
+      "main": [
+        [
+          {
+            "node": "Notify Identity Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T12:47:14.340Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Create a comprehensive identity management workflow that handles user provisioning across 10+ systems, manages role-based access control, handles approval workflows for access requests, monitors for access violations, and automatically deprovisions users when they leave the company",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T12:47:14.340Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 5
+  }
+}

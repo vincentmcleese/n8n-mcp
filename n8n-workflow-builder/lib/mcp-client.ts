@@ -516,6 +516,21 @@ class MCPClient {
   }
 
   /**
+   * Create/Deploy workflow to n8n (Deployment phase)
+   */
+  public async createWorkflow(workflow: any): Promise<CallToolResult> {
+    loggers.mcp.debug(`🚀 Deploying workflow with ${workflow.nodes?.length || 0} nodes to n8n`);
+    
+    // Ensure we have the required properties
+    if (!workflow || !workflow.name || !workflow.nodes || !workflow.connections) {
+      throw new Error(`Invalid workflow object. Missing required properties: name, nodes, or connections`);
+    }
+    
+    // The n8n_create_workflow MCP tool expects the workflow properties directly as arguments
+    return this.callTool('n8n_create_workflow', workflow);
+  }
+
+  /**
    * Get connection status
    */
   public getConnectionStatus(): {

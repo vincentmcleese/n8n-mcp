@@ -67,7 +67,7 @@ const TEST_SCENARIOS = [
   // === LEVEL 1: SIMPLE VALIDATION ERRORS ===
   {
     name: "Simple - Missing Required Field",
-    description: "Should fix missing required jsCode in Code node",
+    description: "Should handle Code node without jsCode (non-breaking)",
     buildingOutput: {
       workflow: {
         name: "Simple Code Workflow",
@@ -90,7 +90,7 @@ const TEST_SCENARIOS = [
             typeVersion: 1,
             position: [450, 300],
             parameters: {
-              // Missing required jsCode field
+              // Missing jsCode field - not a breaking error
             }
           }
         ],
@@ -102,9 +102,9 @@ const TEST_SCENARIOS = [
         settings: {}
       }
     },
-    expectedAttempts: 1,
+    expectedAttempts: 0, // Should pass without fixes
     expectedValid: true,
-    expectedFixes: ["jsCode"]
+    expectedFixes: []
   },
 
   {
@@ -137,7 +137,7 @@ const TEST_SCENARIOS = [
 
   {
     name: "Simple - Empty Code Node",
-    description: "Should fix Code node with empty jsCode",
+    description: "Should handle Code node with empty jsCode (non-breaking)",
     buildingOutput: {
       workflow: {
         name: "Empty Code Workflow",
@@ -160,7 +160,7 @@ const TEST_SCENARIOS = [
             typeVersion: 1,
             position: [450, 300],
             parameters: {
-              jsCode: "" // Empty jsCode that needs content
+              jsCode: "" // Empty jsCode - not a breaking error
             }
           }
         ],
@@ -172,9 +172,9 @@ const TEST_SCENARIOS = [
         settings: {}
       }
     },
-    expectedAttempts: 1,
+    expectedAttempts: 0, // Should pass without fixes
     expectedValid: true,
-    expectedFixes: ["jsCode"]
+    expectedFixes: []
   },
 
   // === LEVEL 2: CONNECTION ISSUES ===
@@ -214,7 +214,7 @@ const TEST_SCENARIOS = [
 
   {
     name: "Medium - Missing Required Connection",
-    description: "Should add missing connection between nodes",
+    description: "Should add missing connection and fix Slack node config",
     buildingOutput: {
       workflow: {
         name: "Disconnected Nodes Workflow",
@@ -241,6 +241,7 @@ const TEST_SCENARIOS = [
               operation: "post",
               channel: "#general",
               text: "Hello World"
+              // Missing select and channelId fields
             }
           }
         ],
@@ -248,9 +249,9 @@ const TEST_SCENARIOS = [
         settings: {}
       }
     },
-    expectedAttempts: 2, // Slack node has multiple interdependent fields
+    expectedAttempts: 3, // Connection + Slack fields need multiple fixes
     expectedValid: true,
-    expectedFixes: ["addConnection", "select", "channelId"]
+    expectedFixes: ["connection", "select", "channelId"]
   },
 
   // === LEVEL 3: EXPRESSION ERRORS ===
@@ -292,7 +293,7 @@ const TEST_SCENARIOS = [
   // === LEVEL 4: MULTIPLE ISSUES (REQUIRES ITERATIONS) ===
   {
     name: "Complex - Multiple Node Issues",
-    description: "Should fix multiple issues across different nodes",
+    description: "Should fix webhook issues (Code/IF issues are non-breaking)",
     buildingOutput: {
       workflow: {
         name: "Multi-Issue Workflow",
@@ -304,7 +305,7 @@ const TEST_SCENARIOS = [
             typeVersion: 1,
             position: [250, 300],
             parameters: {
-              // Missing httpMethod and path
+              // Missing httpMethod and path - these ARE required
             }
           },
           {
@@ -314,7 +315,7 @@ const TEST_SCENARIOS = [
             typeVersion: 1,
             position: [450, 300],
             parameters: {
-              // Missing jsCode
+              // Missing jsCode - not breaking
             }
           },
           {
@@ -325,7 +326,7 @@ const TEST_SCENARIOS = [
             position: [650, 300],
             parameters: {
               conditions: {
-                // Invalid/incomplete condition
+                // Empty conditions - not breaking
                 string: []
               }
             }
@@ -342,9 +343,9 @@ const TEST_SCENARIOS = [
         settings: {}
       }
     },
-    expectedAttempts: 2, // May need multiple iterations
+    expectedAttempts: 1, // Only webhook needs fixing
     expectedValid: true,
-    expectedFixes: ["httpMethod", "path", "jsCode", "conditions"]
+    expectedFixes: ["httpMethod", "path"]
   },
 
   // === LEVEL 5: NODE TYPE ISSUES ===

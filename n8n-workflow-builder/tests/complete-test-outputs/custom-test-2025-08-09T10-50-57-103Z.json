@@ -1,0 +1,155 @@
+{
+  "name": "Webhook to Slack Message Workflow",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "webhook",
+        "httpMethod": "POST",
+        "responseData": "allEntries",
+        "responseMode": "lastNode"
+      },
+      "name": "Webhook",
+      "typeVersion": 1,
+      "onError": "stopWorkflow",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform webhook data for Slack\nconst results = [];\n\nfor (const item of items) {\n  // Extract message from webhook payload\n  const message = item.json.message || item.json.text || JSON.stringify(item.json);\n  \n  results.push({\n    json: {\n      slackMessage: message,\n      timestamp: new Date().toISOString(),\n      source: 'webhook',\n      originalData: item.json\n    }\n  });\n}\n\nreturn results;"
+      },
+      "name": "Transform Message",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "text": "={{ $json.slackMessage }}",
+        "channelId": "#general",
+        "resource": "message",
+        "operation": "post",
+        "select": "channel"
+      },
+      "name": "Send to Slack",
+      "typeVersion": 2,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "sticky_1",
+      "name": "Sticky Note sticky_1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "parameters": {
+        "content": "## 🎯 Webhook Entry Point\n\nReceives incoming webhook requests and captures the message data that needs to be forwarded to Slack.",
+        "height": 150,
+        "width": 250,
+        "color": 1
+      }
+    },
+    {
+      "id": "sticky_2",
+      "name": "Sticky Note sticky_2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        550,
+        100
+      ],
+      "parameters": {
+        "content": "## 📊 Message Processing\n\nTransforms and formats the webhook data into the proper structure for Slack delivery.",
+        "height": 150,
+        "width": 250,
+        "color": 3
+      }
+    },
+    {
+      "id": "sticky_3",
+      "name": "Sticky Note sticky_3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        850,
+        100
+      ],
+      "parameters": {
+        "content": "## 📧 Slack Delivery\n\nSends the processed message to the configured Slack channel or user.",
+        "height": 150,
+        "width": 250,
+        "color": 2
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Transform Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Message": {
+      "main": [
+        [
+          {
+            "node": "Send to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T10:50:57.103Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "when we receive a webhook, submit the message to slack",
+    "testName": "Custom Test",
+    "generatedAt": "2025-08-09T10:50:57.103Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 4,
+    "stickyNotesAdded": 3
+  }
+}

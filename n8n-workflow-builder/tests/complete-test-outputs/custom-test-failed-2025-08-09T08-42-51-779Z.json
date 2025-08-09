@@ -1,0 +1,24 @@
+{
+  "name": "Custom Test-FAILED",
+  "nodes": [],
+  "connections": {},
+  "settings": {},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T08:42:51.779Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Create a simple webhook that sends data to Slack",
+    "testName": "Custom Test-FAILED",
+    "generatedAt": "2025-08-09T08:42:51.779Z",
+    "phases": {
+      "discovery": true,
+      "building": false,
+      "validation": false,
+      "documentation": false
+    },
+    "validationAttempts": 0,
+    "stickyNotesAdded": 0
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "name": "Weekly Website PDF Report",
+  "nodes": [
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weekday",
+              "weekdayValue": 1
+            },
+            {
+              "field": "hour",
+              "hourValue": 8
+            },
+            {
+              "field": "minute",
+              "minuteValue": 0
+            }
+          ]
+        }
+      },
+      "name": "Monday 8 AM Trigger",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "url": "https://your-website.com",
+        "method": "GET",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "name": "Scrape Website",
+      "typeVersion": 4,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "htmlToPdf_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const puppeteer = require('puppeteer');\n\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const browser = await puppeteer.launch({ headless: true });\n  const page = await browser.newPage();\n  \n  await page.setContent(item.json.data || item.json.body);\n  \n  const pdf = await page.pdf({\n    format: 'A4',\n    printBackground: true,\n    margin: {\n      top: '20px',\n      right: '20px',\n      bottom: '20px',\n      left: '20px'\n    }\n  });\n  \n  await browser.close();\n  \n  results.push({\n    json: {\n      filename: `website-report-${new Date().toISOString().split('T')[0]}.pdf`,\n      data: pdf.toString('base64'),\n      mimeType: 'application/pdf'\n    },\n    binary: {\n      data: {\n        data: pdf.toString('base64'),\n        mimeType: 'application/pdf',\n        fileName: `website-report-${new Date().toISOString().split('T')[0]}.pdf`\n      }\n    }\n  });\n}\n\nreturn results;"
+      },
+      "name": "Convert HTML to PDF",
+      "typeVersion": 2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "fromEmail": "your-email@domain.com",
+        "toEmail": "recipient@domain.com",
+        "subject": "Weekly Website Report - {{ $now.format('YYYY-MM-DD') }}",
+        "text": "Please find attached your weekly website report generated on {{ $now.format('dddd, MMMM Do YYYY [at] h:mm A') }}.\n\nThis report contains the current state of your website converted to PDF format.",
+        "attachments": "data",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "data"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Email PDF Report",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "sticky_1",
+      "name": "Sticky Note sticky_1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "parameters": {
+        "content": "## 🎯 Weekly Schedule Trigger\n\nAutomatically starts the workflow every Monday at 8 AM to generate your weekly website report.",
+        "height": 150,
+        "width": 250,
+        "color": 1
+      }
+    },
+    {
+      "id": "sticky_2",
+      "name": "Sticky Note sticky_2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        550,
+        100
+      ],
+      "parameters": {
+        "content": "## 📊 Website Data Collection\n\nScrapes your website content and converts the HTML into a clean PDF format for easy reading.",
+        "height": 150,
+        "width": 400,
+        "color": 3
+      }
+    },
+    {
+      "id": "sticky_3",
+      "name": "Sticky Note sticky_3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1150,
+        100
+      ],
+      "parameters": {
+        "content": "## 📧 PDF Delivery\n\nSends the generated PDF report directly to your email inbox so you can review your website content weekly.",
+        "height": 150,
+        "width": 250,
+        "color": 2
+      }
+    }
+  ],
+  "connections": {
+    "Monday 8 AM Trigger": {
+      "main": [
+        [
+          {
+            "node": "Scrape Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Website": {
+      "main": [
+        [
+          {
+            "node": "Convert HTML to PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert HTML to PDF": {
+      "main": [
+        [
+          {
+            "node": "Email PDF Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T11:58:49.336Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "monday 8 am scrape my website. turn the html into a pdf. email it to me.",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T11:58:49.336Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 1,
+    "stickyNotesAdded": 3
+  }
+}

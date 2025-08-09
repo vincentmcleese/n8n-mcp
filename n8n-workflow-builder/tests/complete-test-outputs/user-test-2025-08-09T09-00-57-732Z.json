@@ -1,0 +1,140 @@
+{
+  "name": "Form Submission to Slack and Email Notification",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "webhook",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "responseData": "allEntries"
+      },
+      "name": "Form Webhook",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        550,
+        200
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": "#general",
+        "text": "New form submission received:\n\n{{ JSON.stringify($node[\"Form Webhook\"].json, null, 2) }}"
+      },
+      "name": "Send Slack Message",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        550,
+        400
+      ],
+      "parameters": {
+        "fromEmail": "notifications@company.com",
+        "toEmail": "team@company.com",
+        "subject": "New Form Submission - {{ new Date().toLocaleDateString() }}",
+        "text": "A new form submission has been received:\n\n{{ JSON.stringify($node[\"Form Webhook\"].json, null, 2) }}"
+      },
+      "name": "Send Email Notification",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "sticky_1",
+      "name": "Sticky Note sticky_1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "parameters": {
+        "content": "## 🎯 Form Submission Entry\n\nReceives form submissions via webhook and captures all the user-submitted data for processing.",
+        "height": 150,
+        "width": 250,
+        "color": 1
+      }
+    },
+    {
+      "id": "sticky_2",
+      "name": "Sticky Note sticky_2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        550,
+        0
+      ],
+      "parameters": {
+        "content": "## 📧 Team Notifications\n\nSends the form response to the team through both Slack and email channels to ensure everyone stays informed.",
+        "height": 150,
+        "width": 250,
+        "color": 2
+      }
+    }
+  ],
+  "connections": {
+    "Form Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Email Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T09:00:57.733Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "when a user submits a form via webhook lets send a slack message to the team with the response and also an email to the team with the response as well",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T09:00:57.733Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 2,
+    "stickyNotesAdded": 2
+  }
+}

@@ -197,6 +197,18 @@ For missing connections:
 - Webhook/Schedule should typically be first
 - Connect each node to the next logical step
 
+Expression syntax rules:
+- n8n does NOT allow multiple {{ }} in one field
+- Use a SINGLE {{ }} with template literals inside
+
+WRONG: "Alert: {{ $json.category }} - {{ $json.status }}"
+RIGHT: "{{ \`Alert: \${$json.category} - \${$json.status}\` }}"
+
+WRONG: "Report for {{ new Date().toLocaleDateString() }}"
+RIGHT: "{{ \`Report for \${new Date().toLocaleDateString()}\` }}"
+
+Fix any "nested expression" errors by converting to single expression format.
+
 Response format:
 {
   "fixedNodes": [/* complete fixed node objects */],

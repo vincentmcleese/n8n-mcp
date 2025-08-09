@@ -418,6 +418,13 @@ export class WorkflowOrchestrator {
 
     return this.checkPhaseTransition(session);
   }
+
+  /**
+   * Get MCP client instance for external use (e.g., deployment)
+   */
+  getMCPClient(): MCPClient {
+    return this.mcpClient;
+  }
 }
 
 /**

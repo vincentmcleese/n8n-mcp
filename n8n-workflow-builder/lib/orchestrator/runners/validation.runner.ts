@@ -77,7 +77,7 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
       // Add phase transition operation
       operations.push({ type: 'setPhase', phase: 'validation' });
 
-      const MAX_ATTEMPTS = 3;
+      const MAX_ATTEMPTS = 5;
       let attempts = 0;
       let allValid = false;
 
@@ -106,29 +106,65 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
           `Found ${allErrors.length} validation errors`
         );
         
+        // Debug log to understand error structure
+        if (allErrors.length > 0 && attempts === 1) {
+          this.deps.loggers.orchestrator.debug('First error structure for debugging:', {
+            error: allErrors[0],
+            type: typeof allErrors[0],
+            keys: allErrors[0] && typeof allErrors[0] === 'object' ? Object.keys(allErrors[0]) : [],
+            isArray: Array.isArray(allErrors[0]),
+            stringified: JSON.stringify(allErrors[0], null, 2)
+          });
+        }
+        
         // Log detailed errors
         if (allErrors.length > 0) {
           this.deps.loggers.orchestrator.info(
-            `\n   🔍 Validation Errors (Attempt ${attempts}/${MAX_ATTEMPTS}):`
+            `\n   🔍 Validation Errors (Attempt ${attempts}/5):`
           );
           allErrors.forEach((error, index) => {
-            // Safely extract error message
+            // Safely extract error message and node info
             let errorMsg = '';
+            let nodeInfo = '';
+            
             if (typeof error === 'string') {
               errorMsg = error;
-            } else if (error?.message) {
-              errorMsg = String(error.message);
-            } else if (error?.error) {
-              errorMsg = String(error.error);
+            } else if (error && typeof error === 'object') {
+              // Try different error message fields
+              errorMsg = error.message || error.error || error.msg || error.text || '';
+              
+              // Extract node information from various possible locations
+              const nodeId = error.node || error.nodeId || error.nodeName || error.id;
+              if (nodeId) {
+                nodeInfo = ` [Node: ${nodeId}]`;
+              } else if (error.data?.node || error.data?.nodeId) {
+                nodeInfo = ` [Node: ${error.data.node || error.data.nodeId}]`;
+              } else if (error.details?.node || error.details?.nodeId) {
+                nodeInfo = ` [Node: ${error.details.node || error.details.nodeId}]`;
+              }
+              
+              // If we still don't have a message, stringify the whole object
+              if (!errorMsg) {
+                errorMsg = JSON.stringify(error);
+              }
             } else {
-              errorMsg = JSON.stringify(error);
+              errorMsg = String(error);
             }
             
-            const nodeInfo = error.node || error.nodeId ? 
-                           ` [Node: ${error.node || error.nodeId}]` : '';
             this.deps.loggers.orchestrator.info(
               `      ${index + 1}. ${errorMsg}${nodeInfo}`
             );
+            
+            // Additional debug logging for complex errors
+            if (error && typeof error === 'object' && Object.keys(error).length > 0) {
+              this.deps.loggers.orchestrator.debug(`      Error ${index + 1} details:`, {
+                keys: Object.keys(error),
+                hasNode: !!error.node,
+                hasNodeId: !!error.nodeId,
+                hasMessage: !!error.message,
+                raw: error
+              });
+            }
           });
         }
 
@@ -204,7 +240,7 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
         }
 
         this.deps.loggers.orchestrator.info(
-          `\n   🤖 Claude Entity Fixes (Attempt ${attempts}/${MAX_ATTEMPTS}):`
+          `\n   🤖 Claude Entity Fixes (Attempt ${attempts}/5):`
         );
         
         // Log Claude's reasoning if available
@@ -303,7 +339,7 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
           `      Total fixes applied: ${validationReport.fixesApplied.length}`
         );
         this.deps.loggers.orchestrator.info(
-          `      Validation attempts: ${attempts}/${MAX_ATTEMPTS}`
+          `      Validation attempts: ${attempts}/5`
         );
         this.deps.loggers.orchestrator.info(
           `      Final status: ${allValid ? '✅ Valid' : '⚠️ Still has issues'}`
@@ -397,7 +433,21 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
     const affectedNodes = new Map<string, any>();
     let needsConnectionFix = false;
     
+    // Debug log to understand error structure
+    this.deps.loggers.orchestrator.debug(`Processing ${errors.length} errors for entity extraction`);
+    
     for (const error of errors) {
+      // Deep introspection of error structure
+      this.deps.loggers.orchestrator.debug('Error structure:', {
+        type: typeof error,
+        hasMessage: !!error?.message,
+        hasError: !!error?.error,
+        hasNode: !!error?.node,
+        hasNodeId: !!error?.nodeId,
+        hasNodeName: !!error?.nodeName,
+        keys: error && typeof error === 'object' ? Object.keys(error) : []
+      });
+      
       // Safely extract error message - handle various error structures
       let errorMsg = '';
       if (typeof error === 'string') {
@@ -406,47 +456,97 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
         errorMsg = String(error.message);
       } else if (error?.error) {
         errorMsg = String(error.error);
+      } else if (error && typeof error === 'object') {
+        // Try to extract any string property that might contain the error
+        const possibleMessageFields = ['msg', 'text', 'description', 'details'];
+        for (const field of possibleMessageFields) {
+          if (error[field]) {
+            errorMsg = String(error[field]);
+            break;
+          }
+        }
+        if (!errorMsg) {
+          errorMsg = JSON.stringify(error);
+        }
       } else {
-        errorMsg = JSON.stringify(error);
+        errorMsg = String(error);
       }
       
       // Check if error is about connections
       if (errorMsg.includes('Connection') || 
           errorMsg.includes('connection') ||
           errorMsg.includes('uses node ID') ||
-          errorMsg.includes('instead of node name')) {
+          errorMsg.includes('instead of node name') ||
+          errorMsg.includes('no connections')) {
         needsConnectionFix = true;
       }
       
-      // Check if error is node-specific
-      const nodeId = error.node || error.nodeId;
-      const nodeName = error.nodeName;
+      // Check if error is node-specific - look in multiple places
+      let nodeIdentifier = error?.node || error?.nodeId || error?.nodeName || error?.id;
       
-      if (nodeId && nodeId !== 'workflow') {
+      // Also check for nested node information
+      if (!nodeIdentifier && error && typeof error === 'object') {
+        // Check for nested node property
+        if (error.data?.node) nodeIdentifier = error.data.node;
+        if (error.data?.nodeId) nodeIdentifier = error.data.nodeId;
+        if (error.details?.node) nodeIdentifier = error.details.node;
+        if (error.details?.nodeId) nodeIdentifier = error.details.nodeId;
+      }
+      
+      if (nodeIdentifier && nodeIdentifier !== 'workflow') {
         // Find node by ID or name
         const node = workflow.nodes?.find((n: any) => 
-          n.id === nodeId || n.name === nodeId || n.name === nodeName
+          n.id === nodeIdentifier || n.name === nodeIdentifier
         );
         if (node && !affectedNodes.has(node.id)) {
           affectedNodes.set(node.id, node);
+          this.deps.loggers.orchestrator.debug(`Added affected node: ${node.id} (${node.name})`);
         }
       }
       
       // Also check if error message mentions a specific node
       if (errorMsg) {
-        // Try to extract node name from error message
-        const nodeNameMatch = errorMsg.match(/node ["']([^"']+)["']/i);
-        if (nodeNameMatch) {
-          const nodeName = nodeNameMatch[1];
-          const node = workflow.nodes?.find((n: any) => 
-            n.name === nodeName || n.id === nodeName
-          );
-          if (node && !affectedNodes.has(node.id)) {
-            affectedNodes.set(node.id, node);
+        // Try multiple patterns to extract node name from error message
+        const patterns = [
+          /node ["']([^"']+)["']/i,
+          /Node: ([^\s,\]]+)/,
+          /\[Node: ([^\]]+)\]/,
+          /for node ([^\s,]+)/i,
+          /node\s+(\w+)/i
+        ];
+        
+        for (const pattern of patterns) {
+          const match = errorMsg.match(pattern);
+          if (match) {
+            const nodeName = match[1];
+            const node = workflow.nodes?.find((n: any) => 
+              n.name === nodeName || n.id === nodeName
+            );
+            if (node && !affectedNodes.has(node.id)) {
+              affectedNodes.set(node.id, node);
+              this.deps.loggers.orchestrator.debug(`Added affected node from message: ${node.id} (${node.name})`);
+            }
           }
         }
       }
     }
+    
+    // If we have validation errors but no specific nodes identified,
+    // and it's not a connection issue, include ALL nodes with issues
+    if (affectedNodes.size === 0 && !needsConnectionFix && errors.length > 0) {
+      this.deps.loggers.orchestrator.debug('No specific nodes identified, checking all nodes for issues');
+      
+      // Send all nodes to Claude for comprehensive fixing
+      for (const node of workflow.nodes || []) {
+        affectedNodes.set(node.id, node);
+      }
+      
+      if (affectedNodes.size > 0) {
+        this.deps.loggers.orchestrator.debug(`Added all ${affectedNodes.size} nodes for comprehensive validation`);
+      }
+    }
+    
+    this.deps.loggers.orchestrator.debug(`Entity extraction complete: ${affectedNodes.size} nodes, connectionFix: ${needsConnectionFix}`);
     
     return { affectedNodes, needsConnectionFix };
   }
@@ -525,12 +625,25 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
         warningCount: validationResult.warnings?.length || 0,
         hasStatistics: !!validationResult.statistics,
         errorSample: validationResult.errors?.[0],
+        errorTypes: validationResult.errors?.map((e: any) => typeof e).slice(0, 5),
+        firstErrorKeys: validationResult.errors?.[0] && typeof validationResult.errors[0] === 'object' 
+          ? Object.keys(validationResult.errors[0]) 
+          : null,
+        rawSample: JSON.stringify(validationResult.errors?.slice(0, 2), null, 2)
       });
 
       // The validate_workflow tool returns a comprehensive result
       // We need to categorize errors by type
       const allErrors = validationResult.errors || [];
       const allWarnings = validationResult.warnings || [];
+      
+      // Debug log warnings to see if important issues are there
+      if (allWarnings.length > 0) {
+        this.deps.loggers.orchestrator.debug("Validation warnings:", {
+          count: allWarnings.length,
+          sample: JSON.stringify(allWarnings.slice(0, 2), null, 2)
+        });
+      }
 
       // Categorize errors for our report structure
       // The errors have a complex structure with node and message fields

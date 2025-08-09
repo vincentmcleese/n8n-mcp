@@ -1,0 +1,373 @@
+{
+  "name": "Social Media & Support Monitoring with AI Analysis",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "webhook",
+        "httpMethod": "POST",
+        "responseData": "allEntries",
+        "responseMode": "lastNode"
+      },
+      "name": "Data Intake Webhook",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "twitter_1",
+      "type": "n8n-nodes-base.twitter",
+      "position": [
+        250,
+        450
+      ],
+      "parameters": {
+        "limit": 100,
+        "resource": "tweet",
+        "operation": "search",
+        "searchText": "#support OR #complaint OR @company"
+      },
+      "name": "Twitter Monitor",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        550,
+        375
+      ],
+      "parameters": {
+        "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString(),\n      source: item.json.source || 'webhook',\n      content: item.json.content || item.json.text || item.json.message,\n      author: item.json.author || item.json.user || 'unknown',\n      timestamp: item.json.timestamp || item.json.created_at || new Date().toISOString(),\n      type: item.json.type || 'mention',\n      rawData: item.json\n    }\n  });\n}\n\nreturn results;"
+      },
+      "name": "Data Normalizer",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        850,
+        375
+      ],
+      "parameters": {
+        "modelId": "gpt-3.5-turbo",
+        "messages": {
+          "values": [
+            {
+              "role": "user",
+              "content": "Analyze the following content for sentiment and key topics. Return JSON with: sentiment (positive/negative/neutral), confidence (0-1), topics (array), category (complaint/praise/inquiry/urgent), alertLevel (low/medium/high/critical), summary (brief). Content: {{ $json.content }}"
+            }
+          ]
+        },
+        "resource": "chat"
+      },
+      "name": "AI Sentiment & Topic Analysis",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "code_2",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1150,
+        375
+      ],
+      "parameters": {
+        "jsCode": "// Parse AI response and merge with original data\nconst results = [];\n\nfor (let i = 0; i < items.length; i++) {\n  const item = items[i];\n  let aiAnalysis = {};\n  \n  try {\n    // Try to parse AI response as JSON\n    aiAnalysis = JSON.parse(item.json.choices[0].message.content);\n  } catch (e) {\n    // Fallback if parsing fails\n    aiAnalysis = {\n      sentiment: 'neutral',\n      confidence: 0.5,\n      topics: ['general'],\n      category: 'inquiry',\n      alertLevel: 'low',\n      summary: 'Analysis failed'\n    };\n  }\n  \n  // Get original data from previous node\n  const originalData = $input.first().json;\n  \n  results.push({\n    json: {\n      ...originalData,\n      ...aiAnalysis,\n      analyzedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;"
+      },
+      "name": "AI Response Parser",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "postgres_1",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        1450,
+        375
+      ],
+      "parameters": {
+        "table": "social_monitoring",
+        "columns": "id,source,content,author,timestamp,sentiment,confidence,topics,category,alert_level,summary,processed_at",
+        "operation": "insert",
+        "returnFields": "*",
+        "schema": "public"
+      },
+      "name": "Store Analysis Results",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "postgres_2",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        1450,
+        550
+      ],
+      "parameters": {
+        "query": "SELECT \n  source,\n  sentiment,\n  category,\n  alert_level,\n  COUNT(*) as count,\n  AVG(confidence) as avg_confidence,\n  array_agg(DISTINCT unnest(topics)) as all_topics\nFROM social_monitoring \nWHERE processed_at >= NOW() - INTERVAL '7 days'\nGROUP BY source, sentiment, category, alert_level\nORDER BY count DESC",
+        "operation": "executeQuery"
+      },
+      "name": "Generate Weekly Report Data",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "code_3",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1750,
+        550
+      ],
+      "parameters": {
+        "jsCode": "// Generate executive summary from report data\nconst reportData = items[0].json;\nconst totalMentions = reportData.reduce((sum, row) => sum + parseInt(row.count), 0);\nconst sentimentBreakdown = {};\nconst alertBreakdown = {};\nconst topTopics = [];\n\n// Analyze the data\nreportData.forEach(row => {\n  // Sentiment breakdown\n  if (!sentimentBreakdown[row.sentiment]) {\n    sentimentBreakdown[row.sentiment] = 0;\n  }\n  sentimentBreakdown[row.sentiment] += parseInt(row.count);\n  \n  // Alert level breakdown\n  if (!alertBreakdown[row.alert_level]) {\n    alertBreakdown[row.alert_level] = 0;\n  }\n  alertBreakdown[row.alert_level] += parseInt(row.count);\n  \n  // Collect topics\n  if (row.all_topics) {\n    topTopics.push(...row.all_topics);\n  }\n});\n\n// Generate summary\nconst summary = {\n  totalMentions,\n  sentimentBreakdown,\n  alertBreakdown,\n  topTopics: [...new Set(topTopics)].slice(0, 10),\n  reportPeriod: '7 days',\n  generatedAt: new Date().toISOString()\n};\n\nreturn [{ json: summary }];"
+      },
+      "name": "Generate Executive Summary",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        2050,
+        450
+      ],
+      "parameters": {
+        "text": "Weekly Social Media & Support Monitoring Report\n\nTotal Mentions: {{ $json.totalMentions }}\n\nSentiment Breakdown:\n- Positive: {{ $json.sentimentBreakdown.positive || 0 }}\n- Negative: {{ $json.sentimentBreakdown.negative || 0 }}\n- Neutral: {{ $json.sentimentBreakdown.neutral || 0 }}\n\nAlert Levels:\n- Critical: {{ $json.alertBreakdown.critical || 0 }}\n- High: {{ $json.alertBreakdown.high || 0 }}\n- Medium: {{ $json.alertBreakdown.medium || 0 }}\n- Low: {{ $json.alertBreakdown.low || 0 }}\n\nTop Topics: {{ $json.topTopics.join(', ') }}\n\nGenerated: {{ $json.generatedAt }}",
+        "subject": "Weekly Social Media Monitoring Report - {{ new Date().toLocaleDateString() }}",
+        "toEmail": "executives@company.com",
+        "fromEmail": "monitoring@company.com"
+      },
+      "name": "Send Executive Report",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "emailSend_2",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1750,
+        300
+      ],
+      "parameters": {
+        "text": "CRITICAL ALERT: {{ $json.category }} detected\n\nSource: {{ $json.source }}\nAuthor: {{ $json.author }}\nSentiment: {{ $json.sentiment }} ({{ $json.confidence }}% confidence)\nContent: {{ $json.content }}\nSummary: {{ $json.summary }}\n\nImmediate attention required.",
+        "subject": "🚨 CRITICAL ALERT - {{ $json.category }} - {{ $json.source }}",
+        "toEmail": "alerts@company.com",
+        "fromEmail": "monitoring@company.com"
+      },
+      "name": "Send Critical Alerts",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "sticky_1",
+      "name": "Sticky Note sticky_1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "parameters": {
+        "content": "## 🎯 Data Collection Sources\n\nCollects mentions and feedback from multiple channels including webhooks for support tickets and Twitter monitoring for social media mentions.",
+        "height": 150,
+        "width": 250,
+        "color": 1
+      }
+    },
+    {
+      "id": "sticky_2",
+      "name": "Sticky Note sticky_2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        550,
+        175
+      ],
+      "parameters": {
+        "content": "## 🤖 AI-Powered Analysis Engine\n\nNormalizes incoming data and uses OpenAI to analyze sentiment, extract key topics, and categorize issues automatically for consistent processing.",
+        "height": 150,
+        "width": 400,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_3",
+      "name": "Sticky Note sticky_3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        175
+      ],
+      "parameters": {
+        "content": "## 💾 Data Storage & Reporting\n\nStores all analysis results in PostgreSQL with proper indexing and generates weekly report data for stakeholder distribution.",
+        "height": 150,
+        "width": 250,
+        "color": 3
+      }
+    },
+    {
+      "id": "sticky_4",
+      "name": "Sticky Note sticky_4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1750,
+        100
+      ],
+      "parameters": {
+        "content": "## 📧 Smart Notifications\n\nGenerates executive summaries and sends targeted reports to different stakeholders, plus immediate critical alerts when urgent issues are detected.",
+        "height": 150,
+        "width": 400,
+        "color": 2
+      }
+    }
+  ],
+  "connections": {
+    "Data Intake Webhook": {
+      "main": [
+        [
+          {
+            "node": "Data Normalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twitter Monitor": {
+      "main": [
+        [
+          {
+            "node": "Data Normalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Normalizer": {
+      "main": [
+        [
+          {
+            "node": "AI Sentiment & Topic Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Sentiment & Topic Analysis": {
+      "main": [
+        [
+          {
+            "node": "AI Response Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Response Parser": {
+      "main": [
+        [
+          {
+            "node": "Store Analysis Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Analysis Results": {
+      "main": [
+        [
+          {
+            "node": "Send Critical Alerts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Generate Weekly Report Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Weekly Report Data": {
+      "main": [
+        [
+          {
+            "node": "Generate Executive Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Executive Summary": {
+      "main": [
+        [
+          {
+            "node": "Send Executive Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T12:08:26.186Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Create a workflow that monitors social media mentions, news articles, and customer support tickets. Use AI to analyze sentiment and extract key topics. Automatically categorize issues, generate executive summaries, and create different alert levels. Store everything in a database with proper indexing and send weekly reports to different stakeholders based on their roles.",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T12:08:26.186Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 5,
+    "stickyNotesAdded": 4
+  }
+}
