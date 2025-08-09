@@ -31,9 +31,9 @@ export interface DocumentationOutput extends PhaseResult {
 
 /**
  * Dependencies for the documentation runner
+ * No longer requires Claude service - uses deterministic phase categorization
  */
 export interface DocumentationRunnerDeps {
-  claudeService: any;
   sessionRepo: any;
   loggers: any;
 }

@@ -219,7 +219,6 @@ export class WorkflowOrchestrator {
     });
 
     this.documentationRunner = new DocumentationRunner({
-      claudeService: this.phaseServices.documentation,
       sessionRepo: this.sessionRepo,
       loggers
     });

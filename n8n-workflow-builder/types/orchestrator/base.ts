@@ -81,3 +81,14 @@ export interface PhaseOptions {
   dryRun?: boolean;
   debug?: boolean;
 }
+
+/**
+ * Orchestrator dependencies
+ */
+export interface OrchestratorDeps {
+  mcpClient?: any;
+  claudeService?: any;
+  phaseManager?: any;
+  sessionRepo?: any;
+  nodeContextService?: any;
+}

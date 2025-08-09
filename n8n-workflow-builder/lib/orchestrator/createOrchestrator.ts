@@ -1,7 +1,6 @@
 // lib/orchestrator/createOrchestrator.ts
 
 import { WorkflowOrchestrator } from "@/lib/workflow-orchestrator";
-import { ClaudeService } from "@/lib/services/claude-service";
 import { MCPClient } from "@/lib/mcp-client";
 import { PhaseManager } from "@/lib/phase-manager";
 import { SessionRepo } from "@/lib/orchestrator/context/SessionRepo";
@@ -21,7 +20,7 @@ export function createOrchestrator(overrides?: Partial<OrchestratorDeps>): Workf
   });
 
   const deps: OrchestratorDeps = {
-    claudeService: overrides?.claudeService || new ClaudeService(),
+    claudeService: overrides?.claudeService || null, // Claude service now optional
     mcpClient,
     phaseManager: overrides?.phaseManager || new PhaseManager(),
     sessionRepo: overrides?.sessionRepo || new SessionRepo(),

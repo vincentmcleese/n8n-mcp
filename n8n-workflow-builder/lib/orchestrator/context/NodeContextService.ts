@@ -250,7 +250,7 @@ export class NodeContextService {
       }
 
       if (!parsedFromJson && parts.length > 0) {
-        const fallbackText = (parts.find(p => p?.type === 'text') as any)?.text || '';
+        const fallbackText = (parts.find((p: any) => p?.type === 'text') as any)?.text || '';
         const parsed = parseValidationOutput(fallbackText);
         isValid = parsed.isValid;
         validationErrors = parsed.errors;
