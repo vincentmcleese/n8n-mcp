@@ -1,0 +1,119 @@
+{
+  "name": "[document test] - Simple Linear",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "category": "trigger",
+      "position": [
+        100,
+        200
+      ],
+      "parameters": {},
+      "typeVersion": 1
+    },
+    {
+      "id": "http_1",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "category": "input",
+      "position": [
+        300,
+        200
+      ],
+      "parameters": {},
+      "typeVersion": 4
+    },
+    {
+      "id": "code_1",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "category": "transform",
+      "position": [
+        500,
+        200
+      ],
+      "parameters": {},
+      "typeVersion": 2
+    },
+    {
+      "id": "slack_1",
+      "name": "Slack",
+      "type": "n8n-nodes-base.slack",
+      "category": "output",
+      "position": [
+        700,
+        200
+      ],
+      "parameters": {},
+      "typeVersion": 2
+    },
+    {
+      "id": "sticky_triggers_1754751788485",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        60,
+        60
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWorkflow entry points",
+        "height": 200,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754751788485",
+      "name": "Inputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        60
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nData collection",
+        "height": 200,
+        "width": 230,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754751788485",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        460,
+        60
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcessing & routing",
+        "height": 200,
+        "width": 230,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754751788485",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        660,
+        60
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nActions & destinations",
+        "height": 200,
+        "width": 230,
+        "color": 7
+      }
+    }
+  ],
+  "settings": {},
+  "connections": {}
+}

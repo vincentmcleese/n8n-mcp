@@ -1,0 +1,103 @@
+{
+  "name": "[document test] - Simple Linear",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "category": "trigger",
+      "position": [
+        100,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "http_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "category": "input",
+      "position": [
+        300,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "category": "transform",
+      "position": [
+        500,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "category": "output",
+      "position": [
+        700,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "sticky_triggers_1754750675696",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        60,
+        60
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWorkflow entry points",
+        "height": 200,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754750675696",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        260,
+        60
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nData collection",
+        "height": 200,
+        "width": 230,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754750675696",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        460,
+        60
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcessing & routing",
+        "height": 200,
+        "width": 230,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754750675696",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        660,
+        60
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nActions & destinations",
+        "height": 200,
+        "width": 230,
+        "color": 7
+      }
+    }
+  ],
+  "settings": {},
+  "connections": {}
+}

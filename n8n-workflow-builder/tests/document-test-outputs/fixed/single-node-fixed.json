@@ -1,0 +1,25 @@
+{
+  "name": "[Fixed] Single Node",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        300,
+        300
+      ],
+      "parameters": {
+        "path": "webhook",
+        "httpMethod": "POST",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {},
+  "settings": {},
+  "staticData": null,
+  "pinData": {}
+}

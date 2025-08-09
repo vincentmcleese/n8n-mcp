@@ -189,7 +189,9 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
       // Create sticky note for this phase
       const stickyNote: WorkflowNode = {
         id: `sticky_${phase}_${Date.now()}`,
+        name: `${phaseConfig.name} Notes`,
         type: "n8n-nodes-base.stickyNote",
+        typeVersion: 1,
         position: [minX, minY - 100], // Position above the nodes
         parameters: {
           content: `## ${phaseConfig.icon} ${phaseConfig.name}\n${phaseConfig.description}`,

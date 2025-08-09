@@ -1,0 +1,97 @@
+{
+  "name": "[Fixed] Uncategorized Nodes",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        100,
+        200
+      ],
+      "parameters": {
+        "path": "webhook",
+        "httpMethod": "POST",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "custom_1",
+      "name": "Custom Node",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Custom processing logic\nreturn items.map(item => {\n  return {\n    json: {\n      ...item.json,\n      processed: true,\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
+      }
+    },
+    {
+      "id": "another_1",
+      "name": "Another Custom",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Additional custom processing\nreturn items.map(item => {\n  return {\n    json: {\n      ...item.json,\n      additionalProcessing: true,\n      processedAt: new Date().toISOString()\n    }\n  };\n});"
+      }
+    },
+    {
+      "id": "slack_1",
+      "name": "Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [
+        700,
+        200
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Custom Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Custom Node": {
+      "main": [
+        [
+          {
+            "node": "Another Custom",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Another Custom": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "pinData": {}
+}

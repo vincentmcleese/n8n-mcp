@@ -1,0 +1,171 @@
+{
+  "name": "Monday Morning Data Summary Email",
+  "nodes": [
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weekday",
+              "weekdayValue": 1
+            },
+            {
+              "field": "hour",
+              "hourValue": 8
+            },
+            {
+              "field": "minute",
+              "minuteValue": 0
+            }
+          ]
+        }
+      },
+      "name": "Monday 8AM Trigger",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString(),\n      content: item.json.content || 'No content available',\n      filename: item.json.filename || 'Unknown file',\n      size: item.json.size || 0\n    }\n  });\n}\n\nreturn results;"
+      },
+      "name": "Process Folder Data",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "modelId": "gpt-3.5-turbo",
+        "messages": {
+          "values": [
+            {
+              "role": "user",
+              "content": "Please provide a concise summary of the following data from my folder. Focus on key insights, patterns, and important information:\n\n{{ JSON.stringify($json, null, 2) }}"
+            }
+          ]
+        },
+        "resource": "chat"
+      },
+      "name": "Summarize Data",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "fromEmail": "your-email@example.com",
+        "toEmail": "your-email@example.com",
+        "subject": "{{ 'Weekly Data Summary - ' + new Date().toLocaleDateString() }}",
+        "text": "{{ 'Here\\'s your weekly data summary:\\n\\n' + $json.message.content + '\\n\\nGenerated on: ' + new Date().toLocaleString() }}"
+      },
+      "name": "Send Summary Email",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "sticky_transforms_1754752602916",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcessing & routing",
+        "height": 200,
+        "width": 1130,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Monday 8AM Trigger": {
+      "main": [
+        [
+          {
+            "node": "Process Folder Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Folder Data": {
+      "main": [
+        [
+          {
+            "node": "Summarize Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize Data": {
+      "main": [
+        [
+          {
+            "node": "Send Summary Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T15:16:43.255Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "when its monday at 8am, retreive data from a folder and summarize it and email it to me",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T15:16:43.255Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 1
+  }
+}

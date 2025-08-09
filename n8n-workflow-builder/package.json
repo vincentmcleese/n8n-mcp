@@ -17,6 +17,7 @@
     "test:build:e2e": "NODE_ENV=test tsx tests/integration/test-building-e2e.ts",
     "test:build:all": "npm run test:build:e2e -- --save-fixtures && npm run test:build",
     "test:validate": "NODE_ENV=test tsx tests/integration/test-validation-refactor.ts",
+    "test:document": "NODE_ENV=test tsx tests/integration/test-documentation-phase.ts",
     "test:complete": "NODE_ENV=test tsx tests/integration/test-complete-e2e.ts",
     "test:complete:e2e": "NODE_ENV=test tsx tests/integration/test-complete-e2e.ts",
     "test:buildworkflow": "tsx scripts/build-workflow.ts"
