@@ -265,10 +265,10 @@ class ConfigurationIntegrationTest {
     console.log(chalk.yellow('⚠️  Using REAL Claude API and MCP services - this will consume tokens!\n'));
     
     // Dynamic import to ensure env vars are loaded first
-    const { WorkflowOrchestrator } = await import('@/lib/workflow-orchestrator');
-    const { TaskService } = await import('@/services/mcp/task-service');
-    const { MCPClient } = await import('@/services/mcp');
-    const { createLogger } = await import('@/lib/logger');
+    const { WorkflowOrchestrator } = await import('../../lib/workflow-orchestrator');
+    const { TaskService } = await import('../../services/mcp/task-service');
+    const { MCPClient } = await import('../../services/mcp');
+    const { createLogger } = await import('../../lib/utils/logger');
     
     try {
       // Create orchestrator which will handle everything
