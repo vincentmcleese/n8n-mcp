@@ -271,32 +271,108 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
     const operations: WorkflowOperation[] = [];
 
     try {
-          // Handle pre-configured task nodes (detected from discovery)
-          if (node.isPreConfigured && node.config) {
+      // Handle pre-configured task nodes (detected from discovery)
+      if (node.isPreConfigured && node.config) {
         this.deps.loggers.orchestrator.debug(
-          `Processing pre-configured task node: ${node.type}`
+          `Processing task node with template: ${node.type}`
         );
         
-        // Restructure the flat config from MCP into proper n8n format
-        const restructuredConfig = this.restructureTaskConfig(node.config);
+        // Step 1: Restructure the flat config from MCP into proper n8n format
+        const restructuredTemplate = this.restructureTaskConfig(node.config);
         
-        this.deps.loggers.orchestrator.info(
-          `✅ Pre-configured node "${node.type}" formatted for node and parameter level properties`
+        this.deps.loggers.orchestrator.debug(
+          `Task template restructured for ${node.type}, now customizing with Claude`
         );
         
+        // Step 2: Build targeted prompt using task template and rules
+        const prompt = this.promptBuilder.buildPrompt({
+          node,
+          essentials: restructuredTemplate, // Pass template as "essentials"
+          workflowContext: {
+            description: userPrompt,
+            userPrompt: userPrompt
+          }
+        });
+
+        // Log that a task customization prompt was created
+        this.deps.loggers.orchestrator.debug(
+          `Task customization prompt created for ${node.type}`
+        );
+
+        // Step 3: Get customized configuration from Claude
+        this.deps.loggers.orchestrator.debug(
+          `Customizing task template for ${node.type} based on user requirements`
+        );
+        
+        const claudeResult = await this.deps.claudeService.execute(
+          {
+            prompt: prompt,
+            selectedNodes: [node.id],
+            context: {
+              discoveredNodes: [node],
+              nodeSchemas: { [node.type]: restructuredTemplate }, // Pass template as schema
+              nodeProperties: {},
+              nodeTemplates: { [node.type]: restructuredTemplate }, // Also as template
+              nodeDocumentation: {},
+              enrichedContext: { 
+                optimized: true, 
+                taskTemplate: true, 
+                customPrompt: true,
+                preConfigured: true 
+              }
+            }
+          },
+          { sessionId }
+        );
+        
+        if (!claudeResult.success || !claudeResult.data) {
+          throw new Error(`Failed to customize task template for ${node.type}`);
+        }
+
+        // Extract configuration from response
+        let nodeConfig: any = {};
+        let configFound = false;
+        
+        for (const operation of claudeResult.data.operations) {
+          if (operation.type === "configureNode" && operation.nodeId === node.id) {
+            nodeConfig = operation.config;
+            configFound = true;
+            operations.push({
+              ...operation,
+              nodeType: node.type,
+              purpose: node.purpose,
+              customizedFromTemplate: true
+            });
+            break;
+          }
+        }
+        
+        if (!configFound) {
+          throw new Error(`No configuration generated for task node ${node.id}`);
+        }
+
+        if (claudeResult.data.reasoning) {
+          reasoning.push(...claudeResult.data.reasoning);
+        }
+
+        // Step 4: Validate the customized configuration
+        const configToValidate = nodeConfig.parameters || nodeConfig;
+        const validation = await this.validateConfig(node.type, configToValidate);
+        
+        if (validation.isValid) {
+          reasoning.push(`✅ ${node.type} task template customized successfully`);
+        } else {
+          reasoning.push(
+            `⚠️ ${node.type} customized configuration may need adjustments: ${validation.validationErrors.join(", ")}`
+          );
+        }
+
         return {
-          finalConfig: restructuredConfig,
-          isValid: true,
-          validationErrors: [],
-          nodeReasoning: [`${node.type} was pre-configured from task template (properties restructured)`],
-          configOperations: [{
-                type: "configureNode",
-                nodeId: node.id,
-                nodeType: node.type,
-                config: restructuredConfig,
-                purpose: node.purpose,
-                preConfigured: true
-              }]
+          finalConfig: nodeConfig,
+          isValid: validation.isValid,
+          validationErrors: validation.validationErrors,
+          nodeReasoning: reasoning,
+          configOperations: operations,
         };
       }
 

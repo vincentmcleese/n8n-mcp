@@ -4,7 +4,7 @@
  * Integration Test for Configuration Phase Refactor
  * 
  * Tests the optimized essentials-based configuration flow with REAL services:
- * 1. Skip pre-configured task nodes (no Claude needed)
+ * 1. Customize pre-configured task nodes from templates
  * 2. Use node essentials for searched nodes (5KB vs 100KB+)
  * 3. Apply category-specific rules
  * 4. Single-pass configuration (no retries)
@@ -70,8 +70,7 @@ const TEST_SCENARIOS = [
       searchNodes: []
     },
     expectedConfigs: 1,
-    expectedSkipped: 1,
-    description: "Should skip pre-configured Slack task node"
+    description: "Should customize pre-configured Slack task node from template"
   },
   
   {
@@ -89,7 +88,6 @@ const TEST_SCENARIOS = [
       }]
     },
     expectedConfigs: 1,
-    expectedSkipped: 0,
     description: "Should configure HTTP node with essentials"
   },
 
@@ -109,7 +107,6 @@ const TEST_SCENARIOS = [
       }]
     },
     expectedConfigs: 1,
-    expectedSkipped: 0,
     description: "Should configure Code node with essentials"
   },
   
@@ -128,7 +125,6 @@ const TEST_SCENARIOS = [
       }]
     },
     expectedConfigs: 1,
-    expectedSkipped: 0,
     description: "Should configure IF node with essentials"
   },
 
@@ -148,7 +144,6 @@ const TEST_SCENARIOS = [
       }]
     },
     expectedConfigs: 1,
-    expectedSkipped: 0,
     description: "Should configure Email node with complex options"
   },
 
@@ -167,7 +162,6 @@ const TEST_SCENARIOS = [
       }]
     },
     expectedConfigs: 1,
-    expectedSkipped: 0,
     description: "Should configure MongoDB with essentials"
   },
 
@@ -187,7 +181,6 @@ const TEST_SCENARIOS = [
       }]
     },
     expectedConfigs: 1,
-    expectedSkipped: 0,
     description: "Should configure OpenAI node with essentials"
   },
 
@@ -222,8 +215,7 @@ const TEST_SCENARIOS = [
       }]
     },
     expectedConfigs: 3,
-    expectedSkipped: 2,
-    description: "Should skip task nodes, configure search nodes"
+    description: "Should customize task nodes from templates, configure search nodes from essentials"
   },
 
   // === PARALLEL CONFIGURATION TEST ===
@@ -260,13 +252,13 @@ const TEST_SCENARIOS = [
       ]
     },
     expectedConfigs: 3,
-    expectedSkipped: 0,
     description: "Should configure 3 nodes in parallel"
   }
 ];
 
 class ConfigurationIntegrationTest {
   private orchestrator: any;
+  private taskService: any;
   
   async setup() {
     console.log(chalk.blue('\n🔧 Setting up test environment...\n'));
@@ -274,11 +266,24 @@ class ConfigurationIntegrationTest {
     
     // Dynamic import to ensure env vars are loaded first
     const { WorkflowOrchestrator } = await import('@/lib/workflow-orchestrator');
+    const { TaskService } = await import('@/services/mcp/task-service');
+    const { MCPClient } = await import('@/services/mcp');
+    const { createLogger } = await import('@/lib/logger');
     
     try {
       // Create orchestrator which will handle everything
       this.orchestrator = new WorkflowOrchestrator();
-      console.log(chalk.green('✅ Test environment ready\n'));
+      
+      // Create TaskService for fetching real task templates
+      const mcpClient = new MCPClient({ env: 'development' });
+      await mcpClient.connect();
+      const logger = createLogger({ 
+        component: 'test-config',
+        level: process.env.LOG_LEVEL || 'info'
+      });
+      this.taskService = new TaskService(mcpClient, logger);
+      
+      console.log(chalk.green('✅ Test environment ready with TaskService\n'));
     } catch (error) {
       console.error(chalk.red('❌ Failed to initialize test environment:'), error);
       throw error;
@@ -302,6 +307,42 @@ class ConfigurationIntegrationTest {
         ...scenario.discoveryOutput.taskNodes,
         ...scenario.discoveryOutput.searchNodes
       ];
+      
+      // Fetch real task templates for pre-configured nodes
+      for (const taskNode of scenario.discoveryOutput.taskNodes) {
+        if (taskNode.isPreConfigured && taskNode.purpose) {
+          // Extract task name from purpose (e.g., "Pre-configured: receive_webhook" → "receive_webhook")
+          let taskName = '';
+          if (taskNode.purpose.includes(':')) {
+            taskName = taskNode.purpose.split(':')[1].trim();
+          } else {
+            // Fallback: try to infer from node type or purpose
+            taskName = taskNode.purpose.toLowerCase().replace(/\s+/g, '_');
+          }
+          
+          if (taskName) {
+            try {
+              if (isVerbose) {
+                console.log(chalk.gray(`   Fetching task template for: ${taskName}`));
+              }
+              const taskTemplate = await this.taskService.fetchTask(taskName);
+              if (taskTemplate) {
+                // Replace the fake config with the real template
+                taskNode.config = taskTemplate.config;
+                taskNode.category = taskTemplate.category || taskNode.category;
+                if (isVerbose) {
+                  console.log(chalk.gray(`   ✓ Got template for ${taskName}`));
+                }
+              } else {
+                console.log(chalk.yellow(`   ⚠️  No template found for ${taskName}, using mock config`));
+              }
+            } catch (error) {
+              console.log(chalk.yellow(`   ⚠️  Failed to fetch template for ${taskName}: ${error}`));
+            }
+          }
+        }
+      }
+      
       const selectedNodeIds = allNodes.map(n => n.id);
       
       // Initialize session with discovered nodes (simulate discovery output)
@@ -363,10 +404,13 @@ class ConfigurationIntegrationTest {
       const duration = Date.now() - startTime;
       
       // Extract metrics from the result
-      const skippedNodes = result.configured?.filter((n: any) => 
+      const taskNodesConfigured = result.configured?.filter((n: any) => 
         scenario.discoveryOutput.taskNodes.some(t => t.id === n.id)
       ).length || 0;
-      const configuredNodes = (result.configured?.length || 0) - skippedNodes;
+      const searchNodesConfigured = result.configured?.filter((n: any) => 
+        scenario.discoveryOutput.searchNodes.some(s => s.id === n.id)
+      ).length || 0;
+      const totalConfigured = result.configured?.length || 0;
       
       // Validate results
       let testFailed = false;
@@ -377,13 +421,8 @@ class ConfigurationIntegrationTest {
         testFailed = true;
       }
       
-      if (result.configured?.length !== scenario.expectedConfigs) {
-        failureReasons.push(`Expected ${scenario.expectedConfigs} configs, got ${result.configured?.length || 0}`);
-        testFailed = true;
-      }
-      
-      if (skippedNodes !== scenario.expectedSkipped) {
-        failureReasons.push(`Expected ${scenario.expectedSkipped} skipped, got ${skippedNodes}`);
+      if (totalConfigured !== scenario.expectedConfigs) {
+        failureReasons.push(`Expected ${scenario.expectedConfigs} configs, got ${totalConfigured}`);
         testFailed = true;
       }
       
@@ -394,9 +433,13 @@ class ConfigurationIntegrationTest {
       } else {
         console.log(chalk.green(`   ✅ Test passed in ${duration}ms`));
       }
-      console.log(chalk.gray(`      Configured: ${result.configured?.length || 0} nodes total`));
-      console.log(chalk.gray(`      Pre-configured (skipped): ${skippedNodes} nodes`));
-      console.log(chalk.gray(`      Configured with essentials: ${configuredNodes} nodes`));
+      console.log(chalk.gray(`      Total configured: ${totalConfigured} nodes`));
+      if (taskNodesConfigured > 0) {
+        console.log(chalk.gray(`      Task nodes (customized from templates): ${taskNodesConfigured}`));
+      }
+      if (searchNodesConfigured > 0) {
+        console.log(chalk.gray(`      Search nodes (configured from essentials): ${searchNodesConfigured}`));
+      }
       
       // Show reasoning if verbose
       if (isVerbose && result.reasoning && result.reasoning.length > 0) {
@@ -439,7 +482,7 @@ class ConfigurationIntegrationTest {
   async runAllTests() {
     console.log(chalk.bold.blue('\n🚀 Configuration Phase Integration Tests (OPTIMIZED)\n'));
     console.log(chalk.gray('Testing essentials-based configuration with 95% token reduction...'));
-    console.log(chalk.gray('Key improvements: Skip task nodes, use essentials (5KB), parallel processing\n'));
+    console.log(chalk.gray('Key improvements: Customize task templates, use essentials (5KB), parallel processing\n'));
     
     await this.setup();
     
@@ -553,8 +596,8 @@ ${chalk.gray('Examples:')}
   npm run test:configure --test="Simple Task Node - Slack Message"
 
 ${chalk.gray('Optimizations Tested:')}
-  - Skip pre-configured task nodes (no Claude calls)
-  - Use node essentials (5KB vs 100KB+ full schema)
+  - Customize task nodes from templates (efficient Claude calls)
+  - Use node essentials for search nodes (5KB vs 100KB+ full schema)
   - Apply category-specific configuration rules
   - Single-pass configuration (no retry loops)
   - Parallel node configuration (max 3 concurrent)

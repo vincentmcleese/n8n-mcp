@@ -19,29 +19,47 @@ export interface PromptBuilderInput {
 }
 
 export class ConfigurationPromptBuilder {
-  private templatePath: string;
-  private template: string | null = null;
+  private taskTemplatePath: string;
+  private searchTemplatePath: string;
+  private taskTemplate: string | null = null;
+  private searchTemplate: string | null = null;
   
   constructor() {
-    this.templatePath = path.join(
+    this.taskTemplatePath = path.join(
       process.cwd(),
-      'services/claude/prompts/configureprompt.md'
+      'services/claude/prompts/configureprompt-tasktemplates.md'
+    );
+    this.searchTemplatePath = path.join(
+      process.cwd(),
+      'services/claude/prompts/configureprompt-searchednodes.md'
     );
   }
   
   /**
-   * Load the prompt template
+   * Load the appropriate prompt template
    */
-  private loadTemplate(): string {
-    if (!this.template) {
-      try {
-        this.template = fs.readFileSync(this.templatePath, 'utf-8');
-      } catch (error) {
-        // Fallback to inline template if file not found
-        this.template = this.getInlineTemplate();
+  private loadTemplate(isTaskNode: boolean): string {
+    if (isTaskNode) {
+      if (!this.taskTemplate) {
+        try {
+          this.taskTemplate = fs.readFileSync(this.taskTemplatePath, 'utf-8');
+        } catch (error) {
+          // Fallback to inline template if file not found
+          this.taskTemplate = this.getInlineTaskTemplate();
+        }
       }
+      return this.taskTemplate;
+    } else {
+      if (!this.searchTemplate) {
+        try {
+          this.searchTemplate = fs.readFileSync(this.searchTemplatePath, 'utf-8');
+        } catch (error) {
+          // Fallback to inline template if file not found
+          this.searchTemplate = this.getInlineSearchTemplate();
+        }
+      }
+      return this.searchTemplate;
     }
-    return this.template;
   }
   
   /**
@@ -49,10 +67,17 @@ export class ConfigurationPromptBuilder {
    */
   buildPrompt(input: PromptBuilderInput): string {
     const { node, essentials, workflowContext } = input;
-    const template = this.loadTemplate();
+    
+    // Detect if this is a task node (has pre-configured template)
+    const isTaskNode = node.isPreConfigured && node.config;
+    const template = this.loadTemplate(isTaskNode);
     
     // Get category-specific rules
     const rules = getCategoryRules(node.category || 'general', node.type);
+    
+    // For task nodes, essentials will actually be the restructured task template
+    const dataToInsert = isTaskNode ? essentials : essentials;
+    const dataPlaceholder = isTaskNode ? '[TASK_TEMPLATE_OUTPUT]' : '[NODE_ESSENTIALS_OUTPUT]';
     
     // Replace placeholders in template
     const prompt = template
@@ -61,7 +86,7 @@ export class ConfigurationPromptBuilder {
       .replace(/\[NODE_ID\]/g, node.id)
       .replace(/\[CATEGORY\]/g, node.category || 'general')
       .replace('[NODE_PURPOSE]', node.purpose || 'Process data')
-      .replace('[NODE_ESSENTIALS_OUTPUT]', JSON.stringify(essentials, null, 2))
+      .replace(dataPlaceholder, JSON.stringify(dataToInsert, null, 2))
       .replace('[CATEGORY_RULES]', rules);
     
     return prompt;
@@ -78,9 +103,9 @@ This node was configured from a task template and should not need additional con
   }
   
   /**
-   * Inline template as fallback
+   * Inline search template as fallback
    */
-  private getInlineTemplate(): string {
+  private getInlineSearchTemplate(): string {
     return `# Configure Node
 
 User Goal: [USER_GOAL]
@@ -104,5 +129,36 @@ Configure this node based on:
 3. The category-specific rules
 
 Return ONLY a JSON object with the configuration.`;
+  }
+  
+  /**
+   * Inline task template as fallback
+   */
+  private getInlineTaskTemplate(): string {
+    return `# Configure Node - Task Template
+
+User Goal: [USER_GOAL]
+
+Node Type: [NODE_TYPE]
+Category: [CATEGORY]
+Purpose: [NODE_PURPOSE]
+
+## Task Template (Starting Configuration)
+\`\`\`json
+[TASK_TEMPLATE_OUTPUT]
+\`\`\`
+
+## Configuration Rules
+[CATEGORY_RULES]
+
+## Instructions
+Customize this pre-configured template based on:
+1. The user's goal
+2. The task template provided above
+3. The category-specific rules
+
+Adapt and customize the parameters while maintaining the core structure.
+
+Return ONLY a JSON object with the customized configuration.`;
   }
 }
