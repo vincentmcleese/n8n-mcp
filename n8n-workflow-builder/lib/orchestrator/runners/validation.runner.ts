@@ -634,23 +634,77 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
 
       // The validate_workflow tool returns a comprehensive result
       // We need to categorize errors by type
-      const allErrors = validationResult.errors || [];
+      let allErrors = validationResult.errors || [];
       const allWarnings = validationResult.warnings || [];
       
-      // Debug log warnings to see if important issues are there
+      // Log ALL warnings for visibility
       if (allWarnings.length > 0) {
-        this.deps.loggers.orchestrator.debug("Validation warnings:", {
-          count: allWarnings.length,
-          sample: JSON.stringify(allWarnings.slice(0, 2), null, 2)
+        this.deps.loggers.orchestrator.info(
+          `\n   📋 Validation Warnings Found (${allWarnings.length} total):`
+        );
+        allWarnings.forEach((warning: any, index: number) => {
+          const message = warning?.message || warning?.text || JSON.stringify(warning);
+          const node = warning?.node || 'Unknown';
+          this.deps.loggers.orchestrator.info(
+            `      ${index + 1}. [${node}] ${message}`
+          );
         });
+        
+        // CRITICAL: Treat "Outdated typeVersion" warnings as errors
+        // These warnings indicate the node will fail deployment to n8n
+        const typeVersionWarnings = allWarnings.filter((warning: any) => {
+          // Check if this is a typeVersion warning based on the message
+          const message = warning?.message || warning?.text || '';
+          return message.startsWith('Outdated typeVersion');
+        });
+        
+        if (typeVersionWarnings.length > 0) {
+          this.deps.loggers.orchestrator.info(
+            `\n   🔄 Converting ${typeVersionWarnings.length} typeVersion warnings to ERRORS for deployment compatibility:`
+          );
+          
+          // Log each typeVersion issue being promoted
+          typeVersionWarnings.forEach((warning: any) => {
+            const match = warning.message.match(/Outdated typeVersion: ([\d.]+)\. Latest is ([\d.]+)/);
+            if (match) {
+              this.deps.loggers.orchestrator.info(
+                `      ✅ ${warning.node}: Updating typeVersion ${match[1]} → ${match[2]}`
+              );
+            } else {
+              this.deps.loggers.orchestrator.info(
+                `      ✅ ${warning.node}: ${warning.message}`
+              );
+            }
+          });
+          
+          // Convert warnings to error format and add to errors array
+          const typeVersionErrors = typeVersionWarnings.map((warning: any) => ({
+            node: warning.node,
+            message: warning.message,
+            type: 'typeVersion',
+            severity: 'error'
+          }));
+          
+          allErrors = [...allErrors, ...typeVersionErrors];
+          
+          this.deps.loggers.orchestrator.info(
+            `      These will be sent to Claude for automatic fixing.`
+          );
+        } else {
+          this.deps.loggers.orchestrator.info(
+            `      ℹ️ No typeVersion warnings found - all nodes using latest versions`
+          );
+        }
+      } else {
+        this.deps.loggers.orchestrator.debug("No validation warnings found");
       }
 
       // Categorize errors for our report structure
       // The errors have a complex structure with node and message fields
       results.workflow = {
-        errors: allErrors, // Keep all errors for now - they'll all be sent to Claude
-        warnings: allWarnings,
-        valid: validationResult.valid,
+        errors: allErrors, // Now includes typeVersion warnings promoted to errors
+        warnings: allWarnings.filter(w => !w?.message?.startsWith('Outdated typeVersion')), // Remove promoted warnings
+        valid: validationResult.valid && allErrors.length === 0, // Not valid if we have errors
         statistics: validationResult.statistics || validationResult.summary,
       };
 

@@ -190,15 +190,21 @@ export class DiscoveryRunner
         );
 
         // Convert successful task fetches to discovered nodes
-        taskNodes = taskResult.successful.map((task) => ({
-          id: task.nodeId,
-          type: task.nodeType,
-          displayName: task.taskName.replace(/_/g, " "),
-          purpose: task.purpose || `Pre-configured: ${task.taskName}`,
-          category: task.category, // Preserve category from MCP
-          isPreConfigured: true,
-          config: task.config,
-        }));
+        taskNodes = taskResult.successful.map((task) => {
+          // LOG CATEGORY FROM TASK
+          this.deps.loggers.orchestrator.info(
+            `📦 Task node ${task.taskName}: type=${task.nodeType}, category=${task.category || 'MISSING'}`
+          );
+          return {
+            id: task.nodeId,
+            type: task.nodeType,
+            displayName: task.taskName.replace(/_/g, " "),
+            purpose: task.purpose || `Pre-configured: ${task.taskName}`,
+            category: task.category, // Preserve category from MCP
+            isPreConfigured: true,
+            config: task.config,
+          };
+        });
 
         // Generate operations for task nodes, including pre-configured flags
         taskOperations = taskResult.successful.flatMap((task) => [
@@ -450,6 +456,10 @@ export class DiscoveryRunner
 
     for (const operation of operations) {
       if (operation.type === "discoverNode") {
+        // LOG CATEGORY FROM GAP NODE
+        this.deps.loggers.orchestrator.info(
+          `🔍 Gap node ${operation.node.id}: type=${operation.node.type}, category=${operation.node.category || 'MISSING'}`
+        );
         const node: DiscoveredNode = {
           id: operation.node.id,
           type: operation.node.type,

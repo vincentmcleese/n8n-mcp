@@ -1,0 +1,124 @@
+{
+  "name": "Webhook to CSV to Email Workflow",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "webhook",
+        "httpMethod": "POST",
+        "responseData": "allEntries",
+        "responseMode": "lastNode"
+      },
+      "name": "Webhook",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform webhook data to CSV format\nconst results = [];\n\n// Check if we have data\nif (!items || items.length === 0) {\n  return [{ json: { csv: '', error: 'No data received' } }];\n}\n\n// Extract all unique keys from all items to create CSV headers\nconst allKeys = new Set();\nitems.forEach(item => {\n  if (item.json) {\n    Object.keys(item.json).forEach(key => allKeys.add(key));\n  }\n});\n\nconst headers = Array.from(allKeys);\n\n// Create CSV content\nlet csvContent = headers.join(',') + '\\n';\n\n// Add data rows\nitems.forEach(item => {\n  const row = headers.map(header => {\n    const value = item.json[header] || '';\n    // Escape commas and quotes in CSV\n    return typeof value === 'string' && (value.includes(',') || value.includes('\"')) \n      ? `\"${value.replace(/\"/g, '\"\"')}\"` \n      : value;\n  });\n  csvContent += row.join(',') + '\\n';\n});\n\nresults.push({\n  json: {\n    csv: csvContent,\n    recordCount: items.length,\n    headers: headers,\n    processedAt: new Date().toISOString()\n  }\n});\n\nreturn results;"
+      },
+      "name": "Transform to CSV",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "text": "{{ 'Please find the CSV data attached.\\n\\nProcessed ' + $json.recordCount + ' records at ' + $json.processedAt + '.\\n\\nHeaders: ' + $json.headers.join(', ') }}",
+        "subject": "{{ 'CSV Data Export - ' + new Date().toLocaleDateString() }}",
+        "toEmail": "recipient@example.com",
+        "fromEmail": "sender@example.com",
+        "attachments": "{{ 'data:text/csv;base64,' + Buffer.from($json.csv).toString('base64') }}"
+      },
+      "name": "Send CSV Email",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3,
+      "retryOnFail": true,
+      "alwaysOutputData": true,
+      "waitBetweenTries": 300
+    },
+    {
+      "id": "sticky_transforms_1754774575330",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcessing & routing",
+        "height": 200,
+        "width": 830,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Transform to CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform to CSV": {
+      "main": [
+        [
+          {
+            "node": "Send CSV Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T21:22:55.800Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "webhook to csv to email\\",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T21:22:55.800Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 1
+  }
+}

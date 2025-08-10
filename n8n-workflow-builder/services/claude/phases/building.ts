@@ -36,7 +36,7 @@ export interface ConfiguredNode {
 
 export interface BuildingOutput extends ClaudeBuildingResponse {
   // Inherits all properties from ClaudeBuildingResponse
-  // Including: name, nodes, connections, settings, reasoning, operations
+  // Including: name, nodes, connections, settings, reasoning, operations, phases
 }
 
 // ==========================================
@@ -120,6 +120,7 @@ export class BuildingPhaseService extends BasePhaseService<BuildingInput, Buildi
         saveDataErrorExecution: 'all',
         saveManualExecutions: true,
       },
+      phases: data.phases, // Preserve phases from Claude's response
       operations: [], // Building phase doesn't use operations
       reasoning: data.reasoning || ['Workflow built from configured nodes'],
     };

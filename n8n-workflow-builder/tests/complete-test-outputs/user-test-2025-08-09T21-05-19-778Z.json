@@ -1,0 +1,163 @@
+{
+  "name": "CSV Translation to Japanese and Slack Notification",
+  "nodes": [
+    {
+      "id": "spreadsheetFile_1",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "operation": "fromFile",
+        "fileFormat": "csv",
+        "binaryPropertyName": "data",
+        "options": {
+          "headerRow": true
+        }
+      },
+      "name": "Read CSV File",
+      "typeVersion": 2,
+      "onError": "stopWorkflow",
+      "notes": "Reads CSV file data to prepare for Japanese translation"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString(),\n      originalData: JSON.stringify(item.json),\n      textToTranslate: Object.values(item.json).join(' | ')\n    }\n  });\n}\n\nreturn results;"
+      },
+      "name": "Transform CSV Data",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "modelId": "gpt-3.5-turbo",
+        "messages": {
+          "values": [
+            {
+              "role": "user",
+              "content": "Translate the following CSV data to Japanese, maintaining the same structure: {{ $json.textToTranslate }}"
+            }
+          ]
+        }
+      },
+      "name": "Translate to Japanese",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": "#translations",
+        "text": "{{ `CSV Translation Complete!\n\nOriginal: ${$('Transform CSV Data').item.json.textToTranslate}\n\nJapanese Translation: ${$json.message.content}` }}"
+      },
+      "name": "Send to Slack",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "sticky_transforms_1754773519238",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcessing & routing",
+        "height": 200,
+        "width": 1130,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Read CSV File": {
+      "main": [
+        [
+          {
+            "node": "Transform CSV Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform CSV Data": {
+      "main": [
+        [
+          {
+            "node": "Translate to Japanese",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Translate to Japanese": {
+      "main": [
+        [
+          {
+            "node": "Send to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T21:05:19.778Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "create a simple workflow that copies a csv and translates it to japanese and sends it to slack",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T21:05:19.778Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 2,
+    "stickyNotesAdded": 1
+  }
+}

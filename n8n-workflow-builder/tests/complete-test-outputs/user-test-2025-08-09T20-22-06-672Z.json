@@ -1,0 +1,90 @@
+{
+  "name": "Grindr Message Mock Image Generator",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "grindr-webhook",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Grindr Webhook",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// ⚠️ CRITICAL: Webhook data is nested under 'body' property!\n// Connect this Code node after a Webhook node\n\n// Access webhook payload data - it's under .body, not directly under .json\nconst webhookData = $input.first().body;\n\n// Log the full structure to understand the data\nconsole.log('Full webhook data structure:', JSON.stringify(webhookData, null, 2));\n\n// Extract message details (adjust based on actual Grindr webhook structure)\nconst messageText = webhookData.message || webhookData.text || webhookData.content;\nconst senderId = webhookData.sender_id || webhookData.from || webhookData.user_id;\nconst conversationId = webhookData.conversation_id || webhookData.chat_id;\n\n// Create mock prompt for image generation\nconst mockPrompt = `Create a humorous meme image that playfully mocks this message: \"${messageText}\". Make it funny but not mean-spirited. Include text overlay on the image.`;\n\n// Return structured data for next nodes\nreturn {\n  originalMessage: messageText,\n  senderId: senderId,\n  conversationId: conversationId,\n  mockPrompt: mockPrompt,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "name": "Process Message Data",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "sticky_transforms_1754770926145",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcessing & routing",
+        "height": 200,
+        "width": 530,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Grindr Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Message Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T20:22:06.673Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "whenever i get a message on grindr, generate a picture that mocks that message and send it back to tthe user",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T20:22:06.673Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 1,
+    "stickyNotesAdded": 1
+  }
+}

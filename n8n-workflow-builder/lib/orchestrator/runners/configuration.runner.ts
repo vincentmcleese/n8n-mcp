@@ -271,21 +271,29 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
     const operations: WorkflowOperation[] = [];
 
     try {
-          // Skip pre-configured task nodes (detected from discovery)
+          // Handle pre-configured task nodes (detected from discovery)
           if (node.isPreConfigured && node.config) {
         this.deps.loggers.orchestrator.debug(
-          `Skipping pre-configured task node: ${node.type}`
+          `Processing pre-configured task node: ${node.type}`
         );
+        
+        // Restructure the flat config from MCP into proper n8n format
+        const restructuredConfig = this.restructureTaskConfig(node.config);
+        
+        this.deps.loggers.orchestrator.info(
+          `✅ Pre-configured node "${node.type}" formatted for node and parameter level properties`
+        );
+        
         return {
-          finalConfig: node.config,
+          finalConfig: restructuredConfig,
           isValid: true,
           validationErrors: [],
-          nodeReasoning: [`${node.type} was pre-configured from task template`],
+          nodeReasoning: [`${node.type} was pre-configured from task template (properties restructured)`],
           configOperations: [{
                 type: "configureNode",
                 nodeId: node.id,
                 nodeType: node.type,
-                config: node.config,
+                config: restructuredConfig,
                 purpose: node.purpose,
                 preConfigured: true
               }]
@@ -435,5 +443,39 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
     };
   }
 
+  /**
+   * Restructure flat task config from MCP into proper n8n node format
+   * Separates node-level properties from parameter-level properties
+   */
+  private restructureTaskConfig(flatConfig: any): any {
+    // Define node-level properties that should NOT be in parameters
+    const NODE_LEVEL_PROPERTIES = [
+      'onError',
+      'retryOnFail',
+      'maxTries',
+      'waitBetweenTries',
+      'alwaysOutputData',
+      'continueOnFail',
+      'notes',
+      'typeVersion'
+    ];
+    
+    const restructured: any = {
+      parameters: {}
+    };
+    
+    // Separate node-level from parameter-level properties
+    for (const [key, value] of Object.entries(flatConfig)) {
+      if (NODE_LEVEL_PROPERTIES.includes(key)) {
+        // Place at node level
+        restructured[key] = value;
+      } else {
+        // Place in parameters
+        restructured.parameters[key] = value;
+      }
+    }
+    
+    return restructured;
+  }
 
 }

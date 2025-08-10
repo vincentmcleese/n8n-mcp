@@ -1,0 +1,240 @@
+{
+  "name": "Monday Morning SQL Data Processing to Slack",
+  "nodes": [
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * 1"
+            }
+          ]
+        }
+      },
+      "name": "Monday 7AM Trigger",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "postgres_1",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "query": "SELECT * FROM your_table WHERE column_name IS NOT NULL",
+        "operation": "executeQuery"
+      },
+      "name": "Fetch SQL Data",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform each item and double integer values\nconst results = [];\n\nfor (const item of items) {\n  const processedItem = { json: {} };\n  \n  // Process each property in the item\n  for (const [key, value] of Object.entries(item.json)) {\n    if (typeof value === 'number' && Number.isInteger(value)) {\n      // Double integer values\n      processedItem.json[key] = value * 2;\n    } else {\n      // Keep non-integer values as is\n      processedItem.json[key] = value;\n    }\n  }\n  \n  processedItem.json.processedAt = new Date().toISOString();\n  results.push(processedItem);\n}\n\nreturn results;"
+      },
+      "name": "Double Integer Values",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "if_1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "leftValue": "={{ Object.values($json).find(val => typeof val === 'number' && Number.isInteger(val) && val > 100) }}",
+              "rightValue": 100
+            }
+          ]
+        }
+      },
+      "name": "Filter Values Above 100",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1450,
+        300
+      ],
+      "parameters": {
+        "text": "{{ Object.values($json).filter(val => typeof val === 'number' && Number.isInteger(val) && val > 100).join(', ') }}",
+        "channel": "#general",
+        "channelId": "#general",
+        "resource": "message",
+        "operation": "post",
+        "select": "channel"
+      },
+      "name": "Send to Slack",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "sticky_triggers_1754775801749",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nInitiates the workflow every Monday morning at 7am using a cron schedule trigger. This ensures the data processing happens automatically on a weekly basis.",
+        "height": 300,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754775801749",
+      "name": "Inputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        160
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nConnects to the PostgreSQL database and executes a query to retrieve all relevant data. Includes retry logic and error handling for database connectivity issues.",
+        "height": 300,
+        "width": 230,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754775801749",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        810,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcesses the retrieved data by doubling all integer values and filtering for values above 100. Uses JavaScript code to transform the data structure and conditional logic to filter results.",
+        "height": 300,
+        "width": 530,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754775801749",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1410,
+        160
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends each filtered value as a separate message to the configured Slack channel. Includes retry logic and error handling for message delivery.",
+        "height": 300,
+        "width": 230,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Monday 7AM Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch SQL Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch SQL Data": {
+      "main": [
+        [
+          {
+            "node": "Double Integer Values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Double Integer Values": {
+      "main": [
+        [
+          {
+            "node": "Filter Values Above 100",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Values Above 100": {
+      "main": [
+        [
+          {
+            "node": "Send to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T21:43:22.258Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "a cronjob monday morning at 7am pulls data from sql database and every integer value is doubled. then we filter for values above 100. we then iterate on each value and send that number in a slack channel (separate messages for each number)",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T21:43:22.258Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 4
+  }
+}

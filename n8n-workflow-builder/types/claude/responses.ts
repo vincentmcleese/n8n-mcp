@@ -239,6 +239,11 @@ export interface WorkflowBuildResponse extends BaseClaudeResponse {
     saveDataErrorExecution: string;
     saveManualExecutions: boolean;
   };
+  phases?: Array<{
+    type: 'trigger' | 'data_collection' | 'data_processing' | 'notification' | 'storage' | 'integration' | 'error_handling';
+    description: string;
+    nodeIds: string[];
+  }>;
 }
 
 // ==========================================

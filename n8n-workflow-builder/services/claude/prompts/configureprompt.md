@@ -59,8 +59,11 @@ For multi-feature requirements:
 
 **DO:**
 
+- ✅ **ALWAYS include typeVersion from essentials (deployment critical!)**
 - ✅ Use EXACT property names from essentials
 - ✅ Search for properties before assuming they exist
+- ✅ If property NOT in essentials → search_node_properties() for structure
+- ✅ FixedCollections always need wrapper object - never direct arrays
 - ✅ Start with minimal config, add incrementally
 - ✅ Follow structure in requiredProperties/commonProperties
 
@@ -83,9 +86,12 @@ For multi-feature requirements:
 
 ### FixedCollection Properties
 
-Format: `{ "optionValue": [array] }`
+Format: `{ "wrapperKey": [array] }`
 
-- optionValue comes from `options[].value` in essentials
+- ALL fixedCollection properties require a wrapper - never a direct array
+- The wrapper key should be visible in essentials (look for options[].name or the property structure)
+- If not in essentials, you MUST search_node_properties() to find the correct wrapper
+- Example: `extractionValues` needs `{ "values": [...] }` not direct array
 
 ---
 
@@ -98,6 +104,7 @@ Format: `{ "optionValue": [array] }`
       "type": "configureNode",
       "nodeId": "[NODE_ID]",
       "config": {
+        "typeVersion": "[USE_LATEST_FROM_ESSENTIALS]", // ALWAYS include latest typeVersion from essentials
         "notes": "[One sentence describing what this node achieves]",
         // Other node-level properties (credentials, onError, etc.)
         "parameters": {
@@ -115,6 +122,7 @@ Format: `{ "optionValue": [array] }`
 
 **Critical Requirements:**
 
+- **MUST include `typeVersion` from essentials (prevents deployment failures)**
 - MUST include `operations` array
 - MUST have `type: "configureNode"`
 - MUST include exact `nodeId`

@@ -1,0 +1,142 @@
+{
+  "name": "Webhook to Google Sheets with Gmail Notification",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "webhook",
+        "httpMethod": "POST",
+        "responseData": "allEntries",
+        "responseMode": "lastNode"
+      },
+      "name": "Webhook",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "googleSheets_1",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": "{{ $env.GOOGLE_SHEET_ID }}",
+        "sheetName": "Sheet1",
+        "range": "A:Z",
+        "columns": {
+          "value": {},
+          "mappingMode": "autoMapInputData"
+        }
+      },
+      "name": "Add to Google Sheet",
+      "typeVersion": 4,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "gmail_1",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "operation": "send",
+        "to": "{{ $env.NOTIFICATION_EMAIL }}",
+        "subject": "New Row Added to Google Sheet",
+        "message": "A new row has been added to your Google Sheet from webhook data.\n\nData received:\n{{ JSON.stringify($node['Webhook'].json, null, 2) }}\n\nSheet updated at: {{ new Date().toLocaleString() }}"
+      },
+      "name": "Send Gmail Notification",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "sticky_triggers_1754776183007",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook receives incoming data from external services via POST request. This serves as the entry point for the workflow and captures all incoming data.",
+        "height": 300,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_outputs_1754776183007",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        160
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nGoogle Sheets node appends the webhook data as a new row to the specified spreadsheet. Uses auto-mapping to handle dynamic data structures from the webhook.\n\nGmail node sends an email notification confirming that a new row was added to the Google Sheet. Includes the original webhook data and timestamp for reference.",
+        "height": 300,
+        "width": 530,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Add to Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to Google Sheet": {
+      "main": [
+        [
+          {
+            "node": "Send Gmail Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T21:49:43.465Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "create a simple workflow that takes a webhook and adds it to a google sheet and updates me via gmail if theres a new row",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T21:49:43.465Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 2,
+    "stickyNotesAdded": 2
+  }
+}

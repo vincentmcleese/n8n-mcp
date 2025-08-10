@@ -282,6 +282,11 @@ export const workflowBuildResponseSchema = z.object({
   nodes: z.array(workflowNodeSchema),
   connections: workflowConnectionSchema,
   settings: workflowSettingsSchema.optional(),
+  phases: z.array(z.object({
+    type: z.string(),
+    description: z.string(),
+    nodeIds: z.array(z.string()),
+  })).optional(),
   reasoning: reasoningSchema,
   operations: z.array(z.any()).optional(), // Building phase doesn't use operations
   usage: tokenUsageSchema,

@@ -1,0 +1,302 @@
+{
+  "name": "Website Pricing Monitor with Email/Slack Alerts",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "pricing-check",
+        "httpMethod": "GET",
+        "responseMode": "responseNode"
+      },
+      "name": "Trigger Pricing Check",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "url": "https://your-website.com",
+        "method": "GET",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "name": "Scrape Website",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "htmlExtract_1",
+      "type": "n8n-nodes-base.htmlExtract",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "sourceData": "json",
+        "dataPropertyName": "data",
+        "extractionValues": [
+          {
+            "key": "prices",
+            "cssSelector": ".price, [data-price], .pricing",
+            "attribute": "text",
+            "returnArray": true
+          }
+        ]
+      },
+      "name": "Extract Pricing Data",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  const prices = item.json.prices || [];\n  \n  // Extract numeric values from price strings\n  const numericPrices = prices\n    .map(price => {\n      if (typeof price === 'string') {\n        // Remove currency symbols and extract numbers\n        const match = price.match(/[\\d,]+\\.?\\d*/g);\n        return match ? parseFloat(match[0].replace(/,/g, '')) : null;\n      }\n      return typeof price === 'number' ? price : null;\n    })\n    .filter(price => price !== null && !isNaN(price));\n  \n  // Calculate average\n  const averagePrice = numericPrices.length > 0 \n    ? numericPrices.reduce((sum, price) => sum + price, 0) / numericPrices.length \n    : 0;\n  \n  results.push({\n    json: {\n      prices: numericPrices,\n      averagePrice: Math.round(averagePrice * 100) / 100,\n      totalPrices: numericPrices.length,\n      shouldSendEmail: averagePrice > 100,\n      pricingData: {\n        average: averagePrice,\n        count: numericPrices.length,\n        min: Math.min(...numericPrices),\n        max: Math.max(...numericPrices),\n        allPrices: numericPrices\n      }\n    }\n  });\n}\n\nreturn results;"
+      },
+      "name": "Calculate Average Price",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "if_1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1450,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition_1",
+              "leftValue": "={{ $json.averagePrice }}",
+              "rightValue": 100,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "name": "Check Price Threshold",
+      "typeVersion": 2.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1750,
+        200
+      ],
+      "parameters": {
+        "text": "{{ `Pricing Alert: Average price is $${$json.averagePrice}\n\nPricing Summary:\n- Average Price: $${$json.pricingData.average}\n- Total Products: ${$json.pricingData.count}\n- Price Range: $${$json.pricingData.min} - $${$json.pricingData.max}\n\nAll Prices: ${$json.pricingData.allPrices.join(', ')}` }}",
+        "subject": "Website Pricing Alert - Average Above $100",
+        "toEmail": "your-email@example.com",
+        "fromEmail": "alerts@your-domain.com"
+      },
+      "name": "Send High Price Email",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1750,
+        400
+      ],
+      "parameters": {
+        "text": "prices are too low!",
+        "channelId": "#pricing-alerts",
+        "resource": "message",
+        "operation": "post",
+        "select": "channel"
+      },
+      "name": "Send Low Price Slack Alert",
+      "typeVersion": 2.3,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "sticky_triggers_1754815269121",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook trigger that initiates the pricing check workflow when called via HTTP GET request.",
+        "height": 480,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754815269121",
+      "name": "Inputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        160
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nScrapes the target website and extracts pricing data from HTML elements using CSS selectors to find price information.",
+        "height": 480,
+        "width": 530,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754815269121",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1110,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcesses extracted pricing data by calculating the average price and determining whether it exceeds the $100 threshold for conditional routing.",
+        "height": 480,
+        "width": 530,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754815269121",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1710,
+        60
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends either a detailed email with pricing data if average is above $100, or a Slack message if prices are too low.",
+        "height": 480,
+        "width": 230,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Trigger Pricing Check": {
+      "main": [
+        [
+          {
+            "node": "Scrape Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Website": {
+      "main": [
+        [
+          {
+            "node": "Extract Pricing Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Pricing Data": {
+      "main": [
+        [
+          {
+            "node": "Calculate Average Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Average Price": {
+      "main": [
+        [
+          {
+            "node": "Check Price Threshold",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Price Threshold": {
+      "main": [
+        [
+          {
+            "node": "Send High Price Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Low Price Slack Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-10T08:41:09.704Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "scrape my website for all pricing data. if average price is above 100, send an email with the pricing data. if not, send a slack message with the message \"prices are too low!\"",
+    "testName": "User Test",
+    "generatedAt": "2025-08-10T08:41:09.704Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 4,
+    "stickyNotesAdded": 4
+  }
+}

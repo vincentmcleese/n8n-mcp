@@ -1,0 +1,151 @@
+{
+  "name": "Webhook to Japanese Translation to Slack",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "webhook",
+        "httpMethod": "POST",
+        "responseData": "allEntries",
+        "responseMode": "lastNode"
+      },
+      "name": "Webhook",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Extract text from webhook payload\n      text: item.json.body?.text || item.json.text || item.json.message || 'No text found',\n      originalPayload: item.json,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;"
+      },
+      "name": "Extract Text",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "googleTranslate_1",
+      "type": "n8n-nodes-base.googleTranslate",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "text": "={{ $json.text }}",
+        "resource": "language",
+        "operation": "translate",
+        "translateTo": "ja"
+      },
+      "name": "Translate to Japanese",
+      "typeVersion": 2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": "japanese-messages",
+        "text": "={{ $json.translatedText }}"
+      },
+      "name": "Post to Slack",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "sticky_transforms_1754774810679",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcessing & routing",
+        "height": 200,
+        "width": 1130,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Text": {
+      "main": [
+        [
+          {
+            "node": "Translate to Japanese",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Translate to Japanese": {
+      "main": [
+        [
+          {
+            "node": "Post to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T21:26:51.098Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "webhook to translatel to japanese to post to slack channel called \"japanese messages\"",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T21:26:51.098Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 4,
+    "stickyNotesAdded": 1
+  }
+}

@@ -85,6 +85,11 @@ export interface WorkflowSession {
       connections: WorkflowConnection[];
       settings: WorkflowSettings;
     };
+    buildPhases?: Array<{
+      type: string;
+      description: string;
+      nodeIds: string[];
+    }>;
     operationHistory: WorkflowOperation[];
     pendingClarifications: ClarificationRequest[];
     clarificationHistory: ClarificationResponse[];
@@ -197,6 +202,19 @@ export interface DiscoveredNode {
   isPreConfigured?: boolean; // True for task nodes with pre-configured settings
   needsConfiguration?: boolean; // True for searched nodes that need configuration
   config?: any; // Pre-configured settings from task template
+}
+
+/**
+ * Workflow phase analysis for logical grouping
+ */
+export interface WorkflowPhaseAnalysis {
+  phases: Array<{
+    id: string;
+    name: string;
+    description: string; // 2-3 sentences describing what this phase does
+    nodeIds: string[]; // IDs of nodes in this phase
+    order: number; // Chronological order (1, 2, 3, etc.)
+  }>;
 }
 
 /**

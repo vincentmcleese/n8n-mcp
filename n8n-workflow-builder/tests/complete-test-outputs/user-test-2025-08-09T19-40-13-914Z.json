@@ -1,0 +1,164 @@
+{
+  "name": "Monday Morning Jokes to Discord",
+  "nodes": [
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weekday",
+              "weekdayValue": 1
+            },
+            {
+              "field": "hour",
+              "hourValue": 9
+            },
+            {
+              "field": "minute",
+              "minuteValue": 0
+            }
+          ]
+        }
+      },
+      "name": "Monday 9am Trigger",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Generate funny jokes for Monday morning\nconst jokes = [\n  \"Why don't scientists trust atoms? Because they make up everything!\",\n  \"I told my wife she was drawing her eyebrows too high. She looked surprised.\",\n  \"Why don't skeletons fight each other? They don't have the guts.\",\n  \"What do you call a fake noodle? An impasta!\",\n  \"Why did the scarecrow win an award? He was outstanding in his field!\"\n];\n\n// Select 3 random jokes\nconst selectedJokes = [];\nfor (let i = 0; i < 3; i++) {\n  const randomIndex = Math.floor(Math.random() * jokes.length);\n  selectedJokes.push(jokes[randomIndex]);\n  jokes.splice(randomIndex, 1); // Remove to avoid duplicates\n}\n\nconst results = [];\nresults.push({\n  json: {\n    jokes: selectedJokes,\n    title: \"Monday Morning Laughs 😄\",\n    date: new Date().toLocaleDateString(),\n    processedAt: new Date().toISOString()\n  }\n});\n\nreturn results;"
+      },
+      "name": "Generate Jokes Data",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "code_2",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Create PDF content structure\nconst item = items[0];\nconst jokes = item.json.jokes;\nconst title = item.json.title;\nconst date = item.json.date;\n\n// Create simple PDF content (text-based)\nlet pdfContent = `${title}\\n\\nDate: ${date}\\n\\n`;\npdfContent += \"Here are your Monday morning jokes to brighten your day:\\n\\n\";\n\njokes.forEach((joke, index) => {\n  pdfContent += `${index + 1}. ${joke}\\n\\n`;\n});\n\npdfContent += \"Have a fantastic Monday! 🌟\";\n\nconst results = [];\nresults.push({\n  json: {\n    pdfContent: pdfContent,\n    fileName: `monday-jokes-${new Date().toISOString().split('T')[0]}.txt`,\n    discordMessage: `📄 Here's your weekly dose of Monday morning humor! ${title}`,\n    jokes: jokes,\n    title: title\n  }\n});\n\nreturn results;"
+      },
+      "name": "Create PDF Content",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://discord.com/api/webhooks/YOUR_WEBHOOK_URL_HERE",
+        "authentication": "none",
+        "requestFormat": "json",
+        "jsonParameters": true,
+        "parametersJson": "{\n  \"content\": \"{{ $json.discordMessage }}\",\n  \"embeds\": [\n    {\n      \"title\": \"{{ $json.title }}\",\n      \"description\": \"{{ $json.jokes.join('\\\\n\\\\n') }}\",\n      \"color\": 16776960,\n      \"footer\": {\n        \"text\": \"Generated on {{ new Date().toLocaleDateString() }}\"\n      }\n    }\n  ]\n}",
+        "options": {
+          "timeout": 10000,
+          "retry": {
+            "enabled": true,
+            "maxTries": 3
+          }
+        }
+      },
+      "name": "Send to Discord",
+      "typeVersion": 4,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "sticky_transforms_1754768413388",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcessing & routing",
+        "height": 200,
+        "width": 1130,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Monday 9am Trigger": {
+      "main": [
+        [
+          {
+            "node": "Generate Jokes Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Jokes Data": {
+      "main": [
+        [
+          {
+            "node": "Create PDF Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create PDF Content": {
+      "main": [
+        [
+          {
+            "node": "Send to Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T19:40:13.915Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "when we see its monday 9am we create a pdf document with a few funny jokes and send it to discord channel",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T19:40:13.915Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 1,
+    "stickyNotesAdded": 1
+  }
+}

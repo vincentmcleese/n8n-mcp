@@ -34,6 +34,11 @@ interface SupabaseSessionState {
     connections: any;
     settings: any;
   };
+  buildPhases?: Array<{
+    type: string;
+    description: string;
+    nodeIds: string[];
+  }>;
   operationHistory: WorkflowOperation[];
   pendingClarifications: ClarificationRequest[];
   clarificationHistory: ClarificationResponse[];
@@ -75,6 +80,7 @@ export class SessionManager {
           connections: {},
           settings: {},
         },
+        buildPhases: [], // Initialize empty array for build phases
         operationHistory: [],
         pendingClarifications: [],
         clarificationHistory: [],
@@ -596,6 +602,16 @@ export class SessionManager {
           updatedState.workflow = op.workflow;
           break;
 
+        case "setBuildPhases":
+          updatedState.buildPhases = op.phases;
+          this.logger.info(
+            `📊 SESSION: Saving ${op.phases?.length || 0} build phases to session state`
+          );
+          this.logger.debug(
+            `📊 SESSION: Build phases content:`, JSON.stringify(op.phases, null, 2)
+          );
+          break;
+
         // Add more operation types as needed
       }
     }
@@ -629,6 +645,7 @@ export class SessionManager {
         configured: this.recordToMap(state.configured),
         validated: this.recordToMap(state.validated),
         workflow: state.workflow,
+        buildPhases: state.buildPhases, // Include build phases from session state
         operationHistory: state.operationHistory,
         pendingClarifications: state.pendingClarifications,
         clarificationHistory: state.clarificationHistory,

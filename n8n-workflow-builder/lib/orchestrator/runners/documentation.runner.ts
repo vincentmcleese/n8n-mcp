@@ -66,9 +66,44 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
       // Add phase transition operation
       operations.push({ type: 'setPhase', phase: 'documentation' });
 
-      // Group nodes by phase
-      const phaseGroups = detectActivePhases(validatedWorkflow.nodes);
-      this.deps.loggers.orchestrator.debug("Phase groups detected:", phaseGroups);
+      // Group nodes by phase using build phase data if available, otherwise fall back to detection
+      let phaseGroups: PhaseGroups;
+      let phaseDescriptions: Map<string, string> = new Map();
+      
+      // Load build phases from session state if available
+      const session = await this.deps.sessionRepo.load(sessionId);
+      this.deps.loggers.orchestrator.info(
+        `📊 DOCUMENTATION: Session loaded, checking for buildPhases...`
+      );
+      
+      const buildPhases = session?.state?.buildPhases;
+      
+      if (buildPhases && Array.isArray(buildPhases)) {
+        this.deps.loggers.orchestrator.info(
+          `📊 DOCUMENTATION: Found ${buildPhases.length} phases from build phase in session state`
+        );
+        this.deps.loggers.orchestrator.info(
+          `📊 DOCUMENTATION: Build phases content:`, JSON.stringify(buildPhases, null, 2)
+        );
+        const result = this.mapBuildPhasesToPhaseGroups(buildPhases);
+        phaseGroups = result.groups;
+        phaseDescriptions = result.descriptions;
+      } else {
+        this.deps.loggers.orchestrator.warn(
+          `⚠️ DOCUMENTATION: No build phases in session state! buildPhases = ${buildPhases}`
+        );
+        this.deps.loggers.orchestrator.warn(
+          `⚠️ DOCUMENTATION: Session state keys:`, session?.state ? Object.keys(session.state) : 'No session state'
+        );
+        this.deps.loggers.orchestrator.info(
+          `📊 DOCUMENTATION: Falling back to node category detection`
+        );
+        phaseGroups = detectActivePhases(validatedWorkflow.nodes);
+      }
+      
+      this.deps.loggers.orchestrator.info(
+        `📊 DOCUMENTATION: Final phase groups:`, JSON.stringify(phaseGroups, null, 2)
+      );
 
       // Generate layout hints
       const layoutHints = generateLayoutHints(phaseGroups, validatedWorkflow.nodes);
@@ -78,11 +113,12 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
       const unifiedHeight = calculateUnifiedHeight(phaseGroups, validatedWorkflow.nodes);
       this.deps.loggers.orchestrator.debug(`Unified sticky height: ${unifiedHeight}px`);
 
-      // Generate phase-based sticky notes
+      // Generate phase-based sticky notes using visual layout system
       const stickyNotes = this.generatePhaseStickyNotes(
         phaseGroups,
         validatedWorkflow.nodes,
-        unifiedHeight
+        unifiedHeight,
+        phaseDescriptions
       );
 
       // Add sticky notes to workflow
@@ -149,12 +185,74 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
   }
 
   /**
+   * Map build phases to phase groups for documentation
+   */
+  private mapBuildPhasesToPhaseGroups(buildPhases: Array<{
+    type: string;
+    description: string;
+    nodeIds: string[];
+  }>): { groups: PhaseGroups; descriptions: Map<string, string> } {
+    const phaseGroups: PhaseGroups = {
+      triggers: [],
+      inputs: [],
+      transforms: [],
+      outputs: [],
+    };
+    
+    // Store descriptions from build phases
+    const descriptions = new Map<string, string>();
+    
+    // Map build phase types to documentation phase categories
+    const phaseTypeMapping: Record<string, keyof PhaseGroups> = {
+      'trigger': 'triggers',
+      'data_collection': 'inputs',
+      'data_processing': 'transforms',
+      'notification': 'outputs',
+      'storage': 'outputs',
+      'integration': 'outputs',
+      'error_handling': 'transforms',
+    };
+    
+    for (const phase of buildPhases) {
+      const targetPhase = phaseTypeMapping[phase.type];
+      if (targetPhase && phase.nodeIds) {
+        // Add all node IDs from this build phase to the appropriate documentation phase
+        phaseGroups[targetPhase].push(...phase.nodeIds);
+        
+        // Store the description for this phase
+        if (phase.description && !descriptions.has(targetPhase)) {
+          descriptions.set(targetPhase, phase.description);
+        } else if (phase.description && descriptions.has(targetPhase)) {
+          // Append additional descriptions if multiple build phases map to same documentation phase
+          const existing = descriptions.get(targetPhase);
+          descriptions.set(targetPhase, `${existing}\n\n${phase.description}`);
+        }
+      } else {
+        // Default unmapped phases to transforms
+        this.deps.loggers.orchestrator.debug(`Unmapped phase type: ${phase.type}, defaulting to transforms`);
+        phaseGroups.transforms.push(...(phase.nodeIds || []));
+        if (phase.description && !descriptions.has('transforms')) {
+          descriptions.set('transforms', phase.description);
+        }
+      }
+    }
+    
+    // Remove duplicates (in case a node appears in multiple build phases)
+    for (const key of Object.keys(phaseGroups) as Array<keyof PhaseGroups>) {
+      phaseGroups[key] = [...new Set(phaseGroups[key])];
+    }
+    
+    return { groups: phaseGroups, descriptions };
+  }
+
+  /**
    * Generate phase-based sticky notes for visual workflow organization
    */
   private generatePhaseStickyNotes(
     phaseGroups: PhaseGroups,
     nodes: WorkflowNode[],
-    unifiedHeight: number
+    unifiedHeight: number,
+    phaseDescriptions?: Map<string, string>
   ): WorkflowNode[] {
     const stickyNotes: WorkflowNode[] = [];
     const nodeMap = new Map(nodes.map((n) => [n.id, n]));
@@ -184,7 +282,13 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
       
       const minX = Math.min(...xPositions) - LAYOUT_CONFIG.spacing.stickyPadding;
       const maxX = Math.max(...xPositions) + LAYOUT_CONFIG.dimensions.nodeWidth + LAYOUT_CONFIG.spacing.stickyPadding;
-      const minY = Math.min(...yPositions) - LAYOUT_CONFIG.spacing.stickyPadding;
+      
+      // Position sticky note to start above the topmost node with proper padding
+      // The sticky note should cover from above the nodes to below them
+      const minY = Math.min(...yPositions) - LAYOUT_CONFIG.spacing.stickyPadding - 100; // Start 100px + padding above the topmost node
+      
+      // Use description from build phase if available, otherwise use default
+      const description = phaseDescriptions?.get(phase) || phaseConfig.description;
       
       // Create sticky note for this phase
       const stickyNote: WorkflowNode = {
@@ -192,9 +296,9 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
         name: `${phaseConfig.name} Notes`,
         type: "n8n-nodes-base.stickyNote",
         typeVersion: 1,
-        position: [minX, minY - 100], // Position above the nodes
+        position: [minX, minY], // Position to cover nodes with padding above and below
         parameters: {
-          content: `## ${phaseConfig.icon} ${phaseConfig.name}\n${phaseConfig.description}`,
+          content: `## ${phaseConfig.icon} ${phaseConfig.name}\n${description}`,
           height: unifiedHeight,
           width: maxX - minX,
           color: phaseConfig.color,

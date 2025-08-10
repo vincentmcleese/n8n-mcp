@@ -1,0 +1,195 @@
+{
+  "name": "Webhook Value Router - Email or Slack",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "webhook",
+        "httpMethod": "POST",
+        "responseData": "allEntries",
+        "responseMode": "lastNode"
+      },
+      "name": "Webhook",
+      "typeVersion": 2,
+      "onError": "stopWorkflow",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "if_1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.value }}",
+              "rightValue": 100,
+              "operation": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ]
+        }
+      },
+      "name": "Check Value",
+      "typeVersion": 2.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        850,
+        200
+      ],
+      "parameters": {
+        "text": "{{ 'Value received: ' + $json.value }}",
+        "subject": "{{ 'High Value Alert - ' + $json.value }}",
+        "toEmail": "recipient@example.com",
+        "fromEmail": "sender@example.com"
+      },
+      "name": "Send Email",
+      "typeVersion": 2.1,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 300,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        850,
+        400
+      ],
+      "parameters": {
+        "text": "{{ 'Low value received: ' + $json.value }}",
+        "channelId": "#alerts",
+        "resource": "message",
+        "operation": "post",
+        "select": "channel"
+      },
+      "name": "Send Slack Message",
+      "typeVersion": 2.3,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "sticky_triggers_1754813923417",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook receives incoming data from external services via POST request. This serves as the entry point for the workflow.",
+        "height": 480,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_transforms_1754813923417",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nEvaluates the received value against threshold of 100 to determine routing path. Routes to email for values above 100, otherwise to Slack.",
+        "height": 480,
+        "width": 230,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754813923417",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        810,
+        60
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends appropriate notifications based on value threshold - email alerts for high values (>100) and Slack messages for low values (≤100).",
+        "height": 480,
+        "width": 230,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check Value",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Value": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Slack Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-10T08:18:43.804Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "get a webhook. if value is above 100, send email with value. if below send slack message with value.",
+    "testName": "User Test",
+    "generatedAt": "2025-08-10T08:18:43.804Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 5,
+    "stickyNotesAdded": 3
+  }
+}

@@ -1,0 +1,204 @@
+{
+  "name": "Weekly Message Collection and Email Workflow",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "webhook",
+        "httpMethod": "POST",
+        "responseData": "allEntries",
+        "responseMode": "lastNode"
+      },
+      "name": "Webhook",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "postgres_1",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "table": "messages",
+        "columns": "message,received_at",
+        "operation": "insert",
+        "returnFields": "*",
+        "schema": "public"
+      },
+      "name": "Store Message",
+      "typeVersion": 1,
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        600
+      ],
+      "parameters": {
+        "rule": "interval",
+        "interval": [
+          {
+            "field": "cronExpression",
+            "expression": "0 17 * * 5"
+          }
+        ]
+      },
+      "name": "Weekly Email Trigger",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "postgres_2",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        550,
+        600
+      ],
+      "parameters": {
+        "query": "SELECT * FROM messages WHERE received_at >= NOW() - INTERVAL '7 days' ORDER BY received_at DESC",
+        "operation": "executeQuery"
+      },
+      "name": "Get Weekly Messages",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        850,
+        600
+      ],
+      "parameters": {
+        "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString(),\n      message: item.json.message,\n      received_at: item.json.received_at\n    }\n  });\n}\n\n// Create email content\nconst emailContent = items.map(item => \n  `Message: ${item.json.message}\\nReceived: ${item.json.received_at}\\n---`\n).join('\\n\\n');\n\nreturn [{\n  json: {\n    emailBody: emailContent || 'No messages received this week.',\n    messageCount: items.length\n  }\n}];"
+      },
+      "name": "Format Email Content",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1150,
+        600
+      ],
+      "parameters": {
+        "text": "={{ $json.emailBody }}",
+        "subject": "{{ 'Weekly Message Summary - ' + $json.messageCount + ' messages' }}",
+        "toEmail": "your-email@example.com",
+        "fromEmail": "noreply@yourapp.com"
+      },
+      "name": "Send Weekly Summary",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "sticky_transforms_1754772765535",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcessing & routing",
+        "height": 480,
+        "width": 1130,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Store Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekly Email Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Weekly Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Weekly Messages": {
+      "main": [
+        [
+          {
+            "node": "Format Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Email Content": {
+      "main": [
+        [
+          {
+            "node": "Send Weekly Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T20:52:46.050Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "a webhook submitts a message to list end of the week we email list to me",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T20:52:46.050Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 1
+  }
+}

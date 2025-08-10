@@ -1,0 +1,158 @@
+{
+  "name": "Webhook to Word Document Email Workflow",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "webhook",
+        "httpMethod": "POST",
+        "responseData": "allEntries",
+        "responseMode": "lastNode"
+      },
+      "name": "Webhook Trigger",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "markdown_1",
+      "type": "n8n-nodes-base.markdown",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "mode": "markdownToHtml",
+        "markdown": "{{ $json.body }}",
+        "destinationKey": "htmlContent"
+      },
+      "name": "Convert to Word Document",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "text": "Please find the Word document generated from webhook data attached.",
+        "subject": "{{ 'Word Document from Webhook Data - ' + new Date().toLocaleDateString() }}",
+        "toEmail": "your-email@example.com",
+        "fromEmail": "noreply@yourcompany.com",
+        "attachments": "htmlContent={{ $json.htmlContent }}"
+      },
+      "name": "Email Word Document",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 300,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "sticky_triggers_1754775188021",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWorkflow entry points",
+        "height": 200,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_transforms_1754775188022",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcessing & routing",
+        "height": 200,
+        "width": 230,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754775188022",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        810,
+        160
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nActions & destinations",
+        "height": 200,
+        "width": 230,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Convert to Word Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Word Document": {
+      "main": [
+        [
+          {
+            "node": "Email Word Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-09T21:33:08.432Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "webhook to worddoc tto email to me",
+    "testName": "User Test",
+    "generatedAt": "2025-08-09T21:33:08.432Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 3
+  }
+}

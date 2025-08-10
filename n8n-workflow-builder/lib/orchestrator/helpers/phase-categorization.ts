@@ -156,13 +156,22 @@ export function calculateUnifiedHeight(
       const yPositions = nodePositions.map((pos: [number, number]) => pos[1]);
       const minY = Math.min(...yPositions);
       const maxY = Math.max(...yPositions);
+      
+      // Calculate the full span including the node height
+      // Add padding both above and below the nodes
       const span = maxY - minY + LAYOUT_CONFIG.dimensions.nodeHeight;
-      phaseHeights.push(span + LAYOUT_CONFIG.spacing.stickyPadding * 2);
+      
+      // Add top padding (above the nodes) and bottom padding (below the nodes)
+      // Plus extra space for the sticky note header (title area)
+      const stickyHeaderSpace = 100; // Space for the sticky note title
+      const totalHeight = stickyHeaderSpace + LAYOUT_CONFIG.spacing.stickyPadding + span + LAYOUT_CONFIG.spacing.stickyPadding;
+      
+      phaseHeights.push(totalHeight);
     }
   }
 
-  // Use maximum height across all phases
-  return Math.max(...phaseHeights, LAYOUT_CONFIG.dimensions.minStickyHeight);
+  // Use maximum height across all phases, ensuring minimum height
+  return Math.max(...phaseHeights, LAYOUT_CONFIG.dimensions.minStickyHeight + 100);
 }
 
 /**

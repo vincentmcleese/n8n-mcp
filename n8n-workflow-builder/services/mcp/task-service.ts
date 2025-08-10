@@ -273,6 +273,10 @@ export class TaskService {
           // Validate the response has required fields
           // MCP returns "configuration" not "config"
           if ((data.configuration || data.config) && data.nodeType) {
+            // LOG WHAT MCP RETURNS
+            this.logger.info(
+              `📡 MCP task response for ${taskName}: nodeType=${data.nodeType}, category=${data.category || 'NOT PROVIDED'}`
+            );
             return {
               nodeType: data.nodeType,
               config: data.configuration || data.config,

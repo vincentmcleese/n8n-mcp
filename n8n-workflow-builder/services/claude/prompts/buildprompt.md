@@ -87,6 +87,13 @@ Return ONLY a JSON object with this structure:
     "saveDataErrorExecution": "all",
     "saveManualExecutions": true
   },
+  "phases": [
+    {
+      "type": "trigger|data_collection|data_processing|notification|storage|integration|error_handling",
+      "description": "2-3 sentences about what this group of nodes does",
+      "nodeIds": ["webhook_1", "code_1"]
+    }
+  ],
   "reasoning": [
     "Connected webhook to data processor",
     "Added error handling for external API calls",
@@ -94,6 +101,11 @@ Return ONLY a JSON object with this structure:
   ]
 }
 ```
+
+### Phases Instructions:
+- **Group connected nodes** by function: trigger (start), data_collection (fetch/read), data_processing (transform/filter), notification (send/alert), storage (save/update), integration (sync/update external), error_handling (catch/retry errors)
+- **Order chronologically** from workflow start to finish - phases array should follow execution order
+- **Every node ID must appear** in exactly one phase - group 1-5 related nodes per phase
 
 ## Important Notes
 
