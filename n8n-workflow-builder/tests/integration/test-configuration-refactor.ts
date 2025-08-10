@@ -267,21 +267,20 @@ class ConfigurationIntegrationTest {
     // Dynamic import to ensure env vars are loaded first
     const { WorkflowOrchestrator } = await import('../../lib/workflow-orchestrator');
     const { TaskService } = await import('../../services/mcp/task-service');
-    const { MCPClient } = await import('../../services/mcp');
     const { createLogger } = await import('../../lib/utils/logger');
     
     try {
       // Create orchestrator which will handle everything
       this.orchestrator = new WorkflowOrchestrator();
       
-      // Create TaskService for fetching real task templates
-      const mcpClient = new MCPClient({ env: 'development' });
-      await mcpClient.connect();
+      // Create TaskService using the orchestrator's MCP client
+      // The orchestrator already has a properly configured MCP client
       const logger = createLogger({ 
         component: 'test-config',
         level: process.env.LOG_LEVEL || 'info'
       });
-      this.taskService = new TaskService(mcpClient, logger);
+      // Use the MCP client from the orchestrator
+      this.taskService = new TaskService(this.orchestrator.mcpClient, logger);
       
       console.log(chalk.green('✅ Test environment ready with TaskService\n'));
     } catch (error) {
@@ -325,7 +324,9 @@ class ConfigurationIntegrationTest {
               if (isVerbose) {
                 console.log(chalk.gray(`   Fetching task template for: ${taskName}`));
               }
-              const taskTemplate = await this.taskService.fetchTask(taskName);
+              // fetchTaskNodes takes an array and returns batch results
+              const result = await this.taskService.fetchTaskNodes([taskName]);
+              const taskTemplate = result.successful.find(t => t.purpose?.includes(taskName));
               if (taskTemplate) {
                 // Replace the fake config with the real template
                 taskNode.config = taskTemplate.config;
