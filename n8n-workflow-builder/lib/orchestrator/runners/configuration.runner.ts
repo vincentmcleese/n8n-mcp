@@ -356,8 +356,8 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
         }
 
         // Step 4: Validate the customized configuration
-        const configToValidate = nodeConfig.parameters || nodeConfig;
-        const validation = await this.validateConfig(node.type, configToValidate);
+        // Pass the full config structure for validation, not just parameters
+        const validation = await this.validateConfig(node.type, nodeConfig);
         
         if (validation.isValid) {
           reasoning.push(`✅ ${node.type} task template customized successfully`);
@@ -455,9 +455,8 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
       }
 
       // Step 4: Simple validation (no retry loop)
-      // Extract parameters from nested structure if present
-      const configToValidate = nodeConfig.parameters || nodeConfig;
-      const validation = await this.validateConfig(node.type, configToValidate);
+      // Pass the full config structure for validation, not just parameters
+      const validation = await this.validateConfig(node.type, nodeConfig);
       
       if (validation.isValid) {
         reasoning.push(`✅ ${node.type} configured successfully with essentials`);

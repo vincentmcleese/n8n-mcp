@@ -206,6 +206,7 @@ export class NodeContextService {
     try {
       const candidates = buildNodeTypeCandidates(nodeType);
       loggers.orchestrator.debug(`Validating configuration for ${nodeType} (candidates: ${candidates.join(', ')})`);
+      loggers.orchestrator.debug(`Config being validated:`, JSON.stringify(config, null, 2));
 
       let validationResult: any = null;
       for (const candidate of candidates) {
@@ -224,6 +225,7 @@ export class NodeContextService {
 
       // Prefer strict JSON from any content part; fall back to tolerant parser
       const parts = Array.isArray(validationResult?.content) ? validationResult.content : [];
+      loggers.orchestrator.debug(`MCP validation response:`, JSON.stringify(validationResult, null, 2));
       let parsedFromJson = false;
       for (const part of parts) {
         if (part?.type === 'text' && typeof part.text === 'string') {
@@ -231,6 +233,7 @@ export class NodeContextService {
           if (text.startsWith('{') || text.startsWith('[')) {
             try {
               const data = JSON.parse(text);
+              loggers.orchestrator.debug(`Parsed validation data:`, data);
               const missing: string[] = Array.isArray((data as any).missingRequiredFields)
                 ? (data as any).missingRequiredFields
                 : [];

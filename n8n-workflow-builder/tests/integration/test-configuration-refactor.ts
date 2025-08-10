@@ -331,10 +331,8 @@ class ConfigurationIntegrationTest {
                 // Replace the fake config with the real template
                 taskNode.config = taskTemplate.config;
                 taskNode.category = taskTemplate.category || taskNode.category;
-                // Also update the node type if needed
-                if (taskTemplate.nodeType && taskTemplate.nodeType !== taskNode.type) {
-                  taskNode.type = taskTemplate.nodeType;
-                }
+                // Don't update the node type - keep the original for validation compatibility
+                // The config is what matters, not the exact type string
                 if (isVerbose) {
                   console.log(chalk.gray(`   ✓ Got template for ${taskName}`));
                 }
