@@ -1,0 +1,154 @@
+{
+  "name": "WhatsApp Conversation to Email Forwarder",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "whatsapp-conversation",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "WhatsApp Webhook",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Process WhatsApp conversation data and format for email\nconst inputData = $input.all();\n\n// Extract conversation data from webhook payload\nconst webhookData = inputData[0].json;\n\n// Format the conversation for email\nlet formattedConversation = '';\nif (webhookData.messages && Array.isArray(webhookData.messages)) {\n  formattedConversation = webhookData.messages.map(msg => {\n    const timestamp = new Date(msg.timestamp).toLocaleString();\n    return `[${timestamp}] ${msg.from}: ${msg.text}`;\n  }).join('\\n');\n} else if (webhookData.conversation) {\n  formattedConversation = webhookData.conversation;\n} else {\n  formattedConversation = JSON.stringify(webhookData, null, 2);\n}\n\n// Prepare data for email\nreturn [{\n  json: {\n    conversation: formattedConversation,\n    originalData: webhookData,\n    processedAt: new Date().toISOString(),\n    participantCount: webhookData.participants ? webhookData.participants.length : 'Unknown',\n    messageCount: webhookData.messages ? webhookData.messages.length : 'Unknown'\n  }\n}];"
+      },
+      "name": "Process Conversation",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "fromEmail": "noreply@yourcompany.com",
+        "toEmail": "admin@yourcompany.com",
+        "subject": "{{ 'WhatsApp Conversation - ' + $json.processedAt }}",
+        "text": "{{ 'WhatsApp Conversation:\\n\\n' + $json.conversation + '\\n\\n---\\nProcessed at: ' + $json.processedAt + '\\nParticipants: ' + $json.participantCount + '\\nMessages: ' + $json.messageCount }}",
+        "options": {
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "name": "Send Email",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "sticky_triggers_1754838477326",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook receives WhatsApp conversation data from external service. Acts as the entry point for the workflow when conversation data is posted to the endpoint.",
+        "height": 300,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_transforms_1754838477326",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcesses and formats the raw WhatsApp conversation data from the webhook. Extracts messages, formats timestamps, and prepares structured data for email delivery.",
+        "height": 300,
+        "width": 230,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754838477326",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        810,
+        160
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends the formatted WhatsApp conversation via email to the configured recipient. Includes conversation content, processing metadata, and participant information.",
+        "height": 300,
+        "width": 230,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "WhatsApp Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Conversation": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-10T15:07:57.627Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "webhook that gets a conversation from whatsapp and sends it via email",
+    "testName": "User Test",
+    "generatedAt": "2025-08-10T15:07:57.627Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 3
+  }
+}

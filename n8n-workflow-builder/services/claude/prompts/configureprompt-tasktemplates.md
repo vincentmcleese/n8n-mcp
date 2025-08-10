@@ -65,15 +65,18 @@ search_node_properties(nodeType, "feature_name"); // Find additional properties
 **DO:**
 
 - ✅ **ALWAYS preserve typeVersion from template**
+- ✅ **Keep exact property names from template** - don't change capitalization
 - ✅ Start with the template structure
 - ✅ Customize values to match user's context
 - ✅ Keep working configurations from template
+- ✅ Keep exact capitalization of all property names from template
 - ✅ Add features only if explicitly needed
 - ✅ Update notes to describe the customized purpose
 - ✅ Maintain the node/parameter property separation
 
 **DON'T:**
 
+- ❌ Change property name capitalization (use exact case from template)
 - ❌ Remove working template configurations
 - ❌ Rebuild from scratch
 - ❌ Over-customize beyond requirements

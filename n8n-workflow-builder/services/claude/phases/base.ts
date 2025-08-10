@@ -140,13 +140,12 @@ export abstract class BasePhaseService<TInput = any, TOutput = any> {
       // Extract reasoning if present
       const reasoning = this.extractReasoning(parseResult.data);
       
-      // Log reasoning at INFO level if available
+      // Log reasoning at debug level to avoid clutter in parallel execution
       if (reasoning && reasoning.length > 0) {
-        this.logger.info(`[${this.phaseName}] Claude reasoning:`);
+        this.logger.debug(`[${this.phaseName}] Reasoning:`);
         reasoning.forEach((reason, index) => {
-          // Truncate long reasoning to keep logs readable
           const truncated = reason.length > 200 ? reason.substring(0, 200) + '...' : reason;
-          this.logger.info(`   ${index + 1}. ${truncated}`);
+          this.logger.debug(`   ${index + 1}. ${truncated}`);
         });
       }
       
@@ -244,7 +243,7 @@ export abstract class BasePhaseService<TInput = any, TOutput = any> {
    */
   protected logSuccess(operation: string, details?: any): void {
     // Create a summary string for INFO level
-    let summary = `[${this.phaseName}] ${operation} completed successfully`;
+    let summary = `   ✓ ${operation} completed`;
     
     if (details) {
       // Add key details to the INFO message
@@ -272,7 +271,8 @@ export abstract class BasePhaseService<TInput = any, TOutput = any> {
         detailParts.push(`${details.errorsFixed} errors fixed`);
       }
       
-      if (detailParts.length > 0) {
+      if (detailParts.length > 0 && this.phaseName === 'configuration') {
+        // Show details for configuration phase at INFO level
         summary += ` (${detailParts.join(', ')})`;
       }
       
@@ -280,7 +280,8 @@ export abstract class BasePhaseService<TInput = any, TOutput = any> {
       this.logger.debug(`[${this.phaseName}] Full details:`, details);
     }
     
-    this.logger.info(summary);
+    // Log at debug level to avoid clutter
+    this.logger.debug(`[${this.phaseName}] ${operation} completed`, details);
   }
 
   /**

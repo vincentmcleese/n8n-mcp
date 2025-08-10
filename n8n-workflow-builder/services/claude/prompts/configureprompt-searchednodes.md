@@ -60,7 +60,8 @@ For multi-feature requirements:
 **DO:**
 
 - ✅ **ALWAYS include typeVersion from essentials (deployment critical!)**
-- ✅ Use EXACT property names from essentials
+- ✅ Use EXACT property names from essentials (typically lowercase like 'url', 'path', 'method')
+- ✅ **Keep property names exactly as shown in essentials** - don't change capitalization
 - ✅ Search for properties before assuming they exist
 - ✅ If property NOT in essentials → search_node_properties() for structure
 - ✅ FixedCollections always need wrapper object - never direct arrays
@@ -69,6 +70,7 @@ For multi-feature requirements:
 
 **DON'T:**
 
+- ❌ Change property name capitalization (use exact case from essentials)
 - ❌ Invent property names
 - ❌ Add unrequested features
 - ❌ Jump to get_node_info

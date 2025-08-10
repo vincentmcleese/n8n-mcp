@@ -67,7 +67,8 @@ export class ConfigurationPhaseService extends BasePhaseService<ConfigurationInp
   ): Promise<PhaseResult<ConfigurationOutput>> {
     const { prompt, selectedNodes, context: configContext } = input;
     
-    this.logger.debug(`Starting configuration generation for ${selectedNodes.length} nodes`);
+    // Log at debug level to avoid confusion when running in parallel
+    this.logger.debug(`Starting configuration for ${selectedNodes.length} node${selectedNodes.length !== 1 ? 's' : ''}`);
     
     try {
       // Always use the prompt passed in (from ConfigurationPromptBuilder)
@@ -76,7 +77,7 @@ export class ConfigurationPhaseService extends BasePhaseService<ConfigurationInp
         user: prompt,
         prefill: '{"operations":['
       };
-      this.logger.debug('Using configuration prompt from ConfigurationPromptBuilder');
+      this.logger.debug('   Using optimized essentials-based configuration');
       
       // Get available tools for configuration phase
       const tools = Object.values(CONFIGURATION_TOOLS);
@@ -104,10 +105,9 @@ export class ConfigurationPhaseService extends BasePhaseService<ConfigurationInp
         result.data.reasoning || []
       );
       
-      this.logSuccess('Configuration phase', {
-        operations: enhancedOperations.length,
-        nodesConfigured: enhancedOperations.filter(op => op.type === 'configureNode').length,
-      });
+      // Log completion at INFO level
+      const configuredCount = enhancedOperations.filter(op => op.type === 'configureNode').length;
+      this.logger.info(`   ✓ Generated ${configuredCount} node configuration${configuredCount !== 1 ? 's' : ''}`);
       
       // Log the actual operations for debugging
       this.logger.debug('Configuration operations generated:', enhancedOperations);

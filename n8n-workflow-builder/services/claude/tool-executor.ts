@@ -21,13 +21,35 @@ export class ToolExecutor {
     const { name, input, id } = toolCall;
     const startTime = Date.now();
     
-    this.logger.info(`🔧 Tool called: ${name}`, { input });
+    // Log tool calls at debug level, except for validation tools
+    if (name.includes('validate')) {
+      this.logger.info(`   🔍 Validating: ${name}`);
+    } else {
+      this.logger.debug(`🔧 Tool called: ${name}`, { input });
+    }
     
     try {
       const result = await this.executeToolByName(name, input);
       const duration = Date.now() - startTime;
       
-      this.logger.info(`✅ Tool ${name} completed in ${duration}ms`);
+      // Log validation results at INFO, others at debug
+      if (name.includes('validate')) {
+        const isValid = result?.isValid || result?.valid || false;
+        const errors = result?.errors || result?.validationErrors || [];
+        
+        if (isValid) {
+          this.logger.info(`   ✅ Validation passed`);
+        } else {
+          this.logger.info(`   ❌ Validation failed: ${errors.length} error${errors.length !== 1 ? 's' : ''}`);
+          // Log each error at INFO level
+          errors.forEach((error: any) => {
+            const errorMsg = typeof error === 'string' ? error : error.message || JSON.stringify(error);
+            this.logger.info(`      - ${errorMsg}`);
+          });
+        }
+      } else {
+        this.logger.debug(`✅ Tool ${name} completed in ${duration}ms`);
+      }
       
       // Return in format Claude expects
       return {
@@ -38,7 +60,12 @@ export class ToolExecutor {
       
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.logger.error(`❌ Tool ${name} failed after ${duration}ms:`, error);
+      // Log validation failures at INFO, others at error level
+      if (name.includes('validate')) {
+        this.logger.info(`   ❌ Validation tool error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } else {
+        this.logger.error(`❌ Tool ${name} failed after ${duration}ms:`, error);
+      }
       
       // Return error in format Claude can understand
       return {

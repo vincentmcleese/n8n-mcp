@@ -81,8 +81,9 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
             return null;
           }
 
+          // Don't log at node level to avoid confusion in parallel execution
           this.deps.loggers.orchestrator.debug(
-            `Configuring ${node.type} (${node.id}) with hybrid approach`
+            `Configuring ${node.type}${node.isPreConfigured ? ' (task template)' : ' (searched node)'}`
           );
 
           try {
@@ -158,11 +159,12 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
           );
           reasoning.push(`${node.type} configured and validated successfully`);
         } else {
+          // Store detailed errors for summary later
           const errorMsg = validationErrors.length > 0 
             ? `: ${validationErrors.join(", ")}`
-            : " (no specific errors provided)";
+            : "";
           this.deps.loggers.orchestrator.debug(
-            `⚠️  ${node.type} configured but validation failed${errorMsg}`
+            `❌ ${node.type} validation failed${errorMsg}`
           );
           reasoning.push(
             `${node.type} configured but validation failed${errorMsg}`
@@ -175,8 +177,12 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
       const validCount = configured.filter((n) => n.validated).length;
       const elapsedTime = Date.now() - startTime;
 
+      // Log summary of configuration phase ONCE at the end
       this.deps.loggers.orchestrator.info(
-        `OPTIMIZED configuration completed in ${elapsedTime}ms: ${validCount}/${configured.length} nodes valid`
+        `\n⚙️  Phase 2: Configuration Complete`
+      );
+      this.deps.loggers.orchestrator.info(
+        `   Nodes configured: ${configured.length}`
       );
       
       // Log node types configured
@@ -187,9 +193,47 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
           .filter(n => n.isPreConfigured && !!n.config).length;
         const searchNodes = configured.length - taskNodes;
         this.deps.loggers.orchestrator.info(
-          `   Task nodes: ${taskNodes} (pre-configured), Search nodes: ${searchNodes} (essentials-based)`
+          `   - Task templates customized: ${taskNodes}`
+        );
+        this.deps.loggers.orchestrator.info(
+          `   - Search nodes configured: ${searchNodes}`
         );
       }
+      
+      // Log validation summary with proper error details
+      if (validCount === configured.length) {
+        this.deps.loggers.orchestrator.info(
+          `   ✅ All nodes validated successfully`
+        );
+      } else {
+        const failedNodes = configured.filter(n => !n.validated);
+        this.deps.loggers.orchestrator.info(
+          `   ⚠️  Validation: ${validCount}/${configured.length} passed`
+        );
+        // List failed nodes with their errors at INFO level
+        failedNodes.forEach(node => {
+          if (node.validationErrors && node.validationErrors.length > 0) {
+            // If we have specific errors, show them
+            this.deps.loggers.orchestrator.info(
+              `      ❌ ${node.type}:`
+            );
+            node.validationErrors.forEach(error => {
+              this.deps.loggers.orchestrator.info(
+                `         - ${error}`
+              );
+            });
+          } else {
+            // If no specific errors, check if it's from a failed Claude call
+            this.deps.loggers.orchestrator.info(
+              `      ❌ ${node.type}: Validation check failed (run with --verbose for details)`
+            );
+          }
+        });
+      }
+      
+      this.deps.loggers.orchestrator.info(
+        `   ⏱️  Duration: ${elapsedTime}ms`
+      );
 
       // Add phase completion operation if successful
       if (allValid) {
@@ -275,14 +319,21 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
       // Handle pre-configured task nodes (detected from discovery)
       if (node.isPreConfigured && node.config) {
         this.deps.loggers.orchestrator.debug(
-          `Processing task node with template: ${node.type}`
+          `Customizing task template: ${node.type}`
         );
         
         // Step 1: Restructure the flat config from MCP into proper n8n format
-        const restructuredTemplate = this.restructureTaskConfig(node.config);
-        
         this.deps.loggers.orchestrator.debug(
-          `Task template restructured for ${node.type}, now customizing with Claude`
+          `Original task template from MCP:`, JSON.stringify(node.config, null, 2)
+        );
+        const restructuredTemplate = this.restructureTaskConfig(node.config);
+        this.deps.loggers.orchestrator.debug(
+          `Restructured template:`, JSON.stringify(restructuredTemplate, null, 2)
+        );
+        
+        // Log customization step
+        this.deps.loggers.orchestrator.debug(
+          `   Applying user requirements to ${node.type} template`
         );
         
         // Step 2: Build targeted prompt using task template and rules
@@ -357,7 +408,11 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
         }
 
         // Step 4: Validate the customized configuration
-        // Pass the full config structure for validation, not just parameters
+        // The validateConfig method will extract just the parameters for MCP validation
+        this.deps.loggers.orchestrator.debug(
+          `Validating customized task config for ${node.type}:`, 
+          JSON.stringify(nodeConfig, null, 2)
+        );
         const validation = await this.validateConfig(node.type, nodeConfig);
         
         if (validation.isValid) {
@@ -379,7 +434,7 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
 
       // Step 1: Get node essentials (5KB instead of 100KB+)
       this.deps.loggers.orchestrator.debug(
-        `Getting essentials for ${node.type} (optimized data fetch)`
+        `Configuring search node: ${node.type}`
       );
       const nodeEssentials = await this.getNodeEssentials(node.type);
       
@@ -456,7 +511,11 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
       }
 
       // Step 4: Simple validation (no retry loop)
-      // Pass the full config structure for validation, not just parameters
+      // The validateConfig method will extract just the parameters for MCP validation
+      this.deps.loggers.orchestrator.debug(
+        `Validating generated config for ${node.type}:`,
+        JSON.stringify(nodeConfig, null, 2)
+      );
       const validation = await this.validateConfig(node.type, nodeConfig);
       
       if (validation.isValid) {
@@ -510,12 +569,27 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
 
   /**
    * Validate node configuration
+   * Note: The NodeContextService will extract just the parameters object for MCP validation
+   * since validate_node_operation expects only parameters, not the full node config structure
    */
   private async validateConfig(nodeType: string, config: any) {
     const validation = await this.deps.nodeContextService.validateNodeConfig(nodeType, config);
+    
+    // Log validation details at debug level for troubleshooting
+    if (!validation.isValid) {
+      this.deps.loggers.orchestrator.debug(
+        `Validation details for ${nodeType}:`,
+        { 
+          isValid: validation.isValid,
+          errors: validation.validationErrors,
+          errorCount: validation.validationErrors?.length || 0
+        }
+      );
+    }
+    
     return {
       isValid: validation.isValid,
-      validationErrors: validation.validationErrors,
+      validationErrors: validation.validationErrors || [],
     };
   }
 
@@ -546,7 +620,7 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
         // Place at node level
         restructured[key] = value;
       } else {
-        // Place in parameters
+        // Place in parameters  
         restructured.parameters[key] = value;
       }
     }

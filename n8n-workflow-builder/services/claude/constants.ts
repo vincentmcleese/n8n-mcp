@@ -79,7 +79,7 @@ export function getModel(options?: {
 export const TOKEN_LIMITS = {
   // Phase-specific limits
   discovery: 8000,
-  configuration: 2000,
+  configuration: 4000, // Increased from 2000 to handle complex node configurations
   building: 8000,
   validation: 8000,
   documentation: 1000,

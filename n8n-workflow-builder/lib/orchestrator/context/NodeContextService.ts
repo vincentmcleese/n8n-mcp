@@ -208,10 +208,16 @@ export class NodeContextService {
       loggers.orchestrator.debug(`Validating configuration for ${nodeType} (candidates: ${candidates.join(', ')})`);
       loggers.orchestrator.debug(`Config being validated:`, JSON.stringify(config, null, 2));
 
+      // Extract just the parameters object for validation
+      // The validate_node_operation MCP tool expects only the parameters, not the full node config
+      const parametersToValidate = config.parameters || {};
+      loggers.orchestrator.debug(`Parameters being sent to MCP validation:`, JSON.stringify(parametersToValidate, null, 2));
+
       let validationResult: any = null;
       for (const candidate of candidates) {
         try {
-          validationResult = await this.mcpClient.validateNodeMinimal(candidate, config);
+          // Use validateNodeOperation with just the parameters object
+          validationResult = await this.mcpClient.validateNodeOperation(candidate, parametersToValidate, 'ai-friendly');
           const text = validationResult?.content?.[0]?.type === "text" ? validationResult.content[0].text : '';
           const lower = (text || '').toLowerCase();
           if (lower.includes("not found") || lower.startsWith("error executing tool")) {
