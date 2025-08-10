@@ -20,6 +20,7 @@ import type {
   ClaudeAnalysisResponse,
   DiscoveryOperationsResponse 
 } from '@/types';
+import { DISCOVERY_TOOLS } from '@/lib/mcp-tools/definitions';
 
 // ==========================================
 // Type Definitions
@@ -136,12 +137,16 @@ Example format:
       prefill: '{"operations":['
     };
     
-    // Call Claude for selection
+    // Get available tools for discovery phase
+    const tools = Object.values(DISCOVERY_TOOLS);
+    
+    // Call Claude for selection with tools available
     const result = await this.callClaude<DiscoveryOperationsResponse>(
       promptParts,
       TOKEN_LIMITS.discovery,
       discoveryOperationsResponseSchema as any,
-      'selectFromGapResults'
+      'selectFromGapResults',
+      tools // Pass tools for Claude to use if needed
     );
     
     if (result.success && result.data) {
@@ -198,12 +203,16 @@ Example format:
     // Get the prompt
     const promptParts = DiscoveryPrompts.getIntentAnalysisPrompt(input.prompt);
     
-    // Call Claude with the intent analysis prompt
+    // Get available tools for discovery phase
+    const tools = Object.values(DISCOVERY_TOOLS);
+    
+    // Call Claude with the intent analysis prompt and tools
     const result = await this.callClaude<ClaudeAnalysisResponse>(
       promptParts,
       TOKEN_LIMITS.intentAnalysis,
       intentAnalysisSchema as any,
-      'analyzeIntent'
+      'analyzeIntent',
+      tools // Pass tools for Claude to use if needed
     );
     
     if (result.success && result.data) {

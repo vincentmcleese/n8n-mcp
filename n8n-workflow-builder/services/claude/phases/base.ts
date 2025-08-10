@@ -10,6 +10,9 @@ import { parseWithPrefill, type ParseResult } from '../parsing/json-prefill';
 import { type PromptParts } from '../prompts/common';
 import { loggers } from '@/lib/utils/logger';
 import { z } from 'zod';
+import type { ToolDefinition } from '@/types/tools';
+import type { MCPClient } from '@/lib/mcp-client';
+import { ToolExecutor } from '../tool-executor';
 
 // ==========================================
 // Type Definitions
@@ -19,6 +22,7 @@ export interface PhaseServiceConfig {
   client?: AnthropicClient;
   onTokenUsage?: (tokens: number) => void;
   logger?: typeof loggers.claude;
+  mcpClient?: MCPClient; // Optional MCP client for tool execution
 }
 
 export interface PhaseContext {
@@ -46,16 +50,23 @@ export interface PhaseResult<T = any> {
 export abstract class BasePhaseService<TInput = any, TOutput = any> {
   protected client: AnthropicClient;
   protected logger: typeof loggers.claude;
+  protected toolExecutor?: ToolExecutor;
   private tokenUsageCallback?: (tokens: number) => void;
 
   constructor(config: PhaseServiceConfig = {}) {
-    this.client = config.client || new AnthropicClient();
+    this.client = config.client || new AnthropicClient({ mcpClient: config.mcpClient });
     this.logger = config.logger || loggers.claude;
     this.tokenUsageCallback = config.onTokenUsage;
     
     // Set token usage callback on client if provided
     if (this.tokenUsageCallback) {
       this.client.setOnUsageCallback(this.tokenUsageCallback);
+    }
+    
+    // Initialize tool executor if MCP client is provided
+    if (config.mcpClient) {
+      this.toolExecutor = new ToolExecutor(config.mcpClient);
+      this.client.setToolExecutor(this.toolExecutor);
     }
   }
 
@@ -84,7 +95,8 @@ export abstract class BasePhaseService<TInput = any, TOutput = any> {
     prompt: PromptParts,
     maxTokens: number,
     schema?: z.ZodSchema<T>,
-    methodName?: string
+    methodName?: string,
+    tools?: ToolDefinition[]
   ): Promise<PhaseResult<T>> {
     try {
       // Log the phase and method
@@ -97,6 +109,7 @@ export abstract class BasePhaseService<TInput = any, TOutput = any> {
         prefill: prompt.prefill,
         maxTokens,
         phase: this.phaseName,
+        tools, // Pass tools if provided
       };
       
       const completion = await this.client.completeJSON(completionParams);

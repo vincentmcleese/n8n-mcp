@@ -17,6 +17,9 @@ import {
   TEMPERATURE 
 } from "./constants";
 import { loggers } from "@/lib/utils/logger";
+import type { ToolDefinition, ToolCall, ToolResult } from "@/types/tools";
+import { ToolExecutor } from "./tool-executor";
+import type { MCPClient } from "@/lib/mcp-client";
 
 // ==========================================
 // Type Definitions
@@ -30,6 +33,7 @@ export interface CompletionParams {
   temperature?: number;
   model?: string;
   phase?: string; // For logging context
+  tools?: ToolDefinition[]; // Optional tools for Claude to use
 }
 
 export interface CompletionResult {
@@ -47,6 +51,7 @@ export interface ClientConfig {
   onUsageCallback?: (tokens: number) => void;
   baseURL?: string;
   timeout?: number;
+  mcpClient?: MCPClient; // Optional MCP client for tool execution
 }
 
 export class ProviderError extends Error {
@@ -68,6 +73,7 @@ export class ProviderError extends Error {
 export class AnthropicClient {
   private client: Anthropic;
   private onUsageCallback?: (tokens: number) => void;
+  private toolExecutor?: ToolExecutor;
 
   constructor(config: ClientConfig = {}) {
     const apiKey = config.apiKey || process.env.ANTHROPIC_API_KEY;
@@ -83,6 +89,18 @@ export class AnthropicClient {
     });
 
     this.onUsageCallback = config.onUsageCallback;
+    
+    // Initialize tool executor if MCP client is provided
+    if (config.mcpClient) {
+      this.toolExecutor = new ToolExecutor(config.mcpClient);
+    }
+  }
+  
+  /**
+   * Set or update the tool executor
+   */
+  setToolExecutor(toolExecutor: ToolExecutor): void {
+    this.toolExecutor = toolExecutor;
   }
 
   /**
@@ -96,6 +114,121 @@ export class AnthropicClient {
    * Complete a JSON generation request with automatic retry logic
    */
   async completeJSON(params: CompletionParams): Promise<CompletionResult> {
+    // If tools are provided and we have a tool executor, use enhanced flow
+    if (params.tools && params.tools.length > 0 && this.toolExecutor) {
+      return this.completeJSONWithTools(params);
+    }
+    
+    // Otherwise use the basic flow (existing implementation)
+    return this.completeJSONBasic(params);
+  }
+  
+  /**
+   * Complete JSON with tool calling support
+   */
+  private async completeJSONWithTools(params: CompletionParams): Promise<CompletionResult> {
+    const messages: Anthropic.MessageParam[] = [
+      { role: "user", content: params.userMessage }
+    ];
+    
+    // Add prefill if provided
+    if (params.prefill) {
+      messages.push({ role: "assistant", content: params.prefill });
+    }
+    
+    // Make the request with tools
+    const response = await this.makeRequestWithTools(params, messages);
+    
+    // Handle the response (may involve tool calls)
+    return this.handleToolResponse(response, messages, params);
+  }
+  
+  /**
+   * Handle response that may contain tool use
+   */
+  private async handleToolResponse(
+    response: any,
+    messages: Anthropic.MessageParam[],
+    params: CompletionParams
+  ): Promise<CompletionResult> {
+    // Check if Claude wants to use tools
+    if (response.stop_reason === 'tool_use') {
+      // Extract tool calls
+      const toolCalls = response.content.filter((c: any) => c.type === 'tool_use') as ToolCall[];
+      
+      if (toolCalls.length > 0) {
+        loggers.claude.info(`🔧 Claude requesting ${toolCalls.length} tool(s):`, 
+          toolCalls.map(t => t.name)
+        );
+        
+        // Execute tools
+        const toolResults = await this.toolExecutor!.executeMultiple(toolCalls);
+        
+        // Add Claude's response (with tool calls) to messages
+        messages.push({ role: 'assistant', content: response.content });
+        
+        // Add tool results to messages
+        messages.push({ role: 'user', content: toolResults as any });
+        
+        // Continue conversation with tool results
+        const nextResponse = await this.client.messages.create({
+          model: params.model || getModel(),
+          max_tokens: params.maxTokens,
+          temperature: params.temperature ?? TEMPERATURE.default,
+          messages,
+          system: params.systemPrompt,
+          tools: params.tools as any,
+          tool_choice: 'auto' as any
+        });
+        
+        // Recursively handle (in case Claude needs more tools)
+        return this.handleToolResponse(nextResponse, messages, params);
+      }
+    }
+    
+    // Extract text content from response
+    const content = response.content[0].type === "text" 
+      ? response.content[0].text 
+      : "";
+    
+    // Track token usage
+    const usage = this.trackTokenUsage(response);
+    
+    // Combine prefill with response for full content
+    const fullContent = params.prefill ? params.prefill + content : content;
+    
+    return {
+      content,
+      fullContent,
+      usage
+    };
+  }
+  
+  /**
+   * Make request with tools
+   */
+  private async makeRequestWithTools(
+    params: CompletionParams,
+    messages: Anthropic.MessageParam[]
+  ): Promise<any> {
+    const model = params.model || getModel();
+    const temperature = params.temperature ?? TEMPERATURE.default;
+    
+    return await this.client.messages.create({
+      model,
+      max_tokens: params.maxTokens,
+      temperature,
+      messages,
+      system: params.systemPrompt,
+      tools: params.tools as any,
+      tool_choice: 'auto' as any
+    });
+  }
+  
+  /**
+   * Original completeJSON implementation (without tools)
+   */
+  private async completeJSONBasic(params: CompletionParams): Promise<CompletionResult> {
     const startTime = Date.now();
     let lastError: Error | undefined;
     

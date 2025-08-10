@@ -19,6 +19,7 @@ import type {
   ClaudeValidationResponse,
   ValidationFixesResponse 
 } from '@/types';
+import { VALIDATION_TOOLS } from '@/lib/mcp-tools/definitions';
 
 // ==========================================
 // Type Definitions
@@ -245,12 +246,16 @@ export class ValidationPhaseService extends BasePhaseService<ValidationInput, Va
     const promptParts = ValidationPrompts.getValidationPrompt(draftWorkflow);
 
     try {
+      // Get available tools for validation phase
+      const tools = Object.values(VALIDATION_TOOLS);
+      
       // For validation, we don't use a prefill since Claude needs to call MCP tools first
       const params = {
         systemPrompt: promptParts.system,
         userMessage: promptParts.user,
         maxTokens: TOKEN_LIMITS.validation,
         phase: this.phaseName,
+        tools, // Pass validation tools for Claude to use
       };
       
       const completion = await this.client.completeJSON(params);

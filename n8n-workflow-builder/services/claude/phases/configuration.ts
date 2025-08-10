@@ -16,6 +16,7 @@ import type {
   ConfigurationOperationsResponse,
   WorkflowOperation
 } from '@/types';
+import { CONFIGURATION_TOOLS } from '@/lib/mcp-tools/definitions';
 
 // ==========================================
 // Type Definitions
@@ -77,12 +78,16 @@ export class ConfigurationPhaseService extends BasePhaseService<ConfigurationInp
       };
       this.logger.debug('Using configuration prompt from ConfigurationPromptBuilder');
       
-      // Call Claude for configuration operations
+      // Get available tools for configuration phase
+      const tools = Object.values(CONFIGURATION_TOOLS);
+      
+      // Call Claude for configuration operations with tools available
       const result = await this.callClaude<ConfigurationOperationsResponse>(
         promptParts,
         TOKEN_LIMITS.configuration,
         configurationOperationsResponseSchema as any,
-        'generateConfiguration'
+        'generateConfiguration',
+        tools // Pass tools for Claude to use if needed
       );
       
       if (!result.success || !result.data) {

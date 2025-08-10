@@ -206,7 +206,14 @@ export const loggers = {
   mcp: createLogger('MCP'),
   claude: createLogger('Claude'),
   orchestrator: createLogger('Orchestrator'),
-  test: createLogger('Test', { format: 'simple' })
+  test: createLogger('Test', { format: 'simple' }),
+  tools: createLogger('Tools'), // Logger for tool execution
+  discovery: createLogger('Discovery'),
+  configuration: createLogger('Configuration'),
+  building: createLogger('Building'),
+  validation: createLogger('Validation'),
+  documentation: createLogger('Documentation'),
+  session: createLogger('Session')
 };
 
 
