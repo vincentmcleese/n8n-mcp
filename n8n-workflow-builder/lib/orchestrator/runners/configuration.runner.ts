@@ -158,13 +158,14 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
           );
           reasoning.push(`${node.type} configured and validated successfully`);
         } else {
+          const errorMsg = validationErrors.length > 0 
+            ? `: ${validationErrors.join(", ")}`
+            : " (no specific errors provided)";
           this.deps.loggers.orchestrator.debug(
-            `⚠️  ${node.type} configured but validation failed`
+            `⚠️  ${node.type} configured but validation failed${errorMsg}`
           );
           reasoning.push(
-            `${
-              node.type
-            } configured but validation failed: ${validationErrors.join(", ")}`
+            `${node.type} configured but validation failed${errorMsg}`
           );
         }
       }

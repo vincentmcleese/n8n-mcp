@@ -314,7 +314,16 @@ class MCPClient {
               case 'validate_node_minimal':
               case 'validate_node_operation':
                 if (data.valid !== undefined) {
-                  resultSummary = data.valid ? ' - ✅ Valid' : ` - ❌ Invalid: ${data.errors?.length || 0} errors`;
+                  // Check for missingRequiredFields (MCP's actual response format)
+                  const errorCount = data.missingRequiredFields?.length || data.errors?.length || 0;
+                  if (data.valid) {
+                    resultSummary = ' - ✅ Valid';
+                  } else {
+                    resultSummary = ` - ❌ Invalid: ${errorCount} error${errorCount !== 1 ? 's' : ''}`;
+                    if (data.missingRequiredFields?.length > 0) {
+                      resultSummary += ` (missing: ${data.missingRequiredFields.join(', ')})`;
+                    }
+                  }
                 }
                 break;
               case 'get_node_for_task':
