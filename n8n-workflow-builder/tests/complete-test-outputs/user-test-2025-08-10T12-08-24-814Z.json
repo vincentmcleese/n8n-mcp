@@ -1,0 +1,235 @@
+{
+  "name": "Weekly File Analysis with Conditional Notifications",
+  "nodes": [
+    {
+      "id": "cron_1",
+      "type": "n8n-nodes-base.cron",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minute",
+              "value": 0
+            },
+            {
+              "field": "hour",
+              "value": 8
+            },
+            {
+              "field": "dayOfWeek",
+              "value": 1
+            }
+          ]
+        }
+      },
+      "name": "Monday 8AM Trigger",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Read file from directory and extract numerical values\nconst fs = require('fs');\nconst path = require('path');\n\n// Configure your file path here\nconst filePath = '/path/to/your/file.txt'; // Update this path\n\ntry {\n  // Read file content\n  const fileContent = fs.readFileSync(filePath, 'utf8');\n  \n  // Extract all numerical values using regex\n  const numbers = fileContent.match(/\\d+(?:\\.\\d+)?/g);\n  \n  if (!numbers || numbers.length === 0) {\n    return [{ json: { error: 'No numerical values found in file', average: 0, numbers: [] } }];\n  }\n  \n  // Convert to numbers and calculate average\n  const numericValues = numbers.map(num => parseFloat(num));\n  const sum = numericValues.reduce((acc, num) => acc + num, 0);\n  const average = sum / numericValues.length;\n  \n  return [{\n    json: {\n      filePath: filePath,\n      numbersFound: numericValues.length,\n      numbers: numericValues,\n      sum: sum,\n      average: average,\n      isAbove100: average > 100,\n      differenceFrom100: average < 100 ? (100 - average) : 0\n    }\n  }];\n  \n} catch (error) {\n  return [{ json: { error: error.message, average: 0 } }];\n}"
+      },
+      "name": "Read File and Extract Numbers",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "code_2",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Route data based on average value\nconst results = [];\n\nfor (const item of items) {\n  const average = item.json.average || 0;\n  \n  if (average > 100) {\n    // Route to Slack (output 0)\n    results.push({\n      json: {\n        ...item.json,\n        action: 'slack',\n        message: `Weekly analysis complete! Average value is ${average.toFixed(2)}, which is above the 100 threshold.`\n      }\n    });\n  } else {\n    // Route to Email (output 1) \n    const difference = 100 - average;\n    results.push({\n      json: {\n        ...item.json,\n        action: 'email',\n        difference: difference,\n        message: `Weekly analysis shows average of ${average.toFixed(2)}, which is ${difference.toFixed(2)} points below the 100 threshold.`\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "name": "Route Based on Average",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1150,
+        200
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": "#alerts",
+        "text": "={{ $json.message }}",
+        "otherOptions": {}
+      },
+      "name": "Send Slack Alert",
+      "typeVersion": 2.3,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1150,
+        400
+      ],
+      "parameters": {
+        "text": "={{ `${$json.message}\n\nDetailed Analysis:\n- Numbers found: ${$json.numbersFound}\n- Sum: ${$json.sum}\n- Average: ${$json.average}\n- Difference from threshold: ${$json.difference}` }}",
+        "subject": "Weekly File Analysis - Below Threshold Alert",
+        "toEmail": "admin@company.com",
+        "fromEmail": "noreply@company.com"
+      },
+      "name": "Send Email Report",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "sticky_triggers_1754827704519",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nInitiates the workflow every Monday at 8:00 AM using a cron schedule. This ensures consistent weekly analysis of numerical data files.",
+        "height": 480,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754827704519",
+      "name": "Inputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        160
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nReads the specified file from the directory and extracts all numerical values using regex pattern matching. Calculates sum, average, and determines routing logic.",
+        "height": 480,
+        "width": 230,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754827704519",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        810,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcesses the extracted numerical data to determine the appropriate notification path. Routes to Slack if average > 100, or to Email if average < 100 with difference calculation.",
+        "height": 480,
+        "width": 230,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754827704519",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1110,
+        60
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends conditional notifications based on the analysis results. Slack alerts for values above threshold, email reports for values below threshold with detailed analysis.",
+        "height": 480,
+        "width": 230,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Monday 8AM Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read File and Extract Numbers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read File and Extract Numbers": {
+      "main": [
+        [
+          {
+            "node": "Route Based on Average",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Based on Average": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Email Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-10T12:08:24.815Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "we want a workflow that riggers with a cron job monday at 8am. then we retreive a file from a file directory and parse it extract all numerical values. then we take the average of that. if its above 100 we send a slack message if its below 100 we then calculate what the difference was and send that in an email. ",
+    "testName": "User Test",
+    "generatedAt": "2025-08-10T12:08:24.815Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 4,
+    "stickyNotesAdded": 4
+  }
+}

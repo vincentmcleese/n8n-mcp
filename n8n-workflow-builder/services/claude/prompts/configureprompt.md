@@ -34,7 +34,7 @@ Use essentials only - the configuration provided above is usually sufficient.
 
 #### Level 2: Feature Search (15% of cases)
 
-Search for specific properties when user mentions them:
+Search for specific properties when user mentions them or required to complete the node purpose:
 
 ```javascript
 search_node_properties(nodeType, "authentication"); // "with auth"

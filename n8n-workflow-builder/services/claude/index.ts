@@ -174,11 +174,13 @@ export function createDefaultClient(): AnthropicClient {
  */
 export function createPhaseServices(config?: {
   client?: AnthropicClient;
+  mcpClient?: any; // Add MCP client for tool support
   onTokenUsage?: (tokens: number) => void;
 }) {
   const client = config?.client || createDefaultClient();
   const baseConfig = {
     client,
+    mcpClient: config?.mcpClient, // Pass MCP client for tool execution
     onTokenUsage: config?.onTokenUsage,
   };
   
@@ -198,12 +200,14 @@ export function createPhaseService<T extends 'discovery' | 'configuration' | 'bu
   phase: T,
   config?: {
     client?: AnthropicClient;
+    mcpClient?: any; // Add MCP client for tool support
     onTokenUsage?: (tokens: number) => void;
   }
 ) {
   const client = config?.client || createDefaultClient();
   const baseConfig = {
     client,
+    mcpClient: config?.mcpClient, // Pass MCP client for tool execution
     onTokenUsage: config?.onTokenUsage,
   };
   

@@ -173,16 +173,17 @@ export class WorkflowOrchestrator {
       apiKey: process.env.ANTHROPIC_API_KEY,
     });
 
-    // Create phase services with shared client
-    this.phaseServices = createPhaseServices({
-      client: this.anthropicClient,
-    });
-
-    // Initialize MCP client with config from environment
+    // Initialize MCP client first (needed for phase services)
     this.mcpClient = deps?.mcpClient || MCPClient.getInstance({
       serverUrl: process.env.MCP_SERVER_URL || "https://mcp.smithery.ai",
       apiKey: process.env.MCP_API_KEY || "",
       profile: process.env.MCP_PROFILE || "default",
+    });
+
+    // Create phase services with shared client AND mcpClient for tool support
+    this.phaseServices = createPhaseServices({
+      client: this.anthropicClient,
+      mcpClient: this.mcpClient, // Pass MCP client for tool execution
     });
 
     this.phaseManager = deps?.phaseManager || new PhaseManager();

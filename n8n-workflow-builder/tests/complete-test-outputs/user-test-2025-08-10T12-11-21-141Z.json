@@ -1,0 +1,212 @@
+{
+  "name": "Website Product Scraper to CSV",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "webhook",
+        "httpMethod": "POST",
+        "responseData": "allEntries",
+        "responseMode": "lastNode"
+      },
+      "name": "Webhook Trigger",
+      "typeVersion": 2,
+      "onError": "stopWorkflow",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "url": "={{ $json.website_url || 'https://example.com/products' }}",
+        "method": "GET",
+        "sendHeaders": true,
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $json.auth_token || 'Bearer your-token' }}"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (compatible; n8n-scraper/1.0)"
+            }
+          ]
+        }
+      },
+      "name": "Scrape Website",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Extract product data from HTML\nconst cheerio = require('cheerio');\nconst results = [];\n\nfor (const item of items) {\n  const html = item.json.data || item.json.body;\n  const $ = cheerio.load(html);\n  \n  // Extract products from HTML\n  $('.product, .product-item, [data-product]').each((index, element) => {\n    const $product = $(element);\n    \n    const productData = {\n      name: $product.find('.product-name, .title, h2, h3').first().text().trim() || 'N/A',\n      price: $product.find('.price, .cost, .amount').first().text().trim() || 'N/A',\n      description: $product.find('.description, .summary, p').first().text().trim() || 'N/A',\n      image: $product.find('img').first().attr('src') || 'N/A',\n      url: $product.find('a').first().attr('href') || 'N/A'\n    };\n    \n    // Only add if we found at least a name\n    if (productData.name !== 'N/A') {\n      results.push({ json: productData });\n    }\n  });\n  \n  // Handle pagination - look for next page link\n  const nextPageUrl = $('.next, .pagination-next, [rel=\"next\"]').attr('href');\n  if (nextPageUrl) {\n    results.push({ \n      json: { \n        _pagination: true,\n        nextUrl: nextPageUrl.startsWith('http') ? nextPageUrl : new URL(nextPageUrl, item.json.url || 'https://example.com').href\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { error: 'No products found' } }];"
+      },
+      "name": "Extract Product Data",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "convertToFile_1",
+      "type": "n8n-nodes-base.convertToFile",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "operation": "csv",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "{{ 'products_' + new Date().toISOString().split('T')[0] + '.csv' }}",
+          "includeHeaders": true
+        }
+      },
+      "name": "Convert to CSV",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "sticky_triggers_1754827880691",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook receives POST request with website URL and authentication details to initiate the scraping process. Supports manual triggering or external system integration.",
+        "height": 300,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754827880691",
+      "name": "Inputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        160
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nMakes authenticated HTTP request to the target website using provided headers. Handles retries and error cases for reliable data fetching from product listing pages.",
+        "height": 300,
+        "width": 230,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754827880691",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        810,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nParses HTML content using Cheerio to extract product information including names, prices, descriptions, and images. Also detects pagination links for comprehensive data collection.",
+        "height": 300,
+        "width": 230,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754827880691",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1110,
+        160
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nConverts the extracted product data into CSV format with proper headers and timestamped filename for easy data export and analysis.",
+        "height": 300,
+        "width": 230,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Scrape Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Website": {
+      "main": [
+        [
+          {
+            "node": "Extract Product Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Product Data": {
+      "main": [
+        [
+          {
+            "node": "Convert to CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-10T12:11:21.141Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "\"Create a webhook that scrapes all product data from our HTML website and saves it to CSV. The webhook should extract product names, prices, descriptions, and images from the product listing page, handle pagination, and use authentication headers.",
+    "testName": "User Test",
+    "generatedAt": "2025-08-10T12:11:21.141Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 4
+  }
+}

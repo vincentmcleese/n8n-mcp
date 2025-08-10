@@ -178,7 +178,7 @@ export class AnthropicClient {
           messages,
           system: params.systemPrompt,
           tools: params.tools as any,
-          tool_choice: 'auto' as any
+          tool_choice: { type: 'auto' } // Correct format for tool_choice
         });
         
         // Recursively handle (in case Claude needs more tools)
@@ -221,7 +221,7 @@ export class AnthropicClient {
       messages,
       system: params.systemPrompt,
       tools: params.tools as any,
-      tool_choice: 'auto' as any
+      tool_choice: { type: 'auto' } // Correct format for tool_choice
     });
   }
   
