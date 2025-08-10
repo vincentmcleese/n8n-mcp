@@ -326,11 +326,15 @@ class ConfigurationIntegrationTest {
               }
               // fetchTaskNodes takes an array and returns batch results
               const result = await this.taskService.fetchTaskNodes([taskName]);
-              const taskTemplate = result.successful.find(t => t.purpose?.includes(taskName));
+              const taskTemplate = result.successful.find(t => t.taskName === taskName);
               if (taskTemplate) {
                 // Replace the fake config with the real template
                 taskNode.config = taskTemplate.config;
                 taskNode.category = taskTemplate.category || taskNode.category;
+                // Also update the node type if needed
+                if (taskTemplate.nodeType && taskTemplate.nodeType !== taskNode.type) {
+                  taskNode.type = taskTemplate.nodeType;
+                }
                 if (isVerbose) {
                   console.log(chalk.gray(`   ✓ Got template for ${taskName}`));
                 }
