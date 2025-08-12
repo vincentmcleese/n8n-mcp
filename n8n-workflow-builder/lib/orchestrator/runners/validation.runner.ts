@@ -8,13 +8,17 @@ import {
 } from "@/lib/orchestrator/contracts/validation.types";
 import { WorkflowOperation } from "@/types/workflow";
 import { OperationLogger } from "@/lib/orchestrator/utils/OperationLogger";
+import { wrapPhase } from "@/lib/orchestrator/utils/wrapPhase";
 
 /**
  * Runner for the validation phase
  * Handles workflow validation and auto-fixing
  */
 export class ValidationRunner implements PhaseRunner<ValidationInput, ValidationOutput> {
-  constructor(private deps: ValidationRunnerDeps) {}
+  constructor(private deps: ValidationRunnerDeps) {
+    // Wrap the run method with wrapPhase for automatic operation persistence
+    this.run = wrapPhase('validation', this.run.bind(this));
+  }
 
   /**
    * Run the validation phase
@@ -142,9 +146,6 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
             if (typeof error === 'string') {
               errorMsg = error;
             } else if (error && typeof error === 'object') {
-              // Try different error message fields
-              errorMsg = error.message || error.error || error.msg || error.text || '';
-              
               // Extract node information from various possible locations
               const nodeId = error.node || error.nodeId || error.nodeName || error.id;
               if (nodeId) {
@@ -153,6 +154,24 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
                 nodeInfo = ` [Node: ${error.data.node || error.data.nodeId}]`;
               } else if (error.details?.node || error.details?.nodeId) {
                 nodeInfo = ` [Node: ${error.details.node || error.details.nodeId}]`;
+              }
+              
+              // Handle different message formats
+              if (typeof error.message === 'string') {
+                // Format A: Simple string message
+                errorMsg = error.message;
+              } else if (error.message && typeof error.message === 'object') {
+                // Format B: Nested object message
+                const msgObj = error.message;
+                const parts = [];
+                if (msgObj.type) parts.push(`[${msgObj.type}]`);
+                if (msgObj.property) parts.push(`Property: ${msgObj.property}`);
+                if (msgObj.message) parts.push(msgObj.message);
+                if (msgObj.fix) parts.push(`Fix: ${msgObj.fix}`);
+                errorMsg = parts.join(' - ');
+              } else {
+                // Fallback to other possible error fields
+                errorMsg = error.error || error.msg || error.text || '';
               }
               
               // If we still don't have a message, stringify the whole object
@@ -234,8 +253,46 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
           "Requesting entity fixes from Claude..."
         );
 
+        // Normalize all errors to strings before passing to Claude
+        const normalizedErrors = allErrors.map(error => {
+          if (typeof error === 'string') {
+            return error;
+          } else if (error && typeof error === 'object') {
+            // Extract node information
+            const nodeId = error.node || error.nodeId || error.nodeName || error.id;
+            
+            // Handle different message formats
+            let errorMsg = '';
+            if (typeof error.message === 'string') {
+              // Format A: Simple string message
+              errorMsg = error.message;
+            } else if (error.message && typeof error.message === 'object') {
+              // Format B: Nested object message
+              const msgObj = error.message;
+              const parts = [];
+              if (msgObj.type) parts.push(`[${msgObj.type}]`);
+              if (msgObj.property) parts.push(`Property: ${msgObj.property}`);
+              if (msgObj.message) parts.push(msgObj.message);
+              if (msgObj.fix) parts.push(`Fix: ${msgObj.fix}`);
+              errorMsg = parts.join(' - ');
+            } else {
+              // Fallback to other possible error fields
+              errorMsg = error.error || error.msg || error.text || '';
+            }
+            
+            if (errorMsg) {
+              return nodeId ? `${errorMsg} [Node: ${nodeId}]` : errorMsg;
+            } else {
+              // If no message field, stringify the entire object
+              return JSON.stringify(error);
+            }
+          } else {
+            return String(error);
+          }
+        });
+
         const fixResult = await this.deps.claudeService.generateEntityFixes({
-          errors: allErrors,
+          errors: normalizedErrors,
           entities,
           workflow: currentWorkflow
         });
@@ -394,13 +451,7 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
         operations.push({ type: 'completePhase', phase: 'validation' });
       }
       
-      // Persist operations before forcing save
-      if (operations.length > 0) {
-        await this.deps.sessionRepo.persistOperations(sessionId, operations);
-      }
-
-      // Force save at phase completion
-      await this.deps.sessionRepo.save(sessionId);
+      // Persistence is now handled automatically by wrapPhase wrapper
 
       // Use empty reasoning array - Claude doesn't provide reasoning for validation fixes
       // The validation report itself contains all the details about what was validated and fixed

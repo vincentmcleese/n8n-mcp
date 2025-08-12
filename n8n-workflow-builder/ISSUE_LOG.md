@@ -229,6 +229,239 @@ Any workflow using task templates should have proper `typeVersion` fields withou
 
 ---
 
+## Issue #4: Duplicate configureNode Operations in Configuration Phase
+
+**Date Identified**: 2025-08-12  
+**Status**: Resolved  
+**Priority**: Medium  
+**Component**: Configuration Phase Runner  
+
+### Problem Description
+Task nodes (pre-configured templates) were generating duplicate `configureNode` operations in the configuration phase. This occurred because:
+1. Claude's response for task nodes included a `configureNode` operation
+2. The configuration runner was pushing this operation to the operations array
+3. Later in the same iteration, another `configureNode` operation was being created for all nodes (both task and regular)
+
+### Root Cause
+In `lib/orchestrator/runners/configuration.runner.ts`:
+- Lines 511-516: Pushed Claude's `configureNode` operation for task nodes
+- Lines 217-223: Always created and pushed a standardized `configureNode` operation for every node
+
+This resulted in task nodes having two `configureNode` operations while regular nodes only had one.
+
+### Impact
+- Duplicate operations in session history
+- Potential state management confusion (second operation overwrites first)
+- Wasted storage in Supabase
+- Inconsistent operation structure between task and regular nodes
+- Potential race conditions if operations are processed asynchronously
+
+### Solution Implemented
+**Option A**: Removed the code that pushes Claude's `configureNode` operations for task nodes.
+
+The fix:
+1. Keep extracting the config from Claude's response (for use in configuration)
+2. Remove the `operations.push()` that adds Claude's operation (lines 511-516)
+3. Let the standardized `configureNode` operation creation (lines 217-223) handle all nodes uniformly
+
+### Code Changes
+```typescript
+// Before (lines 507-516):
+for (const operation of claudeResult.data.operations) {
+  if (operation.type === "configureNode" && operation.nodeId === node.id) {
+    nodeConfig = operation.config;
+    configFound = true;
+    operations.push({  // This was causing duplicates
+      ...operation,
+      nodeType: node.type,
+      purpose: node.purpose,
+      customizedFromTemplate: true
+    });
+    break;
+  }
+}
+
+// After:
+for (const operation of claudeResult.data.operations) {
+  if (operation.type === "configureNode" && operation.nodeId === node.id) {
+    nodeConfig = operation.config;
+    configFound = true;
+    // Don't push Claude's configureNode operation here to avoid duplicates
+    // We'll create a standardized configureNode operation later (around line 217)
+    break;
+  }
+}
+```
+
+### Benefits
+- Consistent operation structure for all nodes
+- Clean operation history without duplicates
+- Single source of truth for `configureNode` operations
+- Simplified debugging and state management
+
+### Files Affected
+- `lib/orchestrator/runners/configuration.runner.ts`
+
+### Test Verification
+Verified that:
+- Task nodes now generate only one `configureNode` operation
+- Regular nodes continue to work as before
+- Session state properly stores configured nodes
+- Building phase can access configured nodes from session
+
+---
+
+---
+
+## Issue #5: Triple Discovery Operations Due to Double-Wrapping
+
+**Date Identified**: 2025-08-12  
+**Status**: Resolved  
+**Priority**: Critical  
+**Component**: Discovery Runner  
+
+### Problem Description
+Discovery operations were being persisted THREE times, causing each node to appear as a triplicate in the discovered array. This resulted in:
+- 21 `discoverNode` operations in the database when there should be 7
+- 21 nodes in the discovered array (7 nodes × 3)
+- Each node being configured 3 times
+- 3× the expected MCP API calls for node essentials
+
+### Root Cause
+The discovery runner had THREE sources of operation persistence:
+
+1. **Manual logging** (line 345): `await operationLogger.logBatch(allOperations)`
+2. **Inner wrapPhase** (line 48): Method definition wrapped with wrapPhase
+3. **Outer wrapPhase** (line 42): Constructor wrapped the already-wrapped method again
+
+Discovery was the ONLY runner with double-wrapping. All other runners only wrap once.
+
+### Timeline Evidence
+From Supabase query showing the three batches:
+- **07:04:07.265-546Z**: Original 7 operations from discovery execution
+- **07:04:08.037-202Z**: Second batch from inner wrapPhase persistence
+- **07:04:08.373-483Z**: Third batch from outer wrapPhase persistence
+
+### Impact
+- Each node configured multiple times unnecessarily
+- 3x the expected number of MCP API calls for node essentials
+- Potential state inconsistency if nodes were configured differently each time
+- Performance degradation due to redundant processing
+- Excessive database storage for duplicate operations
+
+### Solution Implemented
+Fixed the triple persistence by:
+
+1. **Removed double-wrapping** in discovery runner constructor (line 42):
+   ```typescript
+   // REMOVED: this.run = wrapPhase('discovery', this.run.bind(this));
+   // The method is already wrapped at line 48
+   ```
+
+2. **Removed redundant operation logging** (line 345):
+   ```typescript
+   // REMOVED: await operationLogger.logBatch(allOperations);
+   // Operations are persisted automatically by wrapPhase
+   ```
+
+### Benefits
+- Operations persisted exactly once
+- Each node appears only once in discovered array
+- Correct number of nodes passed to configuration phase
+- 66% reduction in database operations
+- Significant performance improvement
+
+### Files Affected
+- `lib/orchestrator/runners/discovery.runner.ts` (lines 42, 343-345)
+
+### Test Verification
+After the fix:
+- Discovered array contains only unique nodes
+- Configuration phase processes each node exactly once
+- Node essentials are fetched only for unique node types
+
+## Issue #6: Validation Errors Not Properly Stringified for Claude
+
+**Date Identified**: 2025-08-12  
+**Status**: Resolved  
+**Priority**: High  
+**Component**: Validation Runner  
+
+### Problem Description
+When MCP validation tools return errors with nested object messages (Format B), the validation runner was passing these raw objects to Claude. This caused a runtime error "e.message.includes is not a function" because the `message` field itself was an object, not a string.
+
+### Root Cause
+The MCP validation tools return errors in two formats:
+- **Format A**: Simple string message: `{ node: "NodeName", message: "error string" }`
+- **Format B**: Nested object message: `{ node: "NodeName", message: { type: "...", property: "...", message: "...", fix: "..." } }`
+
+The validation runner was not handling Format B properly. When it tried to process `error.message` as a string (checking `.includes()`), it failed because `message` was an object.
+
+### Impact
+- Validation phase would crash with "e.message.includes is not a function"
+- Workflows with validation errors couldn't be fixed
+- Build process would fail even for fixable issues
+
+### Solution Implemented
+Added error normalization before passing to Claude:
+1. Check if error is already a string - use as-is
+2. If object, extract meaningful message from various possible fields
+3. Include node information if available
+4. Fall back to JSON.stringify for complex objects
+5. Pass normalized string array to Claude
+
+### Code Changes
+```typescript
+// Normalize all errors to strings before passing to Claude
+const normalizedErrors = allErrors.map(error => {
+  if (typeof error === 'string') {
+    return error;
+  } else if (error && typeof error === 'object') {
+    const nodeId = error.node || error.nodeId || error.nodeName || error.id;
+    
+    // Handle different message formats
+    let errorMsg = '';
+    if (typeof error.message === 'string') {
+      // Format A: Simple string message
+      errorMsg = error.message;
+    } else if (error.message && typeof error.message === 'object') {
+      // Format B: Nested object message
+      const msgObj = error.message;
+      const parts = [];
+      if (msgObj.type) parts.push(`[${msgObj.type}]`);
+      if (msgObj.property) parts.push(`Property: ${msgObj.property}`);
+      if (msgObj.message) parts.push(msgObj.message);
+      if (msgObj.fix) parts.push(`Fix: ${msgObj.fix}`);
+      errorMsg = parts.join(' - ');
+    } else {
+      errorMsg = error.error || error.msg || error.text || '';
+    }
+    
+    if (errorMsg) {
+      return nodeId ? `${errorMsg} [Node: ${nodeId}]` : errorMsg;
+    } else {
+      return JSON.stringify(error);
+    }
+  } else {
+    return String(error);
+  }
+});
+```
+
+### Benefits
+- All validation errors are properly formatted as strings
+- Claude receives consistent error format
+- Node information is preserved in error messages
+- Complex error objects are still captured via JSON.stringify
+
+### Files Affected
+- `lib/orchestrator/runners/validation.runner.ts` (lines 241-259)
+
+### Test Case
+Any workflow with MCP validation errors that return object-format errors (like Asana node with missing required fields).
+
+---
+
 ## Future Improvement Ideas
 
 ### Idea #1: Dynamic Node Search and Replacement During Configuration Failures
