@@ -17,6 +17,7 @@ import {
   PhaseName,
 } from "@/lib/orchestrator/helpers/phase-categorization";
 import { OperationLogger } from "@/lib/orchestrator/utils/OperationLogger";
+import { wrapPhase } from "@/lib/orchestrator/utils/wrapPhase";
 
 /**
  * Runner for the documentation phase
@@ -24,7 +25,10 @@ import { OperationLogger } from "@/lib/orchestrator/utils/OperationLogger";
  * Uses deterministic categorization instead of Claude AI
  */
 export class DocumentationRunner implements PhaseRunner<DocumentationInput, DocumentationOutput> {
-  constructor(private deps: DocumentationRunnerDeps) {}
+  constructor(private deps: DocumentationRunnerDeps) {
+    // Wrap the run method with wrapPhase for automatic operation persistence
+    this.run = wrapPhase('documentation', this.run.bind(this));
+  }
 
   /**
    * Run the documentation phase
@@ -82,6 +86,7 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
       let phaseGroups: PhaseGroups;
       let phaseDescriptions: Map<string, string> = new Map();
       let phaseOrder: PhaseName[] | undefined;
+      let nodeRowMap: Map<string, number> = new Map();
       
       // Load build phases from session state if available
       const session = await this.deps.sessionRepo.load(sessionId);
@@ -102,6 +107,7 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
         phaseGroups = result.groups;
         phaseDescriptions = result.descriptions;
         phaseOrder = result.phaseOrder;
+        nodeRowMap = result.nodeRowMap;
       } else {
         this.deps.loggers.orchestrator.warn(
           `⚠️ DOCUMENTATION: No build phases in session state! buildPhases = ${buildPhases}`
@@ -113,33 +119,50 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
           `📊 DOCUMENTATION: Falling back to node category detection`
         );
         phaseGroups = detectActivePhases(validatedWorkflow.nodes);
+        // Default all nodes to row 1 when no build phases
+        for (const node of validatedWorkflow.nodes) {
+          nodeRowMap.set(node.id, 1);
+        }
       }
       
       this.deps.loggers.orchestrator.info(
         `📊 DOCUMENTATION: Final phase groups:`, JSON.stringify(phaseGroups, null, 2)
       );
 
-      // Generate layout hints
-      const layoutHints = generateLayoutHints(phaseGroups, validatedWorkflow.nodes);
-      this.deps.loggers.orchestrator.debug("Layout hints:", layoutHints);
-
-      // Calculate unified height for all sticky notes
-      const unifiedHeight = calculateUnifiedHeight(phaseGroups, validatedWorkflow.nodes);
-      this.deps.loggers.orchestrator.debug(`Unified sticky height: ${unifiedHeight}px`);
-
-      // Generate phase-based sticky notes using visual layout system
-      const stickyNotes = this.generatePhaseStickyNotes(
+      // Reposition nodes with phase-based spacing for better visual grouping
+      const repositionedNodes = this.repositionNodesByPhase(
         phaseGroups,
         validatedWorkflow.nodes,
-        unifiedHeight,
-        phaseDescriptions,
-        phaseOrder
+        phaseOrder || ["triggers", "inputs", "transforms", "decision", "aggregation", "storage", "integration", "outputs", "finalization", "error"],
+        nodeRowMap
+      );
+      
+      this.deps.loggers.orchestrator.info(
+        `📊 DOCUMENTATION: Repositioned ${repositionedNodes.length} nodes with phase-based spacing`
       );
 
-      // Add sticky notes to workflow
+      // Generate layout hints using repositioned nodes
+      const layoutHints = generateLayoutHints(phaseGroups, repositionedNodes);
+      this.deps.loggers.orchestrator.debug("Layout hints:", layoutHints);
+
+      // Calculate unified height for all sticky notes using repositioned nodes
+      const unifiedHeight = calculateUnifiedHeight(phaseGroups, repositionedNodes);
+      this.deps.loggers.orchestrator.debug(`Unified sticky height: ${unifiedHeight}px`);
+
+      // Generate phase-based sticky notes using repositioned nodes
+      const stickyNotes = this.generatePhaseStickyNotes(
+        phaseGroups,
+        repositionedNodes,  // Use repositioned nodes instead of original
+        unifiedHeight,
+        phaseDescriptions,
+        phaseOrder,
+        nodeRowMap
+      );
+
+      // Add both repositioned nodes and sticky notes to workflow
       let documentedWorkflow = {
         ...validatedWorkflow,
-        nodes: [...validatedWorkflow.nodes, ...stickyNotes],
+        nodes: [...repositionedNodes, ...stickyNotes],
       };
 
       this.deps.loggers.orchestrator.debug(
@@ -163,13 +186,7 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
       // Add phase completion operation
       operations.push({ type: 'completePhase', phase: 'documentation' });
       
-      // Persist operations before forcing save
-      if (operations.length > 0) {
-        await this.deps.sessionRepo.persistOperations(sessionId, operations);
-      }
-
-      // Force save at phase completion
-      await this.deps.sessionRepo.save(sessionId);
+      // Persistence is now handled automatically by wrapPhase wrapper
 
       return {
         success: true,
@@ -200,13 +217,122 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
   }
 
   /**
+   * Reposition nodes with phase-based spacing for better visual grouping
+   */
+  private repositionNodesByPhase(
+    phaseGroups: PhaseGroups,
+    nodes: WorkflowNode[],
+    phaseOrder: PhaseName[],
+    nodeRowMap: Map<string, number>
+  ): WorkflowNode[] {
+    const updatedNodes = [...nodes];
+    const nodeMap = new Map(nodes.map(n => [n.id, n]));
+    
+    // Row spacing configuration
+    const ROW_SPACING = 200; // Vertical spacing between workflow rows
+    const BASE_Y = 300; // Base Y position for row 1
+    
+    // Track X position per row
+    const rowXPositions = new Map<number, number>();
+    
+    // Ensure space for promotional sticky (280px width + 50px gap + 40px padding + 50px margin + 50px buffer)
+    const requiredLeftSpace = 280 + 50 + 40 + 50 + 50; // 470px total to account for sticky positioning
+    const startX = Math.max(250, requiredLeftSpace); // Start at 470px to guarantee promo space
+    
+    // Initialize X position for each row
+    const maxRow = Math.max(...Array.from(nodeRowMap.values()), 1);
+    for (let row = 1; row <= maxRow; row++) {
+      rowXPositions.set(row, startX);
+    }
+    
+    console.log('\n🔧 MULTI-ROW PHASE SPACING DEBUG:');
+    console.log(`   Starting position: ${startX}px`);
+    console.log(`   Within-phase spacing: ${LAYOUT_CONFIG.spacing.withinPhase}px`);
+    console.log(`   Between-phase gap: ${LAYOUT_CONFIG.spacing.withinPhase}px (additional)`);
+    console.log(`   Row spacing: ${ROW_SPACING}px`);
+    console.log(`   Max row detected: ${maxRow}`);
+    
+    // Process each phase in order
+    for (const phase of phaseOrder) {
+      const nodeIds = phaseGroups[phase];
+      if (nodeIds.length === 0) {
+        console.log(`   📂 ${phase.toUpperCase()}: empty, skipping`);
+        continue;
+      }
+      
+      // Group nodes by row within this phase
+      const nodesByRow = new Map<number, string[]>();
+      for (const nodeId of nodeIds) {
+        const row = nodeRowMap.get(nodeId) || 1;
+        if (!nodesByRow.has(row)) {
+          nodesByRow.set(row, []);
+        }
+        nodesByRow.get(row)!.push(nodeId);
+      }
+      
+      console.log(`   📂 ${phase.toUpperCase()} phase with ${nodesByRow.size} row(s):`);
+      
+      // Track the maximum X position across all rows for this phase
+      let maxPhaseX = 0;
+      
+      // Position nodes in each row for this phase
+      for (const [row, rowNodeIds] of nodesByRow) {
+        const currentX = rowXPositions.get(row) || startX;
+        const phaseStartX = currentX;
+        let rowCurrentX = currentX;
+        
+        console.log(`     Row ${row} starting at X=${currentX}:`);
+        
+        // Position each node in this row
+        rowNodeIds.forEach((nodeId, index) => {
+          const originalNode = nodeMap.get(nodeId);
+          if (originalNode) {
+            const updatedNode = updatedNodes.find(n => n.id === nodeId);
+            if (updatedNode) {
+              const oldPosition = [...updatedNode.position];
+              // Calculate Y position based on row
+              const newY = BASE_Y + (row - 1) * ROW_SPACING;
+              // Update position with row-aware Y and phase-based X
+              updatedNode.position = [rowCurrentX, newY];
+              console.log(`       ${updatedNode.name}: [${oldPosition[0]},${oldPosition[1]}] → [${rowCurrentX},${newY}] (row ${row})`);
+              rowCurrentX += LAYOUT_CONFIG.spacing.withinPhase; // 200px within phase
+            }
+          }
+        });
+        
+        // Update the row's X position
+        rowXPositions.set(row, rowCurrentX);
+        maxPhaseX = Math.max(maxPhaseX, rowCurrentX);
+        
+        const phaseWidth = rowCurrentX - phaseStartX - LAYOUT_CONFIG.spacing.withinPhase;
+        console.log(`     Row ${row} phase spans: ${phaseStartX}px to ${rowCurrentX - LAYOUT_CONFIG.spacing.withinPhase}px (width: ${phaseWidth}px)`);
+      }
+      
+      // Sync all rows to the same X position after this phase (align phases vertically)
+      // Add extra gap between phases
+      const nextPhaseX = maxPhaseX + LAYOUT_CONFIG.spacing.withinPhase;
+      for (let row = 1; row <= maxRow; row++) {
+        rowXPositions.set(row, nextPhaseX);
+      }
+      
+      console.log(`     Phase complete, all rows advance to X=${nextPhaseX}px`);
+    }
+    
+    const finalX = Math.max(...Array.from(rowXPositions.values()));
+    console.log(`   🏁 Final X position: ${finalX}px`);
+    
+    return updatedNodes;
+  }
+
+  /**
    * Map build phases to phase groups for documentation
    */
   private mapBuildPhasesToPhaseGroups(buildPhases: Array<{
     type: string;
     description: string;
     nodeIds: string[];
-  }>, workflow: any): { groups: PhaseGroups; descriptions: Map<string, string>; phaseOrder: PhaseName[] } {
+    row?: number;
+  }>, workflow: any): { groups: PhaseGroups; descriptions: Map<string, string>; phaseOrder: PhaseName[]; nodeRowMap: Map<string, number> } {
     const phaseGroups: PhaseGroups = {
       triggers: [],
       inputs: [],
@@ -217,6 +343,7 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
       integration: [],
       outputs: [],
       finalization: [],
+      error: [],
     };
     
     // Store descriptions from build phases
@@ -224,6 +351,9 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
     
     // Track the order of phases as they appear in build phases
     const phaseOrder: PhaseName[] = [];
+    
+    // Track which row each node belongs to
+    const nodeRowMap = new Map<string, number>();
     
     // Map build phase types to documentation phase categories
     const phaseTypeMapping: Record<string, keyof PhaseGroups> = {
@@ -235,11 +365,20 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
       'notification': 'outputs',
       'storage': 'storage',
       'integration': 'integration',
-      'error_handling': 'transforms',
+      'error_handling': 'error',
     };
     
     for (const phase of buildPhases) {
       const targetPhase = phaseTypeMapping[phase.type];
+      
+      // Track the row for all nodes in this phase
+      const row = phase.row || 1; // Default to row 1 if not specified
+      if (phase.nodeIds) {
+        for (const nodeId of phase.nodeIds) {
+          nodeRowMap.set(nodeId, row);
+        }
+      }
+      
       if (targetPhase && phase.nodeIds) {
         // Add all node IDs from this build phase to the appropriate documentation phase
         phaseGroups[targetPhase].push(...phase.nodeIds);
@@ -337,7 +476,7 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
       );
     }
     
-    return { groups: phaseGroups, descriptions, phaseOrder };
+    return { groups: phaseGroups, descriptions, phaseOrder, nodeRowMap };
   }
 
   /**
@@ -348,96 +487,178 @@ export class DocumentationRunner implements PhaseRunner<DocumentationInput, Docu
     nodes: WorkflowNode[],
     unifiedHeight: number,
     phaseDescriptions?: Map<string, string>,
-    dynamicPhaseOrder?: PhaseName[]
+    dynamicPhaseOrder?: PhaseName[],
+    nodeRowMap?: Map<string, number>
   ): WorkflowNode[] {
     const stickyNotes: WorkflowNode[] = [];
     const nodeMap = new Map(nodes.map((n) => [n.id, n]));
     
-    // Calculate global minimum Y across ALL nodes for unified top alignment
-    const allYPositions = nodes.map((n) => n.position[1]);
-    const globalMinY = allYPositions.length > 0 ? Math.min(...allYPositions) : 300;
+    // Row spacing configuration
+    const ROW_SPACING = 200; // Should match the row spacing in repositionNodesByPhase
+    const BASE_Y = 300; // Base Y position for row 1
     
-    // Calculate unified top position for ALL sticky notes
-    // Provide adequate space above the topmost node for descriptions
-    const stickyTopY = globalMinY - LAYOUT_CONFIG.spacing.stickyPadding - LAYOUT_CONFIG.spacing.stickyTopSpacing;
-    
-    // Calculate cumulative X position for each phase
-    let currentX = 480; // Starting X position (leave space for promo sticky on the left)
+    // Determine the number of rows
+    const maxRow = nodeRowMap ? Math.max(...Array.from(nodeRowMap.values()), 1) : 1;
     
     // Use dynamic phase order if provided, otherwise use default
-    const phaseOrder = dynamicPhaseOrder || ["triggers", "inputs", "transforms", "decision", "aggregation", "storage", "integration", "outputs", "finalization"];
+    const phaseOrder = dynamicPhaseOrder || ["triggers", "inputs", "transforms", "decision", "aggregation", "storage", "integration", "outputs", "finalization", "error"];
     
-    for (const phase of phaseOrder) {
-      const nodeIds = phaseGroups[phase];
-      if (nodeIds.length === 0) continue;
+    // Process sticky notes per row
+    for (let row = 1; row <= maxRow; row++) {
+      // Calculate Y position for sticky notes in this row
+      const rowY = BASE_Y + (row - 1) * ROW_SPACING;
+      const stickyTopY = rowY - LAYOUT_CONFIG.spacing.stickyPadding - LAYOUT_CONFIG.spacing.stickyTopSpacing;
       
-      const phaseConfig = PHASE_DEFINITIONS[phase];
+      console.log(`\n🔧 STICKY NOTES for ROW ${row}:`);
+      console.log(`   Row Y position: ${rowY}px`);
+      console.log(`   Sticky top Y: ${stickyTopY}px`);
       
-      // Get nodes in this phase
-      const phaseNodes = nodeIds
-        .map((id) => nodeMap.get(id))
-        .filter((n): n is WorkflowNode => n !== undefined);
+      for (const phase of phaseOrder) {
+        const nodeIds = phaseGroups[phase];
+        if (nodeIds.length === 0) continue;
+        
+        // Filter nodes for this row only
+        const rowNodeIds = nodeIds.filter(id => {
+          const nodeRow = nodeRowMap?.get(id) || 1;
+          return nodeRow === row;
+        });
+        
+        if (rowNodeIds.length === 0) continue;
+        
+        const phaseConfig = PHASE_DEFINITIONS[phase];
+        
+        // Get nodes in this phase and row
+        const phaseNodes = rowNodeIds
+          .map((id) => nodeMap.get(id))
+          .filter((n): n is WorkflowNode => n !== undefined);
+        
+        if (phaseNodes.length === 0) continue;
+        
+        // Calculate phase boundaries based on actual node positions
+        const xPositions = phaseNodes.map((n) => n.position[0]);
+        const nodeMinX = Math.min(...xPositions);
+        const nodeMaxX = Math.max(...xPositions);
+        
+        console.log(`   📂 ${phase.toUpperCase()} phase (row ${row}):`); 
+        console.log(`     Phase nodes: ${phaseNodes.map(n => `${n.name}@[${n.position[0]},${n.position[1]}]`).join(', ')}`);
+        console.log(`     Node width: ${LAYOUT_CONFIG.dimensions.nodeWidth}px`);
+        
+        // Calculate the actual width of the node cluster
+        // The rightmost node's right edge is at nodeMaxX + nodeWidth
+        const clusterWidth = (nodeMaxX - nodeMinX) + LAYOUT_CONFIG.dimensions.nodeWidth;
+        const nodeRightEdge = nodeMaxX + LAYOUT_CONFIG.dimensions.nodeWidth;
+        
+        // Calculate the center point of the node cluster
+        const clusterCenterX = (nodeMinX + nodeMaxX + LAYOUT_CONFIG.dimensions.nodeWidth) / 2;
+        
+        // Add equal padding on both sides for visual centering
+        const totalPadding = LAYOUT_CONFIG.spacing.stickyPadding * 2;
+        
+        // Calculate sticky width to cover all nodes with equal padding
+        // Minimum width of 310px for readability
+        const stickyWidth = Math.max(
+          310,
+          clusterWidth + totalPadding
+        );
+        
+        // Position sticky note so it's centered on the node cluster
+        // The sticky's center should align with the cluster's center
+        const stickyX = clusterCenterX - (stickyWidth / 2);
+        
+        console.log(`     Sticky position: [${stickyX}, ${stickyTopY}], width: ${stickyWidth}px`);
+        
+        // Use description from build phase if available, otherwise use default
+        const description = phaseDescriptions?.get(phase) || phaseConfig.description;
+        
+        // Add row indicator to description for multi-row workflows
+        const rowSuffix = maxRow > 1 ? ` (Row ${row})` : '';
+        
+        // Create sticky note for this phase aligned with actual node positions
+        const stickyNote: WorkflowNode = {
+          id: `sticky_${phase}_row${row}_${Date.now()}`,
+          name: `${phaseConfig.name} Documentation${rowSuffix}`,
+          type: "n8n-nodes-base.stickyNote",
+          typeVersion: 1,
+          position: [stickyX, stickyTopY], // Use actual node-based X position
+          parameters: {
+            content: `## ${phaseConfig.icon} ${phaseConfig.name}${rowSuffix}\n${description}`,
+            height: unifiedHeight,
+            width: stickyWidth,
+            color: phaseConfig.color,
+          },
+        };
+        
+        stickyNotes.push(stickyNote);
+      }
+    }
+    
+    // Add promotional sticky note as a title element - positioned well to the left
+    // Only add it for row 1
+    const row1StickyNotes = stickyNotes.filter(s => s.position[1] < BASE_Y);
+    if (row1StickyNotes.length > 0) {
+      const allRow1XPositions = row1StickyNotes.map((s) => s.position[0]);
+      const leftmostStickyX = Math.min(...allRow1XPositions);
+      const row1StickyTopY = row1StickyNotes[0].position[1]; // Use the same Y as other row 1 stickies
       
-      if (phaseNodes.length === 0) continue;
+      console.log('\n🔧 PROMOTIONAL STICKY DEBUG:');
+      console.log(`   Row 1 sticky X positions: [${allRow1XPositions.join(', ')}]`);
+      console.log(`   Leftmost sticky X: ${leftmostStickyX}`);
       
-      // Calculate phase width based on nodes within this phase
-      const xPositions = phaseNodes.map((n) => n.position[0]);
-      const nodeMinX = Math.min(...xPositions);
-      const nodeMaxX = Math.max(...xPositions);
+      // Calculate promo position with safety constraints to prevent overlap
+      const promoWidth = 280; // Fixed width for promotional sticky
+      const minPromoX = 50; // Minimum X for viewport visibility
+      const minGapFromFirstPhase = 50; // Minimum gap to prevent overlap with first phase
       
-      // Calculate sticky width to cover all nodes in this phase with padding
-      // Minimum width of 310px for readability
-      const stickyWidth = Math.max(
-        310,
-        (nodeMaxX - nodeMinX) + LAYOUT_CONFIG.dimensions.nodeWidth + (LAYOUT_CONFIG.spacing.stickyPadding * 2)
-      );
+      console.log(`   Promo width: ${promoWidth}px`);
+      console.log(`   Min promo X: ${minPromoX}px`);
+      console.log(`   Min gap from first phase: ${minGapFromFirstPhase}px`);
       
-      // Use description from build phase if available, otherwise use default
-      const description = phaseDescriptions?.get(phase) || phaseConfig.description;
+      // Only add promo if there's enough space to avoid overlap
+      // If leftmost sticky is too close to the left edge, skip the promo sticky
+      const requiredSpace = promoWidth + minGapFromFirstPhase;
+      const availableSpace = leftmostStickyX - minPromoX;
       
-      // Create sticky note for this phase using cumulative X position
-      const stickyNote: WorkflowNode = {
-        id: `sticky_${phase}_${Date.now()}`,
-        name: `${phaseConfig.name} Notes`,
+      console.log(`   Required space: ${requiredSpace}px (${promoWidth} + ${minGapFromFirstPhase})`);
+      console.log(`   Available space: ${availableSpace}px (${leftmostStickyX} - ${minPromoX})`);
+      console.log(`   Space check: ${availableSpace >= requiredSpace ? '✅ PASS' : '❌ FAIL'}`);
+      
+      // Skip promotional sticky if it would overlap
+      if (availableSpace < requiredSpace) {
+        console.log(`   🚫 SKIPPING promotional sticky - insufficient space!`);
+        this.deps.loggers.orchestrator.info(
+          `Skipping promotional sticky note - insufficient space (available: ${availableSpace}px, required: ${requiredSpace}px)`
+        );
+        return stickyNotes; // Return without adding promo
+      }
+      
+      // Calculate ideal position with larger gap for title-like separation
+      const idealPromoGap = 100; // Standard gap for separation
+      const promoX = Math.max(minPromoX, leftmostStickyX - idealPromoGap - promoWidth);
+      
+      console.log(`   Ideal gap: ${idealPromoGap}px`);
+      console.log(`   Calculated promo X: ${promoX}px`);
+      console.log(`   Final promo position: [${promoX}, ${row1StickyTopY}]`);
+      console.log(`   ✅ ADDING promotional sticky`);
+      
+      const promoStickyNote: WorkflowNode = {
+        id: `sticky_promo_${Date.now()}`,
+        name: "Workflow Overview",
         type: "n8n-nodes-base.stickyNote",
         typeVersion: 1,
-        position: [currentX, stickyTopY], // Use cumulative X position, not node position
+        position: [promoX, row1StickyTopY],
         parameters: {
-          content: `## ${phaseConfig.icon} ${phaseConfig.name}\n${description}`,
+          content: `## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.`,
           height: unifiedHeight,
-          width: stickyWidth,
-          color: phaseConfig.color,
+          width: promoWidth,
+          color: 3, // Green color (changed to 3 for consistency)
         },
       };
       
-      stickyNotes.push(stickyNote);
-      
-      // Update current X for next phase
-      currentX = currentX + stickyWidth + LAYOUT_CONFIG.spacing.phaseGap;
+      // Add promo sticky as the LAST element (final operation)
+      stickyNotes.push(promoStickyNote);
+    } else {
+      console.log('\n🔧 PROMOTIONAL STICKY: No row 1 sticky notes found, skipping promo');
     }
-    
-    // Add promotional sticky note to the LEFT of all workflow content as the last step
-    // Calculate leftmost workflow position
-    const allNodeXPositions = nodes.map((n) => n.position[0]);
-    const workflowMinX = allNodeXPositions.length > 0 ? Math.min(...allNodeXPositions) : 250;
-    
-    // Position promo sticky well to the left with extra spacing (at least 150px gap)
-    const promoX = workflowMinX - 150 - 280; // 150px gap + sticky width
-    
-    const promoStickyNote: WorkflowNode = {
-      id: `sticky_promo_${Date.now()}`,
-      name: "Ghost Team Promo",
-      type: "n8n-nodes-base.stickyNote",
-      typeVersion: 1,
-      position: [Math.max(100, promoX), stickyTopY], // Same Y as other stickies, but well to the left
-      parameters: {
-        content: `## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.`,
-        height: unifiedHeight,
-        width: 280, // Fixed width for promotional sticky
-        color: 4, // Green color
-      },
-    };
-    stickyNotes.push(promoStickyNote);
     
     return stickyNotes;
   }

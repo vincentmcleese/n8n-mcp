@@ -242,9 +242,10 @@ export interface WorkflowBuildResponse extends BaseClaudeResponse {
     saveManualExecutions: boolean;
   };
   phases?: Array<{
-    type: 'trigger' | 'data_collection' | 'data_processing' | 'notification' | 'storage' | 'integration' | 'error_handling';
+    type: 'trigger' | 'data_collection' | 'data_processing' | 'decision' | 'aggregation' | 'notification' | 'storage' | 'integration' | 'error_handling';
     description: string;
     nodeIds: string[];
+    row?: number;
   }>;
 }
 

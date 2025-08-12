@@ -26,10 +26,13 @@ import type {
  */
 export interface WorkflowNode {
   id: string;
+  name: string; // Required display name for the node
   type: string;
+  typeVersion?: number; // Version of the node type
   position: [number, number];
   parameters: Record<string, any>; // Flexible for MCP integration
   category?: string; // Node category: trigger, input, transform, output
+  onError?: string; // Error handling strategy
 }
 
 /**
@@ -194,6 +197,7 @@ export type SessionOperation =
         type: string;
         description: string;
         nodeIds: string[];
+        row?: number;
       }>;
     };
 

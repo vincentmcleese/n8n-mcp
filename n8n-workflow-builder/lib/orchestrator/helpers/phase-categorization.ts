@@ -10,7 +10,7 @@ export const PHASE_DEFINITIONS = {
     icon: "📥",
     name: "Triggers",
     description: "Workflow entry points",
-    color: 6, // Yellow
+    color: 5, // Light blue (changed from 6)
   },
   inputs: {
     icon: "📊",
@@ -22,43 +22,49 @@ export const PHASE_DEFINITIONS = {
     icon: "⚙️",
     name: "Transform",
     description: "Processing & routing",
-    color: 4, // Green
+    color: 5, // Light blue (changed from 4)
   },
   decision: {
     icon: "🔀",
     name: "Decision",
     description: "Routing & conditional logic",
-    color: 3, // Purple/Violet
+    color: 5, // Light blue (changed from 3)
   },
   aggregation: {
     icon: "🔄",
     name: "Aggregation",
     description: "Combining data streams",
-    color: 2, // Cyan
+    color: 5, // Light blue (changed from 2)
   },
   storage: {
     icon: "💾",
     name: "Storage",
     description: "Save & persist data",
-    color: 8, // Pink
+    color: 5, // Light blue (changed from 8)
   },
   integration: {
     icon: "🔗",
     name: "Integration",
     description: "External system updates",
-    color: 6, // Yellow
+    color: 5, // Light blue (changed from 6)
   },
   outputs: {
     icon: "🚀",
     name: "Outputs",
     description: "Actions & destinations",
-    color: 7, // Orange
+    color: 6, // Light purple (changed from 7)
   },
   finalization: {
     icon: "✅",
     name: "Finalization",
     description: "Post-output processing",
-    color: 1, // Gray
+    color: 5, // Light blue (changed from 1)
+  },
+  error: {
+    icon: "⚠️",
+    name: "Error Handling",
+    description: "Error recovery and retry logic",
+    color: 4, // Red for errors
   },
 } as const;
 
@@ -69,11 +75,13 @@ export type PhaseName = keyof typeof PHASE_DEFINITIONS;
  */
 export const LAYOUT_CONFIG = {
   spacing: {
-    horizontal: 220, // Between nodes horizontally
+    horizontal: 220, // Between nodes horizontally (legacy, not used in new layout)
     vertical: 180, // Between rows vertically
-    stickyPadding: 80, // Space around sticky edges - increased for better padding
-    stickyTopSpacing: 250, // Space above workflow nodes for sticky note descriptions
-    phaseGap: 100, // Gap between phase sections
+    withinPhase: 200, // Tighter spacing between nodes in same phase
+    betweenPhases: 400, // Clear separation between different phases
+    stickyPadding: 40, // Space around sticky edges
+    stickyTopSpacing: 200, // Space above workflow nodes for sticky note descriptions (reduced from 250)
+    phaseGap: 100, // Gap between phase sections (legacy, not used in new layout)
     gridSnap: 20, // Grid alignment
   },
   dimensions: {
@@ -173,6 +181,7 @@ export interface PhaseGroups {
   integration: string[];
   outputs: string[];
   finalization: string[];
+  error: string[];
 }
 
 /**
@@ -191,6 +200,7 @@ export function detectActivePhases(
     integration: [],
     outputs: [],
     finalization: [],
+    error: [],
   };
 
   // Categorize each node
