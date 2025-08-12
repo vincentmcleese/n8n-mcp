@@ -706,7 +706,22 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
           `\n   📋 Validation Warnings Found (${allWarnings.length} total):`
         );
         allWarnings.forEach((warning: any, index: number) => {
-          const message = warning?.message || warning?.text || JSON.stringify(warning);
+          // Handle different message formats (same as error handling)
+          let message = '';
+          if (typeof warning?.message === 'string') {
+            message = warning.message;
+          } else if (warning?.message && typeof warning.message === 'object') {
+            // Format B: Nested object message
+            const msgObj = warning.message;
+            const parts = [];
+            if (msgObj.type) parts.push(`[${msgObj.type}]`);
+            if (msgObj.property) parts.push(`Property: ${msgObj.property}`);
+            if (msgObj.message) parts.push(msgObj.message);
+            if (msgObj.fix) parts.push(`Fix: ${msgObj.fix}`);
+            message = parts.join(' - ');
+          } else {
+            message = warning?.text || JSON.stringify(warning);
+          }
           const node = warning?.node || 'Unknown';
           this.deps.loggers.orchestrator.info(
             `      ${index + 1}. [${node}] ${message}`
@@ -717,8 +732,15 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
         // These warnings indicate the node will fail deployment to n8n
         const typeVersionWarnings = allWarnings.filter((warning: any) => {
           // Check if this is a typeVersion warning based on the message
-          const rawMessage = warning?.message || warning?.text || '';
-          const message = Array.isArray(rawMessage) ? rawMessage[0] : String(rawMessage);
+          let message = '';
+          if (typeof warning?.message === 'string') {
+            message = warning.message;
+          } else if (warning?.message && typeof warning.message === 'object') {
+            // For nested messages, check the actual message text
+            message = warning.message.message || '';
+          } else {
+            message = warning?.text || '';
+          }
           return message.startsWith('Outdated typeVersion');
         });
         
@@ -729,14 +751,24 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
           
           // Log each typeVersion issue being promoted
           typeVersionWarnings.forEach((warning: any) => {
-            const match = warning.message.match(/Outdated typeVersion: ([\d.]+)\. Latest is ([\d.]+)/);
+            // Extract message properly handling nested format
+            let message = '';
+            if (typeof warning?.message === 'string') {
+              message = warning.message;
+            } else if (warning?.message && typeof warning.message === 'object') {
+              message = warning.message.message || JSON.stringify(warning.message);
+            } else {
+              message = warning?.text || '';
+            }
+            
+            const match = message.match(/Outdated typeVersion: ([\d.]+)\. Latest is ([\d.]+)/);
             if (match) {
               this.deps.loggers.orchestrator.info(
                 `      ✅ ${warning.node}: Updating typeVersion ${match[1]} → ${match[2]}`
               );
             } else {
               this.deps.loggers.orchestrator.info(
-                `      ✅ ${warning.node}: ${warning.message}`
+                `      ✅ ${warning.node}: ${message}`
               );
             }
           });
@@ -768,8 +800,15 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
       results.workflow = {
         errors: allErrors, // Now includes typeVersion warnings promoted to errors
         warnings: allWarnings.filter(w => {
-          const rawMessage = w?.message || w?.text || '';
-          const message = Array.isArray(rawMessage) ? rawMessage[0] : String(rawMessage);
+          // Extract message properly to check if it's a typeVersion warning
+          let message = '';
+          if (typeof w?.message === 'string') {
+            message = w.message;
+          } else if (w?.message && typeof w.message === 'object') {
+            message = w.message.message || '';
+          } else {
+            message = w?.text || '';
+          }
           return !message.startsWith('Outdated typeVersion');
         }), // Remove promoted warnings
         valid: validationResult.valid && allErrors.length === 0, // Not valid if we have errors
@@ -789,11 +828,31 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
       };
     } catch (error) {
       this.deps.loggers.orchestrator.error(
-        "Workflow validation failed:",
+        "Error during validation processing:",
         error
       );
-      // Return empty results on error
-      results.workflow = { errors: [], warnings: [], valid: false };
+      
+      // Don't add JavaScript runtime errors to the validation errors
+      // Instead, return a proper validation error structure
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      // Only add as validation error if it's actually a validation issue
+      // Runtime errors should be logged but not added to validation errors
+      if (errorMessage.includes('validation') || errorMessage.includes('invalid')) {
+        results.workflow = { 
+          errors: [{
+            node: 'workflow',
+            message: `Validation processing error: ${errorMessage}`
+          }], 
+          warnings: [], 
+          valid: false 
+        };
+      } else {
+        // For runtime errors, just return empty validation results
+        // The error has already been logged above
+        results.workflow = { errors: [], warnings: [], valid: false };
+      }
+      
       results.connections = { errors: [], warnings: [] };
       results.expressions = { errors: [], warnings: [] };
     }
