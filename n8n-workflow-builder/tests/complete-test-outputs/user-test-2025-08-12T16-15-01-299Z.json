@@ -1,0 +1,218 @@
+{
+  "name": "LinkedIn Job Scraper with Hiring Manager Extraction",
+  "nodes": [
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        470,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      },
+      "name": "Monday Trigger",
+      "typeVersion": 1.2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        870,
+        300
+      ],
+      "parameters": {
+        "url": "https://api.apify.com/v2/acts/linkedin-jobs-scraper/runs",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer {{ $fromAI('apifyToken', 'Your Apify API token') }}",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "searchKeywords": "{{ $fromAI('jobKeywords', 'software engineer, product manager, data scientist') }}",
+          "location": "{{ $fromAI('location', 'United States') }}",
+          "maxResults": 100
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "name": "Apify LinkedIn Scraper",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1270,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Extract hiring managers from LinkedIn job scraping data and prepare for Google Sheets insertion\nconst jobs = $input.all();\nconst hiringManagers = [];\n\nfor (const job of jobs) {\n  const jobData = job.json;\n  \n  // Extract hiring manager information from job posting\n  if (jobData.hiringManager || jobData.recruiter || jobData.contactPerson) {\n    const manager = {\n      jobTitle: jobData.title || 'N/A',\n      company: jobData.company || 'N/A',\n      hiringManager: jobData.hiringManager || jobData.recruiter || jobData.contactPerson || 'N/A',\n      jobUrl: jobData.url || 'N/A',\n      scrapedDate: new Date().toISOString().split('T')[0]\n    };\n    \n    hiringManagers.push(manager);\n  }\n}\n\n// Return formatted data for Google Sheets\nreturn hiringManagers.map(manager => ({\n  json: {\n    'Job Title': manager.jobTitle,\n    'Company': manager.company,\n    'Hiring Manager': manager.hiringManager,\n    'Job URL': manager.jobUrl,\n    'Scraped Date': manager.scrapedDate\n  }\n}));"
+      },
+      "name": "Extract Hiring Managers",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "googleSheets_1",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1670,
+        300
+      ],
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": "{{ $fromAI('sheetId', 'Your Google Sheet ID') }}",
+        "sheetName": "{{ $fromAI('sheetName', 'Hiring Managers') }}",
+        "range": "A:E",
+        "keyRowIndex": 1,
+        "dataMode": "autoMapInputData",
+        "options": {
+          "cellFormat": "USER_ENTERED",
+          "useAppend": true
+        }
+      },
+      "name": "Add to Google Sheet",
+      "typeVersion": 4.6,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "sticky_triggers_1755015300819",
+      "name": "Triggers Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        390,
+        60
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nInitiates the workflow every Monday at 9 AM to begin the LinkedIn job scraping process for hiring manager extraction.",
+        "height": 380,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_inputs_1755015300819",
+      "name": "Inputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        790,
+        60
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nCalls Apify API to scrape LinkedIn job postings, retrieving job details including potential hiring manager information from job listings.",
+        "height": 380,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1755015300819",
+      "name": "Transform Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1190,
+        60
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcesses the scraped job data to extract and format hiring manager information, preparing structured data for Google Sheets insertion.",
+        "height": 380,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_storage_1755015300819",
+      "name": "Storage Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1590,
+        60
+      ],
+      "parameters": {
+        "content": "## 💾 Storage\nAppends the extracted hiring manager data to a Google Sheet, creating a centralized database of job opportunities and their associated contacts.",
+        "height": 380,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_promo_1755015300819",
+      "name": "Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        50,
+        60
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 380,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Monday Trigger": {
+      "main": [
+        [
+          {
+            "node": "Apify LinkedIn Scraper",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify LinkedIn Scraper": {
+      "main": [
+        [
+          {
+            "node": "Extract Hiring Managers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Hiring Managers": {
+      "main": [
+        [
+          {
+            "node": "Add to Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T16:15:01.302Z",
+  "versionId": null
+}

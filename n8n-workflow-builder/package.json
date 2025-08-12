@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test:discovery": "NODE_ENV=test tsx tests/integration/test-discovery-refactor.ts",
     "test:configure": "NODE_ENV=test tsx tests/integration/test-configuration-refactor.ts",
+    "test:noop": "NODE_ENV=test tsx tests/integration/test-configuration-noop-replacement.ts",
     "test:build": "NODE_ENV=test tsx tests/integration/test-building-refactor.ts",
     "test:build:e2e": "NODE_ENV=test tsx tests/integration/test-building-e2e.ts",
     "test:build:all": "npm run test:build:e2e -- --save-fixtures && npm run test:build",

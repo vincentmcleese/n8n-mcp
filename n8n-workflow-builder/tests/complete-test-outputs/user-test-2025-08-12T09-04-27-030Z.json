@@ -1,0 +1,225 @@
+{
+  "name": "Zoom Meeting Transcript to Action Items Workflow",
+  "nodes": [
+    {
+      "id": "zoom_1",
+      "type": "n8n-nodes-base.zoom",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "resource": "meeting",
+        "meetingId": "={{ $json.meetingId }}",
+        "operation": "get"
+      },
+      "name": "Zoom Meeting Trigger",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        650,
+        300
+      ],
+      "parameters": {
+        "url": "https://example.com/transcript",
+        "method": "GET"
+      },
+      "name": "Download Transcript",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        1050,
+        300
+      ],
+      "parameters": {
+        "resource": "text",
+        "operation": "complete",
+        "model": "gpt-3.5-turbo",
+        "prompt": "Analyze the following transcript and provide key insights:"
+      },
+      "name": "Analyze Transcript",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1250,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform Zoom transcript data into structured action items with deadlines for project management tool integration"
+      },
+      "name": "Extract Action Items",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "asana_1",
+      "type": "n8n-nodes-base.asana",
+      "position": [
+        1650,
+        200
+      ],
+      "parameters": {
+        "name": "{{ $('Extract Action Items').item.json.action_item }}",
+        "dueOn": "{{ $('Extract Action Items').item.json.deadline }}"
+      },
+      "name": "Create Asana Tasks",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "httpRequest_2",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1850,
+        400
+      ],
+      "parameters": {
+        "url": "{{ $('Extract Action Items').item.json.project_tool_url }}",
+        "method": "POST"
+      },
+      "name": "Send to Project Tool",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 2
+    },
+    {
+      "id": "sticky_triggers_1754989466443",
+      "name": "Triggers Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        170,
+        -90
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nInitiates the workflow when a Zoom meeting ends by connecting to the Zoom API to detect meeting completion events.",
+        "height": 630,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754989466443",
+      "name": "Inputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        570,
+        -90
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nDownloads the meeting transcript file from Zoom's API after the meeting has concluded, retrieving the raw transcript data for processing.",
+        "height": 630,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754989466443",
+      "name": "Transform Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1010,
+        -90
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nUses OpenAI to analyze the transcript content and extract key decisions, action items, and deadlines. Then transforms this data into a structured format suitable for project management tools.",
+        "height": 630,
+        "width": 430,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_integration_1754989466443",
+      "name": "Integration Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1610,
+        -90
+      ],
+      "parameters": {
+        "content": "## 🔗 Integration\nCreates tasks in both Asana and sends data to additional project management tools, ensuring action items with deadlines are properly integrated into the project workflow.",
+        "height": 630,
+        "width": 430,
+        "color": 6
+      }
+    }
+  ],
+  "connections": {
+    "Zoom Meeting Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Transcript": {
+      "main": [
+        [
+          {
+            "node": "Analyze Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Transcript": {
+      "main": [
+        [
+          {
+            "node": "Extract Action Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Action Items": {
+      "main": [
+        [
+          {
+            "node": "Create Asana Tasks",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send to Project Tool",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T09:04:27.031Z",
+  "versionId": null
+}

@@ -1,0 +1,117 @@
+{
+  "testName": "Custom Test",
+  "userPrompt": "i want to automate something cool",
+  "sessionId": "complete_e2e_custom_test_1755016245490",
+  "timestamp": "2025-08-12T16:30:45.490Z",
+  "duration": 6926,
+  "success": false,
+  "phases": {
+    "discovery": {
+      "name": "Discovery",
+      "success": false,
+      "metrics": {
+        "startTime": 1755016245801,
+        "endTime": 0,
+        "duration": 0,
+        "memoryUsage": {
+          "heapUsed": 34911144,
+          "heapTotal": 58081280,
+          "external": 6507558
+        }
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "configuration": {
+      "name": "Configuration",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "building": {
+      "name": "Building",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "validation": {
+      "name": "Validation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "documentation": {
+      "name": "Documentation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    }
+  },
+  "summary": {
+    "totalNodes": 0,
+    "totalConnections": 0,
+    "validationAttempts": 0,
+    "errorsFixed": 0,
+    "stickyNotesAdded": 0,
+    "performanceScore": 100,
+    "qualityScore": 115,
+    "completenessScore": 0
+  },
+  "optimizationSuggestions": [],
+  "errorPatterns": []
+}

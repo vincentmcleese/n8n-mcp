@@ -1,0 +1,42 @@
+{
+  "testName": "User Test",
+  "prompt": "Generate an n8n workflow that: 1) triggers when a deal is marked ‘Closed Won’ in Pipedrive, 2) creates a Google Drive client folder, 3) sends a pre-filled DocuSign contract, 4) shares onboarding docs, 5) books a kickoff meeting in Google Calendar, and 6) notifies the team in Slack.",
+  "generatedAt": "2025-08-12T12:42:59.993Z",
+  "workflowFile": "user-test-2025-08-12T12-42-59-992Z.json",
+  "workflow": {
+    "name": "Pipedrive Deal Won - Client Onboarding Automation",
+    "nodeCount": 10,
+    "connectionCount": 4
+  },
+  "phases": {
+    "discovery": {
+      "success": true,
+      "nodeCount": 5,
+      "duration": 0
+    },
+    "configuration": {
+      "success": true,
+      "configuredCount": 5,
+      "duration": 0
+    },
+    "building": {
+      "success": true,
+      "duration": 0
+    },
+    "validation": {
+      "success": true,
+      "attempts": 3,
+      "issuesFixed": 0,
+      "duration": 0
+    },
+    "documentation": {
+      "success": true,
+      "stickyNotesAdded": 5,
+      "duration": 0
+    }
+  },
+  "overall": {
+    "success": true,
+    "totalDuration": 0
+  }
+}

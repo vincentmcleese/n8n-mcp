@@ -1,0 +1,304 @@
+{
+  "name": "Webinar Registration & Follow-up Automation",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        470,
+        300
+      ],
+      "parameters": {
+        "path": "webinar-signup",
+        "httpMethod": "POST",
+        "responseCode": 200,
+        "responseData": "firstEntryJson",
+        "responseHeaders": {},
+        "options": {}
+      },
+      "name": "Webinar Signup Webhook",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "noOp_1",
+      "type": "n8n-nodes-base.noOp",
+      "position": [
+        1070,
+        300
+      ],
+      "parameters": {},
+      "name": "Generate Calendar Link",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1470,
+        300
+      ],
+      "parameters": {
+        "text": "={{ `Hi ${$json.firstName || $json.name},\n\nThank you for registering for our webinar: ${$json.webinarTitle}!\n\nWebinar Details:\n📅 Date: ${$json.webinarDate}\n🕐 Time: ${$json.webinarTime}\n📍 Join Link: ${$json.webinarLink}\n\nAdd to Calendar: ${$json.calendarLink}\n\nWe'll send you reminders before the event.\n\nBest regards,\nThe Team` }}",
+        "subject": "{{ 'Webinar Registration Confirmed - ' + $json.webinarTitle }}",
+        "toEmail": "={{ $json.email }}",
+        "fromEmail": "webinars@company.com",
+        "fromName": "Webinar Team"
+      },
+      "name": "Send Confirmation Email",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "mailchimp_1",
+      "type": "n8n-nodes-base.mailchimp",
+      "position": [
+        2270,
+        500
+      ],
+      "parameters": {
+        "resource": "member",
+        "operation": "create",
+        "list": "={{ $json.mailchimp_list_id }}",
+        "email": "={{ $json.email }}",
+        "status": "subscribed",
+        "mergeFields": {
+          "FNAME": "={{ $json.firstName }}",
+          "LNAME": "={{ $json.lastName }}",
+          "WEBINAR": "={{ $json.webinarTitle }}"
+        },
+        "tags": "={{ `webinar-signup,${$json.webinarTitle}` }}"
+      },
+      "name": "Add to Mailchimp Segment",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "zohoCrm_1",
+      "type": "n8n-nodes-base.zohoCrm",
+      "position": [
+        2470,
+        500
+      ],
+      "parameters": {
+        "email": "={{ $json.email }}",
+        "phone": "={{ $json.phone }}",
+        "firstName": "={{ $json.firstName }}",
+        "lastName": "={{ $json.lastName }}",
+        "company": "={{ $json.company }}",
+        "leadSource": "Webinar Registration",
+        "description": "Registered for webinar: {{ $json.webinarTitle }}"
+      },
+      "name": "Push to CRM",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        670,
+        700
+      ],
+      "parameters": {
+        "notice": ""
+      },
+      "name": "Reminder Schedule Trigger",
+      "typeVersion": 1.2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "emailSend_2",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1670,
+        700
+      ],
+      "parameters": {
+        "text": "={{ `Hi ${$json.firstName},\n\nThis is a friendly reminder about the upcoming webinar:\n\n${$json.webinarTitle}\n📅 ${$json.webinarDate} at ${$json.webinarTime}\n\n🔗 Join here: ${$json.webinarLink}\n\nSee you there!\n\nBest regards,\nThe Team` }}",
+        "subject": "{{ 'Reminder: ' + $json.webinarTitle + ' - Starting Soon!' }}",
+        "toEmail": "={{ $json.email }}",
+        "fromEmail": "webinars@company.com",
+        "fromName": "Webinar Team"
+      },
+      "name": "Send Reminder Emails",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "emailSend_3",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1870,
+        700
+      ],
+      "parameters": {
+        "text": "={{ `Hi ${$json.firstName},\n\nThank you for attending our webinar: ${$json.webinarTitle}!\n\nAs promised, here's your exclusive offer:\n\n🎁 Special Discount: 25% off our premium package\n💰 Use code: WEBINAR25\n⏰ Valid until: ${$json.offerExpiry}\n\n👉 Claim your offer: ${$json.offerLink}\n\nQuestions? Reply to this email!\n\nBest regards,\nThe Team` }}",
+        "subject": "{{ 'Exclusive Offer - Thank You for Attending ' + $json.webinarTitle }}",
+        "toEmail": "={{ $json.email }}",
+        "fromEmail": "offers@company.com",
+        "fromName": "Sales Team"
+      },
+      "name": "Send Follow-up Offers",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "sticky_triggers_1755008965992",
+      "name": "Triggers Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        430,
+        60
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nCaptures webinar signup data from landing page form submissions via webhook endpoint. This initiates the entire registration and follow-up automation process.\n\nSchedule-based trigger that activates reminder and follow-up email sequences at predetermined intervals before and after the webinar event.",
+        "height": 780,
+        "width": 430,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1755008965992",
+      "name": "Transform Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        990,
+        60
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcesses signup data by generating calendar links for the webinar event. Prepares the data needed for confirmation emails and attendee management.",
+        "height": 380,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_outputs_1755008965992",
+      "name": "Outputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1430,
+        60
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends confirmation email to registrants with webinar details and calendar link. Provides immediate acknowledgment of successful registration.\n\nSends reminder emails to registered attendees and follow-up offers to those who attended. Maintains engagement throughout the webinar lifecycle and drives post-event conversions.",
+        "height": 780,
+        "width": 630,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_integration_1755008965992",
+      "name": "Integration Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2230,
+        260
+      ],
+      "parameters": {
+        "content": "## 🔗 Integration\nAdds new registrants to Mailchimp email list and creates/updates contact records in Zoho CRM. Ensures all attendee data is synchronized across marketing and sales systems.",
+        "height": 380,
+        "width": 430,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_promo_1755008965992",
+      "name": "Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        50,
+        60
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 780,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Webinar Signup Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate Calendar Link",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Add to Mailchimp Segment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Calendar Link": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to Mailchimp Segment": {
+      "main": [
+        [
+          {
+            "node": "Push to CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reminder Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send Reminder Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reminder Emails": {
+      "main": [
+        [
+          {
+            "node": "Send Follow-up Offers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T14:29:26.438Z",
+  "versionId": null
+}

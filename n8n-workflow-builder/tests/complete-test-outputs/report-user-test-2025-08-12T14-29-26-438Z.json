@@ -1,0 +1,42 @@
+{
+  "testName": "User Test",
+  "prompt": "Generate an n8n workflow that: 1) captures webinar signups from a landing page, 2) sends a confirmation email with a calendar link, 3) adds contacts to a Mailchimp segment, 4) sends reminders 24h & 1h before the event, 5) pushes attendee list to CRM, and 6) sends follow-up offers to attendees.",
+  "generatedAt": "2025-08-12T14:29:26.440Z",
+  "workflowFile": "user-test-2025-08-12T14-29-26-438Z.json",
+  "workflow": {
+    "name": "Webinar Registration & Follow-up Automation",
+    "nodeCount": 13,
+    "connectionCount": 5
+  },
+  "phases": {
+    "discovery": {
+      "success": true,
+      "nodeCount": 7,
+      "duration": 0
+    },
+    "configuration": {
+      "success": true,
+      "configuredCount": 7,
+      "duration": 0
+    },
+    "building": {
+      "success": true,
+      "duration": 0
+    },
+    "validation": {
+      "success": true,
+      "attempts": 5,
+      "issuesFixed": 0,
+      "duration": 0
+    },
+    "documentation": {
+      "success": true,
+      "stickyNotesAdded": 5,
+      "duration": 0
+    }
+  },
+  "overall": {
+    "success": true,
+    "totalDuration": 0
+  }
+}

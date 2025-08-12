@@ -1,0 +1,307 @@
+{
+  "name": "Zoom Meeting Transcript to Action Items Workflow",
+  "nodes": [
+    {
+      "id": "zoom_1",
+      "type": "n8n-nodes-base.zoom",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "resource": "meeting",
+        "meetingId": "={{ $json.meetingId }}",
+        "operation": "get"
+      },
+      "name": "Download Meeting Transcript",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        650,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.download_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "name": "Fetch Transcript File",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        1050,
+        300
+      ],
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an expert meeting analyst. Extract key decisions and action items with deadlines from meeting transcripts. Return structured JSON with: {\"decisions\": [\"decision1\", \"decision2\"], \"action_items\": [{\"task\": \"description\", \"assignee\": \"person\", \"deadline\": \"YYYY-MM-DD\"}]}"
+            },
+            {
+              "role": "user",
+              "content": "Analyze this meeting transcript and extract key decisions and action items with deadlines:\n\n{{ $json.data }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "name": "Analyze Transcript",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1250,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform Zoom transcript analysis into structured action items for project management\nconst aiResponse = $input.first().json;\n\n// Parse AI response if it's a string\nlet analysisData;\ntry {\n  analysisData = typeof aiResponse.choices[0].message.content === 'string' \n    ? JSON.parse(aiResponse.choices[0].message.content)\n    : aiResponse.choices[0].message.content;\n} catch (error) {\n  // Fallback if parsing fails\n  analysisData = { action_items: [], decisions: [] };\n}\n\n// Transform action items for project management tool\nconst transformedItems = [];\n\nif (analysisData.action_items && Array.isArray(analysisData.action_items)) {\n  analysisData.action_items.forEach((item, index) => {\n    transformedItems.push({\n      action_item: item.task || `Action Item ${index + 1}`,\n      assignee: item.assignee || 'Unassigned',\n      deadline_date: item.deadline || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default to 1 week from now\n      description: `Meeting Decision Context: ${analysisData.decisions ? analysisData.decisions.join('; ') : 'No decisions recorded'}`,\n      priority: 'medium',\n      source: 'zoom_meeting_transcript'\n    });\n  });\n}\n\n// If no action items found, create a summary task\nif (transformedItems.length === 0) {\n  transformedItems.push({\n    action_item: 'Review Meeting Summary',\n    assignee: 'Team Lead',\n    deadline_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 days from now\n    description: `Key Decisions: ${analysisData.decisions ? analysisData.decisions.join('; ') : 'No specific decisions recorded'}`,\n    priority: 'low',\n    source: 'zoom_meeting_transcript'\n  });\n}\n\nreturn transformedItems.map(item => ({ json: item }));"
+      },
+      "name": "Transform Action Items",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "asana_1",
+      "type": "n8n-nodes-base.asana",
+      "position": [
+        1650,
+        300
+      ],
+      "parameters": {
+        "resource": "task",
+        "operation": "create",
+        "workspace": "",
+        "name": "={{ $json.action_item }}",
+        "dueOn": "={{ $json.deadline_date }}",
+        "projectId": "",
+        "additionalFields": {
+          "assignee": "={{ $json.assignee }}"
+        }
+      },
+      "name": "Create Asana Tasks",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "notes": "={{ $json.description }}"
+    },
+    {
+      "id": "httpRequest_2",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1850,
+        500
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "{{ $('Transform Action Items').first().json.api_endpoint || 'https://api.projecttool.com/tasks' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.projectApiToken }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "={{ $json.action_item }}"
+            },
+            {
+              "name": "due_date",
+              "value": "={{ $json.deadline_date }}"
+            },
+            {
+              "name": "description",
+              "value": "={{ $json.description }}"
+            },
+            {
+              "name": "assignee",
+              "value": "={{ $json.assignee }}"
+            },
+            {
+              "name": "priority",
+              "value": "={{ $json.priority }}"
+            }
+          ]
+        }
+      },
+      "name": "Backup to Project API",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 2
+    },
+    {
+      "id": "sticky_triggers_1754985981758",
+      "name": "Triggers Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        10
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nInitiates the workflow when a Zoom meeting ends by downloading the meeting transcript from Zoom's API.",
+        "height": 630,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754985981758",
+      "name": "Inputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        610,
+        10
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nFetches the actual transcript file content from the download URL provided by Zoom API.",
+        "height": 630,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754985981758",
+      "name": "Transform Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1010,
+        10
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nUses AI to analyze the transcript content and extract key decisions and action items with deadlines, then transforms the data into a structured format suitable for project management tools.",
+        "height": 630,
+        "width": 430,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_integration_1754985981758",
+      "name": "Integration Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1610,
+        10
+      ],
+      "parameters": {
+        "content": "## 🔗 Integration\nCreates tasks in both Asana and a backup project management system, ensuring action items are properly tracked with deadlines and assignments.",
+        "height": 630,
+        "width": 430,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_promo_1754985981758",
+      "name": "Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        50,
+        10
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 630,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Download Meeting Transcript": {
+      "main": [
+        [
+          {
+            "node": "Fetch Transcript File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Transcript File": {
+      "main": [
+        [
+          {
+            "node": "Analyze Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Transcript": {
+      "main": [
+        [
+          {
+            "node": "Transform Action Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Action Items": {
+      "main": [
+        [
+          {
+            "node": "Create Asana Tasks",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Backup to Project API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T08:06:22.230Z",
+  "versionId": null
+}

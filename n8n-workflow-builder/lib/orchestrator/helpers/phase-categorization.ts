@@ -28,13 +28,13 @@ export const PHASE_DEFINITIONS = {
     icon: "🔀",
     name: "Decision",
     description: "Routing & conditional logic",
-    color: 5, // Light blue (changed from 3)
+    color: 2, // Yellow/orange for decision points
   },
   aggregation: {
     icon: "🔄",
-    name: "Aggregation",
-    description: "Combining data streams",
-    color: 5, // Light blue (changed from 2)
+    name: "Data Merging",
+    description: "Merge and combine data streams",
+    color: 5, // Light blue
   },
   storage: {
     icon: "💾",
@@ -64,7 +64,7 @@ export const PHASE_DEFINITIONS = {
     icon: "⚠️",
     name: "Error Handling",
     description: "Error recovery and retry logic",
-    color: 4, // Red for errors
+    color: 3, // Red for errors
   },
 } as const;
 

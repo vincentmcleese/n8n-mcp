@@ -462,6 +462,114 @@ Any workflow with MCP validation errors that return object-format errors (like A
 
 ---
 
+## Issue #7: Trigger Nodes Being Misused as Action Nodes
+
+**Date Identified**: 2025-08-12  
+**Status**: Open  
+**Priority**: High  
+**Component**: Building/Validation Phase  
+
+### Problem Description
+The system is incorrectly placing trigger nodes (like `scheduleTrigger`) as action nodes in the middle/end of workflows. Trigger nodes are designed to START workflows, not to be connected after other nodes. This fundamental misunderstanding leads to invalid workflow configurations.
+
+### Example Case
+User prompt: "Create an n8n workflow that... schedules follow-up reminders if no reply within 5 days"
+
+Generated workflow incorrectly connects:
+```
+Gmail (Send Email) → scheduleTrigger (Follow-up Reminder)
+```
+
+The `scheduleTrigger` node cannot have incoming connections - it's a workflow entry point, not an action.
+
+### Root Cause
+The current system doesn't distinguish between:
+1. **Trigger nodes**: Must be workflow entry points (no incoming connections)
+2. **Action nodes**: Can be placed anywhere in the workflow flow
+3. **Wait/Delay nodes**: Proper nodes for adding delays within a workflow
+
+When the user mentions "schedule" or "reminder", the system selects `scheduleTrigger` without understanding its architectural constraints.
+
+### Impact
+- Generated workflows are architecturally invalid
+- Trigger nodes with incoming connections will fail validation
+- Users get broken workflows that can't execute
+- The actual user intent (delayed actions) is not properly implemented
+
+### Current System Analysis
+1. **Phase categorization** (`phase-categorization.ts`): Already recognizes trigger nodes with category "trigger"
+2. **Validation** (`validation.runner.ts`): Doesn't specifically check for misplaced triggers
+3. **Building** (`building.runner.ts`): Connects nodes without checking trigger constraints
+
+### Proposed Solution
+Implement an intelligent trigger node recognition and validation system:
+
+#### 1. Trigger Node Validator
+Create `lib/orchestrator/validators/trigger-node.validator.ts`:
+- Detect all trigger-type nodes in the workflow
+- Validate trigger nodes have no incoming connections
+- Check triggers are only at workflow start positions
+- Generate specific error messages for trigger misuse
+
+#### 2. Smart Node Replacement Logic
+When a trigger is misused for scheduling/delays:
+- **"schedule follow-up"** → Suggest Wait node or separate workflow
+- **"reminder after X days"** → Use Wait node with timeout
+- **"trigger when"** → Webhook or polling pattern
+- Provide automatic replacement suggestions
+
+#### 3. Enhanced Validation Rules
+```typescript
+interface TriggerValidationRule {
+  nodeType: string;
+  canHaveIncomingConnections: boolean;
+  alternativeNodes: string[];
+  contextualSuggestions: Map<string, string>;
+}
+
+// Validation errors
+enum TriggerValidationError {
+  TRIGGER_AS_ACTION = "Trigger node used as action node",
+  TRIGGER_WITH_INCOMING = "Trigger node has incoming connections",
+  MISPLACED_TRIGGER = "Trigger node not at workflow start"
+}
+```
+
+#### 4. Building Phase Enhancement
+During the building phase:
+- Detect intent for "follow-up" or "reminder" features
+- Route to appropriate node types based on context:
+  - If starting a new workflow → Use trigger node
+  - If within workflow flow → Use Wait/Delay node
+  - If checking conditions → Use polling pattern
+
+### Implementation Strategy
+1. Add trigger validation to validation runner
+2. Create helper functions in phase-categorization.ts:
+   - `isTriggerNode(nodeType: string): boolean`
+   - `validateTriggerPlacement(node, connections): ValidationResult`
+3. Enhance building runner to pre-validate trigger usage
+4. Add smart replacement suggestions in configuration phase
+
+### Benefits
+- Prevents invalid workflow configurations
+- Educates the system about n8n workflow patterns  
+- Provides automatic fixes for common mistakes
+- Improves workflow generation quality
+- Reduces validation failures
+
+### Files to be Affected
+- `lib/orchestrator/validators/trigger-node.validator.ts` (new)
+- `lib/orchestrator/helpers/phase-categorization.ts` (enhance)
+- `lib/orchestrator/runners/validation.runner.ts` (add trigger validation)
+- `lib/orchestrator/runners/building.runner.ts` (add pre-validation)
+- `lib/orchestrator/helpers/node-replacement.ts` (new)
+
+### Test Case
+The workflow from report `report-user-test-2025-08-12T12-32-29-692Z.md` shows the issue where scheduleTrigger is incorrectly connected after Gmail node for follow-up reminders.
+
+---
+
 ## Future Improvement Ideas
 
 ### Idea #1: Dynamic Node Search and Replacement During Configuration Failures

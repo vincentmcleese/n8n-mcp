@@ -1,0 +1,42 @@
+{
+  "testName": "User Test-FAILED",
+  "prompt": "“Create an n8n workflow that: 1) pulls new leads from Apollo.io, 2) enriches with LinkedIn profile & company data, 3) uses an AI model to score leads based on ICP criteria, 4) sends a personalized cold email via Gmail, 5) logs activity in HubSpot, and 6) schedules follow-up reminders if no reply within 5 days",
+  "generatedAt": "2025-08-12T12:32:29.692Z",
+  "workflowFile": "user-test-failed-2025-08-12T12-32-29-691Z.json",
+  "workflow": {
+    "name": "Apollo Lead Enrichment & Outreach Automation",
+    "nodeCount": 8,
+    "connectionCount": 6
+  },
+  "phases": {
+    "discovery": {
+      "success": true,
+      "nodeCount": 8,
+      "duration": 0
+    },
+    "configuration": {
+      "success": true,
+      "configuredCount": 8,
+      "duration": 0
+    },
+    "building": {
+      "success": true,
+      "duration": 0
+    },
+    "validation": {
+      "success": true,
+      "attempts": 2,
+      "issuesFixed": 0,
+      "duration": 0
+    },
+    "documentation": {
+      "success": true,
+      "stickyNotesAdded": 4,
+      "duration": 0
+    }
+  },
+  "overall": {
+    "success": true,
+    "totalDuration": 0
+  }
+}

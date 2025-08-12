@@ -1,0 +1,301 @@
+{
+  "name": "Research Agent - LinkedIn & YouTube Scraper to Google Sheets",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        470,
+        300
+      ],
+      "parameters": {
+        "path": "research-agent",
+        "httpMethod": "POST",
+        "responseMode": "onReceived"
+      },
+      "name": "Webhook Trigger",
+      "typeVersion": 2,
+      "onError": "stopWorkflow",
+      "notes": "Webhook trigger to initiate research agent workflow for scraping top performing LinkedIn posts and YouTube videos based on keyword input"
+    },
+    {
+      "id": "agent_1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        870,
+        300
+      ],
+      "parameters": {
+        "text": "{{ $json.keyword }}"
+      },
+      "name": "Research Agent",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "notes": "Research agent that uses Apify to scrape top performing LinkedIn posts and YouTube videos based on a keyword, then outputs all links to Google Sheets"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1270,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform agent output into structured data for Google Sheets\nconst items = [];\n\n// Process agent response\nif ($input.all().length > 0) {\n  const agentData = $input.all()[0].json;\n  \n  // Extract LinkedIn posts\n  if (agentData.linkedinPosts) {\n    agentData.linkedinPosts.forEach(post => {\n      items.push({\n        platform: 'LinkedIn',\n        url: post.url,\n        title: post.title || 'LinkedIn Post',\n        engagement: post.likes || 0,\n        type: 'Post'\n      });\n    });\n  }\n  \n  // Extract YouTube videos\n  if (agentData.youtubeVideos) {\n    agentData.youtubeVideos.forEach(video => {\n      items.push({\n        platform: 'YouTube',\n        url: video.url,\n        title: video.title || 'YouTube Video',\n        engagement: video.views || 0,\n        type: 'Video'\n      });\n    });\n  }\n}\n\nreturn items;"
+      },
+      "name": "Transform Data",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "notes": "Transform scraped LinkedIn posts and YouTube videos data from Apify into a clean format for Google Sheets output with links and performance metrics"
+    },
+    {
+      "id": "if_1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1670,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "{{ $json.platform }}",
+              "rightValue": "LinkedIn",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "name": "Filter Content",
+      "typeVersion": 2.2,
+      "onError": "continueRegularOutput",
+      "notes": "Filter scraped content to separate LinkedIn posts from YouTube videos for proper routing to Google Sheets"
+    },
+    {
+      "id": "googleSheets_1",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        2070,
+        300
+      ],
+      "parameters": {
+        "operation": "append",
+        "range": "A:E",
+        "columns": {
+          "value": {
+            "Platform": "={{ $json.platform }}",
+            "URL": "={{ $json.url }}",
+            "Title": "={{ $json.title }}",
+            "Engagement": "={{ $json.engagement }}",
+            "Type": "={{ $json.type }}"
+          }
+        }
+      },
+      "name": "Save to Google Sheets",
+      "typeVersion": 4.6,
+      "onError": "continueErrorOutput",
+      "notes": "Append scraped LinkedIn posts and YouTube video links to Google Sheets for research analysis"
+    },
+    {
+      "id": "youTube_1",
+      "type": "n8n-nodes-base.youTube",
+      "position": [
+        550,
+        500
+      ],
+      "parameters": {
+        "operation": "search",
+        "part": [
+          "snippet",
+          "statistics"
+        ],
+        "q": "={{ $json.keyword }}",
+        "order": "viewCount",
+        "maxResults": 10
+      },
+      "name": "YouTube Search",
+      "typeVersion": 2,
+      "onError": "continueErrorOutput",
+      "notes": "Searches YouTube for top performing videos based on keyword input and retrieves video details with statistics"
+    },
+    {
+      "id": "linkedIn_1",
+      "type": "n8n-nodes-base.linkedIn",
+      "position": [
+        550,
+        100
+      ],
+      "parameters": {
+        "operation": "post",
+        "person": ""
+      },
+      "name": "LinkedIn Posts",
+      "typeVersion": 1,
+      "onError": "continueErrorOutput",
+      "notes": "This LinkedIn node is configured for creating posts, but it cannot scrape top performing posts - you'll need to use Apify's LinkedIn scraper instead"
+    },
+    {
+      "id": "sticky_triggers_1755011290138",
+      "name": "Triggers Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        390,
+        -140
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook receives keyword input to initiate the research workflow for scraping top performing content.",
+        "height": 780,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_inputs_1755011290138",
+      "name": "Inputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        790,
+        -140
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nAI research agent orchestrates the scraping of LinkedIn posts and YouTube videos using Apify based on the provided keyword.",
+        "height": 780,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1755011290138",
+      "name": "Transform Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1190,
+        -140
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nTransform and structure the scraped data from both platforms into a consistent format for Google Sheets storage.",
+        "height": 780,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_decision_1755011290138",
+      "name": "Decision Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1590,
+        -140
+      ],
+      "parameters": {
+        "content": "## 🔀 Decision\nFilter and route content based on platform type to ensure proper categorization in the final output.",
+        "height": 780,
+        "width": 310,
+        "color": 2
+      }
+    },
+    {
+      "id": "sticky_storage_1755011290138",
+      "name": "Storage Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1990,
+        -140
+      ],
+      "parameters": {
+        "content": "## 💾 Storage\nSave all scraped LinkedIn posts and YouTube video links with performance metrics to Google Sheets for analysis.",
+        "height": 780,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_promo_1755011290139",
+      "name": "Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        50,
+        -140
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 780,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Research Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Agent": {
+      "main": [
+        [
+          {
+            "node": "Transform Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Data": {
+      "main": [
+        [
+          {
+            "node": "Filter Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Content": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T15:08:10.668Z",
+  "versionId": null
+}

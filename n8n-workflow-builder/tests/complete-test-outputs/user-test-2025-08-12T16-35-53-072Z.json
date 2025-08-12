@@ -1,0 +1,216 @@
+{
+  "name": "Automated Data Export Pipeline",
+  "nodes": [
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        470,
+        300
+      ],
+      "parameters": {
+        "notice": ""
+      },
+      "name": "Daily Data Export",
+      "typeVersion": 1.2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "manualTrigger_1",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        670,
+        300
+      ],
+      "parameters": {
+        "notice": ""
+      },
+      "name": "Manual Export",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1070,
+        300
+      ],
+      "parameters": {
+        "url": "https://jsonplaceholder.typicode.com/posts",
+        "options": {}
+      },
+      "name": "Fetch API Data",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1470,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform each item and add processing metadata\nconst processedItems = [];\n\nfor (const item of $input.all()) {\n  processedItems.push({\n    ...item.json,\n    processedAt: new Date().toISOString(),\n    workflowId: $workflow.id,\n    executionId: $execution.id\n  });\n}\n\nreturn processedItems;"
+      },
+      "name": "Transform Data",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "convertToFile_1",
+      "type": "n8n-nodes-base.convertToFile",
+      "position": [
+        1870,
+        300
+      ],
+      "parameters": {
+        "operation": "csv",
+        "binaryPropertyName": "data"
+      },
+      "name": "Generate CSV Export",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "sticky_triggers_1755016552643",
+      "name": "Triggers Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        430,
+        60
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nAutomated trigger that runs on a schedule to initiate the data export process at regular intervals.\n\nManual trigger that allows users to initiate the data export process on-demand when needed.",
+        "height": 380,
+        "width": 430,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_inputs_1755016552643",
+      "name": "Inputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        990,
+        60
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nFetches data from an external API endpoint with built-in retry logic and error handling for reliable data retrieval.",
+        "height": 380,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1755016552643",
+      "name": "Transform Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1390,
+        60
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nTransforms the raw API data by adding processing metadata including timestamps and execution identifiers for audit trails.",
+        "height": 380,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_storage_1755016552643",
+      "name": "Storage Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1790,
+        60
+      ],
+      "parameters": {
+        "content": "## 💾 Storage\nConverts the processed JSON data into CSV format for easy export, analysis, and sharing with stakeholders.",
+        "height": 380,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_promo_1755016552643",
+      "name": "Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        50,
+        60
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 380,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Daily Data Export": {
+      "main": [
+        [
+          {
+            "node": "Fetch API Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Export": {
+      "main": [
+        [
+          {
+            "node": "Fetch API Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch API Data": {
+      "main": [
+        [
+          {
+            "node": "Transform Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Data": {
+      "main": [
+        [
+          {
+            "node": "Generate CSV Export",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T16:35:53.073Z",
+  "versionId": null
+}

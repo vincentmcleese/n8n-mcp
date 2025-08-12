@@ -1,0 +1,244 @@
+{
+  "name": "Pipedrive Deal Won - Client Onboarding Automation",
+  "nodes": [
+    {
+      "id": "pipedriveTrigger_1",
+      "type": "n8n-nodes-base.pipedriveTrigger",
+      "position": [
+        470,
+        300
+      ],
+      "parameters": {
+        "authentication": "apiToken",
+        "incomingAuthentication": "none"
+      },
+      "name": "Pipedrive Trigger",
+      "typeVersion": 1.1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "googleDrive_1",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        870,
+        300
+      ],
+      "parameters": {
+        "name": "={{ $('Pipedrive Trigger').item.json.current.title }} - Client Folder",
+        "driveId": {
+          "__rl": true,
+          "value": "root",
+          "mode": "list"
+        }
+      },
+      "name": "Create Client Folder",
+      "typeVersion": 3,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "googleDrive_2",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        1270,
+        200
+      ],
+      "parameters": {
+        "resource": "folder",
+        "operation": "share",
+        "folderNoRootId": "{{ $('Create Client Folder').item.json.id }}",
+        "permissions": {
+          "permissions": [
+            {
+              "role": "writer",
+              "type": "user",
+              "emailAddress": "={{ $('Pipedrive Trigger').item.json.current.person_id.email[0].value }}"
+            }
+          ]
+        }
+      },
+      "name": "Share Onboarding Docs",
+      "typeVersion": 3,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "googleCalendar_1",
+      "type": "n8n-nodes-base.googleCalendar",
+      "position": [
+        1470,
+        400
+      ],
+      "parameters": {
+        "end": "={{ $now.plus(3, 'days').set({ hour: 11, minute: 0, second: 0, millisecond: 0 }).toISO() }}",
+        "start": "={{ $now.plus(3, 'days').set({ hour: 10, minute: 0, second: 0, millisecond: 0 }).toISO() }}",
+        "summary": "={{ 'Kickoff Meeting - ' + $('Pipedrive Trigger').item.json.current.title }}",
+        "description": "={{ 'Client onboarding kickoff meeting for ' + $('Pipedrive Trigger').item.json.current.title }}",
+        "attendees": [
+          {
+            "email": "={{ $('Pipedrive Trigger').item.json.current.person_id.email[0].value }}"
+          }
+        ]
+      },
+      "name": "Book Kickoff Meeting",
+      "typeVersion": 1.3,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1870,
+        300
+      ],
+      "parameters": {
+        "channel": "#sales",
+        "text": "{{ `🎉 Deal Closed Won! ${$('Pipedrive Trigger').item.json.current.title}\n\n✅ Client folder created\n✅ Onboarding docs shared\n✅ Kickoff meeting scheduled\n\nClient: ${$('Pipedrive Trigger').item.json.current.person_id.name}\nValue: $${$('Pipedrive Trigger').item.json.current.value}\n\nNext steps: DocuSign contract and client onboarding initiated!` }}"
+      },
+      "name": "Notify Team",
+      "typeVersion": 2.3,
+      "onError": "continueRegularOutput",
+      "maxTries": 2
+    },
+    {
+      "id": "sticky_triggers_1755002579558",
+      "name": "Triggers Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        390,
+        -90
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWorkflow initiates when a deal status changes to 'Closed Won' in Pipedrive, capturing deal and client information for downstream processing.",
+        "height": 630,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_storage_1755002579559",
+      "name": "Storage Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        790,
+        -90
+      ],
+      "parameters": {
+        "content": "## 💾 Storage\nCreates a dedicated client folder in Google Drive using the deal title, establishing a centralized location for all client-related documents and resources.",
+        "height": 630,
+        "width": 310,
+        "color": 8
+      }
+    },
+    {
+      "id": "sticky_integration_1755002579559",
+      "name": "Integration Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1230,
+        -90
+      ],
+      "parameters": {
+        "content": "## 🔗 Integration\nParallel execution of client onboarding tasks: sharing onboarding documents via Google Drive permissions and scheduling a kickoff meeting in Google Calendar with the client.",
+        "height": 630,
+        "width": 430,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_outputs_1755002579559",
+      "name": "Outputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1790,
+        -90
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends a comprehensive Slack notification to the sales team with deal details, completion status of onboarding tasks, and next steps for client engagement.",
+        "height": 630,
+        "width": 310,
+        "color": 7
+      }
+    },
+    {
+      "id": "sticky_promo_1755002579560",
+      "name": "Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        50,
+        -90
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 630,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Pipedrive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Create Client Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Client Folder": {
+      "main": [
+        [
+          {
+            "node": "Share Onboarding Docs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Book Kickoff Meeting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share Onboarding Docs": {
+      "main": [
+        [
+          {
+            "node": "Notify Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Book Kickoff Meeting": {
+      "main": [
+        [
+          {
+            "node": "Notify Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T12:42:59.992Z",
+  "versionId": null
+}

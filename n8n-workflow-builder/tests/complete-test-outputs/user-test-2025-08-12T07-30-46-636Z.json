@@ -1,0 +1,117 @@
+{
+  "name": "Webhook to PostgreSQL Data Save",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "data-webhook",
+        "httpMethod": "POST"
+      },
+      "name": "Webhook",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "postgres_1",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        650,
+        300
+      ],
+      "parameters": {
+        "table": "webhook_data",
+        "schema": "public",
+        "columns": "data,timestamp,source"
+      },
+      "name": "PostgreSQL",
+      "typeVersion": 2.6,
+      "onError": "stopWorkflow",
+      "maxTries": 2
+    },
+    {
+      "id": "sticky_triggers_1754983846260",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        210,
+        10
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook receives incoming POST requests from external services and triggers the workflow execution.",
+        "height": 450,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_storage_1754983846260",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        610,
+        10
+      ],
+      "parameters": {
+        "content": "## 💾 Storage\nPostgreSQL node saves the received webhook data into the database table for persistent storage.",
+        "height": 450,
+        "width": 310,
+        "color": 8
+      }
+    },
+    {
+      "id": "sticky_promo_1754983846260",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        100,
+        10
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 450,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T07:30:46.637Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "webhook to postgres db save",
+    "testName": "User Test",
+    "generatedAt": "2025-08-12T07:30:46.637Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 2,
+    "stickyNotesAdded": 3
+  }
+}

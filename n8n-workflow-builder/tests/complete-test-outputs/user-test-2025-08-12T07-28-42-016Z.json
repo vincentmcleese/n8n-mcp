@@ -1,0 +1,388 @@
+{
+  "name": "Daily News Digest - What's New Today",
+  "nodes": [
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "cronExpression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Daily Morning Trigger",
+      "typeVersion": 1.2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "reddit_1",
+      "type": "n8n-nodes-base.reddit",
+      "position": [
+        650,
+        200
+      ],
+      "parameters": {
+        "limit": 10,
+        "category": "top",
+        "resource": "post",
+        "operation": "getAll",
+        "subreddit": "technology,programming,artificial,startups,entrepreneur"
+      },
+      "name": "Reddit Top Posts",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "rssFeedRead_1",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "url": "https://techcrunch.com/feed/"
+      },
+      "name": "Industry Blog RSS",
+      "typeVersion": 1.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "rssFeedRead_2",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "position": [
+        1050,
+        350
+      ],
+      "parameters": {
+        "url": "https://feeds.feedburner.com/venturebeat/SZYF"
+      },
+      "name": "Industry Blog RSS 2",
+      "typeVersion": 1.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "rssFeedRead_3",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "position": [
+        1250,
+        400
+      ],
+      "parameters": {
+        "url": "https://www.wired.com/feed/rss"
+      },
+      "name": "Industry Blog RSS 3",
+      "typeVersion": 1.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "googleAds_1",
+      "type": "n8n-nodes-base.googleAds",
+      "position": [
+        1450,
+        450
+      ],
+      "parameters": {
+        "operation": "getAll",
+        "resource": "campaign",
+        "managerCustomerId": "123-456-7890",
+        "clientCustomerId": "098-765-4321"
+      },
+      "name": "Google Trends Data",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "merge_1",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        1850,
+        325
+      ],
+      "parameters": {
+        "mode": "append"
+      },
+      "name": "Combine All Sources",
+      "typeVersion": 3.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        2250,
+        325
+      ],
+      "parameters": {
+        "model": "gpt-3.5-turbo",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a news curator. Create a concise daily digest from the provided content sources including Reddit posts, industry blogs, and trending searches. Format as an engaging 'What's New Today' summary with key highlights and insights."
+            },
+            {
+              "role": "user",
+              "content": "={{ JSON.stringify($input.all()) }}"
+            }
+          ]
+        }
+      },
+      "name": "AI Content Summarizer",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        2650,
+        325
+      ],
+      "parameters": {
+        "toEmail": "user@example.com",
+        "subject": "What's New Today - {{ new Date().toLocaleDateString() }}",
+        "message": "={{ $json.choices[0].message.content }}",
+        "options": {
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "name": "Send Daily Digest Email",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "sticky_triggers_1754983721587",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        210,
+        -90
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nInitiates the daily news aggregation workflow every morning at 8:00 AM using a scheduled trigger to ensure consistent daily execution.",
+        "height": 680,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754983721587",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        610,
+        -90
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nSimultaneously collects content from multiple sources including Reddit top posts from 5 subreddits, RSS feeds from 3 industry blogs, and Google Trends data to gather comprehensive daily news content.",
+        "height": 680,
+        "width": 1030,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_aggregation_1754983721587",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1810,
+        -90
+      ],
+      "parameters": {
+        "content": "## 🔄 Aggregation\nCombines all collected data from Reddit posts, RSS feeds, and trending searches into a single unified stream for processing by the AI summarization service.",
+        "height": 680,
+        "width": 310,
+        "color": 2
+      }
+    },
+    {
+      "id": "sticky_transforms_1754983721587",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2210,
+        -90
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nUses OpenAI to analyze and summarize all collected content into a concise, engaging daily digest that highlights key insights and trending topics from all sources.",
+        "height": 680,
+        "width": 310,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754983721587",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2610,
+        -90
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends the AI-generated summary as a formatted email with the subject 'What's New Today' containing the curated daily digest to the specified recipient.",
+        "height": 680,
+        "width": 310,
+        "color": 7
+      }
+    },
+    {
+      "id": "sticky_promo_1754983721587",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        100,
+        -90
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 680,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Daily Morning Trigger": {
+      "main": [
+        [
+          {
+            "node": "Reddit Top Posts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Industry Blog RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Industry Blog RSS 2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Industry Blog RSS 3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google Trends Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit Top Posts": {
+      "main": [
+        [
+          {
+            "node": "Combine All Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Industry Blog RSS": {
+      "main": [
+        [
+          {
+            "node": "Combine All Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Industry Blog RSS 2": {
+      "main": [
+        [
+          {
+            "node": "Combine All Sources",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Industry Blog RSS 3": {
+      "main": [
+        [
+          {
+            "node": "Combine All Sources",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Google Trends Data": {
+      "main": [
+        [
+          {
+            "node": "Combine All Sources",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Combine All Sources": {
+      "main": [
+        [
+          {
+            "node": "AI Content Summarizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Content Summarizer": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Digest Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T07:28:42.017Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "“Every morning, scrape top posts from 5 chosen subreddits, 3 industry blogs, and trending Google searches, summarize them with AI, and send a single ‘What’s New Today’ email.”",
+    "testName": "User Test",
+    "generatedAt": "2025-08-12T07:28:42.017Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 2,
+    "stickyNotesAdded": 6
+  }
+}

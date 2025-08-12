@@ -66,21 +66,35 @@ if (!fs.existsSync(outputDir)) {
 }
 
 /**
- * Save workflow output as n8n-compatible JSON
+ * Type definition for the test result
+ */
+interface TestResult {
+  success: boolean;
+  duration: number;
+  outputPath?: string;  // Path to saved workflow JSON (only on success)
+  workflow?: any;       // The final workflow object (only on success)
+  phaseResults: any;    // Results from each phase
+  reportPath?: string;  // Path to markdown report
+  error?: any;          // Error details (only on failure)
+}
+
+/**
+ * Save workflow output as n8n-compatible JSON and separate report
  */
 function saveWorkflowOutput(
   workflow: any,
   prompt: string,
   testName: string,
   phaseResults: any
-): string {
+): { workflowPath: string; reportPath: string } {
   // Create filename from test name
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const safeName = testName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-  const fileName = `${safeName}-${timestamp}.json`;
-  const filePath = path.join(outputDir, fileName);
   
-  // Create n8n-compatible output
+  // Save clean n8n workflow (directly importable)
+  const workflowFileName = `${safeName}-${timestamp}.json`;
+  const workflowFilePath = path.join(outputDir, workflowFileName);
+  
   const n8nWorkflow = {
     name: workflow.name || testName,
     nodes: workflow.nodes || [],
@@ -90,28 +104,63 @@ function saveWorkflowOutput(
     tags: [],
     triggerCount: 0,
     updatedAt: new Date().toISOString(),
-    versionId: null,
-    // Add metadata for testing
-    __metadata: {
-      prompt,
-      testName,
-      generatedAt: new Date().toISOString(),
-      phases: {
-        discovery: phaseResults.discovery?.success || false,
-        configuration: phaseResults.configuration?.success || false,
-        building: phaseResults.building?.success || false,
-        validation: phaseResults.validation?.success || false,
-        documentation: phaseResults.documentation?.success || false,
+    versionId: null
+  };
+  
+  // Save clean workflow for direct n8n import
+  fs.writeFileSync(workflowFilePath, JSON.stringify(n8nWorkflow, null, 2));
+  
+  // Save separate report file with metadata
+  const reportFileName = `report-${safeName}-${timestamp}.json`;
+  const reportFilePath = path.join(outputDir, reportFileName);
+  
+  const report = {
+    testName,
+    prompt,
+    generatedAt: new Date().toISOString(),
+    workflowFile: workflowFileName,
+    workflow: {
+      name: n8nWorkflow.name,
+      nodeCount: n8nWorkflow.nodes.length,
+      connectionCount: Object.keys(n8nWorkflow.connections).length,
+    },
+    phases: {
+      discovery: {
+        success: phaseResults.discovery?.success || false,
+        nodeCount: phaseResults.discovery?.discoveredNodes?.length || 0,
+        duration: phaseResults.discovery?.duration || 0,
       },
-      validationAttempts: phaseResults.validation?.validationReport?.attempts || 0,
-      stickyNotesAdded: phaseResults.documentation?.stickyNotesAdded || 0,
+      configuration: {
+        success: phaseResults.configuration?.success || false,
+        configuredCount: phaseResults.configuration?.configured?.length || 0,
+        duration: phaseResults.configuration?.duration || 0,
+      },
+      building: {
+        success: phaseResults.building?.success || false,
+        duration: phaseResults.building?.duration || 0,
+      },
+      validation: {
+        success: phaseResults.validation?.success || false,
+        attempts: phaseResults.validation?.validationReport?.attempts || 0,
+        issuesFixed: phaseResults.validation?.validationReport?.issuesFixed || 0,
+        duration: phaseResults.validation?.duration || 0,
+      },
+      documentation: {
+        success: phaseResults.documentation?.success || false,
+        stickyNotesAdded: phaseResults.documentation?.stickyNotesAdded || 0,
+        duration: phaseResults.documentation?.duration || 0,
+      },
+    },
+    overall: {
+      success: Object.values(phaseResults).every((r: any) => r?.success),
+      totalDuration: Object.values(phaseResults).reduce((sum: number, r: any) => sum + (r?.duration || 0), 0),
     }
   };
   
-  // Save to file
-  fs.writeFileSync(filePath, JSON.stringify(n8nWorkflow, null, 2));
+  // Save report with metadata
+  fs.writeFileSync(reportFilePath, JSON.stringify(report, null, 2));
   
-  return filePath;
+  return { workflowPath: workflowFilePath, reportPath: reportFilePath };
 }
 
 /**
@@ -169,7 +218,7 @@ async function deployWorkflow(workflow: any, name: string, mcpClient?: any): Pro
   }
 }
 
-async function runCompleteWorkflow(orchestrator: any, name: string, prompt: string) {
+async function runCompleteWorkflow(orchestrator: any, name: string, prompt: string): Promise<TestResult> {
   const sessionId = `complete_e2e_${name.replace(/\s+/g, '_').toLowerCase()}_${Date.now()}`;
   const startTime = Date.now();
   const phaseResults: any = {};
@@ -195,8 +244,37 @@ async function runCompleteWorkflow(orchestrator: any, name: string, prompt: stri
     console.log(chalk.blue('🔍 Phase 1: Discovery'));
     reporter.startPhase('discovery');
     
-    const discoveryResult = await orchestrator.runDiscoveryPhase(sessionId, prompt);
+    let discoveryResult = await orchestrator.runDiscoveryPhase(sessionId, prompt);
     phaseResults.discovery = discoveryResult;
+    
+    // Handle clarifications if needed
+    while (discoveryResult.pendingClarification) {
+      console.log(chalk.yellow('\n   ❓ Clarification needed:'));
+      console.log(chalk.yellow(`      ${discoveryResult.pendingClarification.question}`));
+      
+      let response: string;
+      
+      // Check if we're in non-interactive mode (using --prompt flag or --no-prompt)
+      if (testPrompt || skipPrompts) {
+        // Can't ask for input in non-interactive mode, skip clarification
+        console.log(chalk.yellow('      ⚠️ Running in non-interactive mode, cannot ask for clarification'));
+        console.log(chalk.yellow('      Please run without --prompt flag to answer clarification questions'));
+        throw new Error('Clarification needed but running in non-interactive mode');
+      } else {
+        // Get user input in interactive mode
+        response = await getUserInput('Your response');
+      }
+      
+      // Submit clarification response
+      discoveryResult = await orchestrator.handleClarificationResponse(
+        sessionId,
+        discoveryResult.pendingClarification.questionId,
+        response
+      );
+      
+      // Update phase results with new discovery result
+      phaseResults.discovery = discoveryResult;
+    }
     
     // Track discovered nodes
     if (discoveryResult.discoveredNodes) {
@@ -333,15 +411,13 @@ async function runCompleteWorkflow(orchestrator: any, name: string, prompt: stri
     const validationResult = await orchestrator.runValidationPhase(sessionId, buildingResult);
     phaseResults.validation = validationResult;
     
-    // Track validation errors and fixes
+    // Track validation fixes that were applied (these are successes, not errors)
     if (validationResult.validationReport?.fixesApplied) {
       validationResult.validationReport.fixesApplied.forEach((fix: any, index: number) => {
-        reporter.addError('validation', {
-          type: 'ValidationError',
-          message: fix.error || `Error ${index + 1}`,
-          resolution: fix.fix || 'Applied automatic fix',
-          attemptNumber: fix.attempt || 1,
-        });
+        // Log as INFO since these are successful fixes, not errors
+        reporter.log('INFO', 'Validation', 
+          `Applied fix ${index + 1}: ${fix.description || 'Entity replacement'} (attempt ${fix.attempt || 1})`
+        );
       });
     }
     
@@ -412,19 +488,20 @@ async function runCompleteWorkflow(orchestrator: any, name: string, prompt: stri
     
     // === SAVE OUTPUT ===
     console.log(chalk.blue('\n💾 Saving Output'));
-    const outputPath = saveWorkflowOutput(
+    const { workflowPath, reportPath: metadataPath } = saveWorkflowOutput(
       finalWorkflow,
       prompt,
       name,
       phaseResults
     );
-    console.log(chalk.green(`   ✅ Saved to: ${path.basename(outputPath)}`));
+    console.log(chalk.green(`   ✅ Workflow: ${path.basename(workflowPath)} (ready for n8n import)`));
+    console.log(chalk.green(`   ✅ Metadata: ${path.basename(metadataPath)}`));
     
-    // Generate and save report
+    // Generate and save additional markdown report
     reporter.generateSummary(finalWorkflow, validationResult.validationReport);
     reporter.finalize(true, Date.now() - startTime);
     reportPath = reporter.saveReport(outputDir);
-    console.log(chalk.green(`   ✅ Report saved to: ${path.basename(reportPath)}`));
+    console.log(chalk.green(`   ✅ Report:   ${path.basename(reportPath)}`));
     
     // === PHASE 6: DEPLOYMENT (if configured) ===
     if (shouldDeploy && !finalWorkflow) {
@@ -473,7 +550,7 @@ async function runCompleteWorkflow(orchestrator: any, name: string, prompt: stri
     return {
       success: true,
       duration,
-      outputPath,
+      outputPath: workflowPath,
       workflow: finalWorkflow,
       phaseResults,
       reportPath,
@@ -484,16 +561,20 @@ async function runCompleteWorkflow(orchestrator: any, name: string, prompt: stri
     console.log(chalk.red(`\n❌ Test failed after ${duration}ms`));
     console.log(chalk.red(`   Error: ${error}`));
     
+    let partialWorkflowPath: string | undefined;
+    
     // Still try to save partial output for debugging
     if (phaseResults.validation?.workflow || phaseResults.building?.workflow) {
       const partialWorkflow = phaseResults.validation?.workflow || phaseResults.building?.workflow;
-      const outputPath = saveWorkflowOutput(
+      const { workflowPath, reportPath: metadataPath } = saveWorkflowOutput(
         partialWorkflow,
         prompt,
         `${name}-FAILED`,
         phaseResults
       );
-      console.log(chalk.yellow(`   ⚠️ Partial output saved to: ${path.basename(outputPath)}`));
+      partialWorkflowPath = workflowPath;
+      console.log(chalk.yellow(`   ⚠️ Partial workflow: ${path.basename(workflowPath)}`));
+      console.log(chalk.yellow(`   ⚠️ Failure metadata: ${path.basename(metadataPath)}`));
     }
     
     // Generate failure report
@@ -511,6 +592,8 @@ async function runCompleteWorkflow(orchestrator: any, name: string, prompt: stri
       error,
       phaseResults,
       reportPath,
+      outputPath: partialWorkflowPath,  // Include partial workflow path if available
+      workflow: phaseResults.validation?.workflow || phaseResults.building?.workflow,  // Include partial workflow if available
     };
   }
 }

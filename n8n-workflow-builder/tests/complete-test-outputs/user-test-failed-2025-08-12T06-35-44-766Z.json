@@ -1,0 +1,25 @@
+{
+  "name": "User Test-FAILED",
+  "nodes": [],
+  "connections": {},
+  "settings": {},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T06:35:44.766Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "“Pull daily electricity usage data from my smart meter API, compare to last week, and if usage is unusually high, send me a WhatsApp message with possible causes and quick fixes.”",
+    "testName": "User Test-FAILED",
+    "generatedAt": "2025-08-12T06:35:44.766Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": false,
+      "validation": false,
+      "documentation": false
+    },
+    "validationAttempts": 0,
+    "stickyNotesAdded": 0
+  }
+}

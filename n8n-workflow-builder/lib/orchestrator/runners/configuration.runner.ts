@@ -6,23 +6,29 @@ import {
   ConfigurationOutput,
   ConfiguredNode,
   ConfigurationRunnerDeps,
-} from "@/lib/orchestrator/contracts/configuration.types";
+} from "@/types/orchestrator/configuration";
 import { DiscoveredNode, WorkflowOperation } from "@/types/workflow";
 import type { MissingFieldFix } from "@/types/orchestrator/configuration";
 import { ConfigurationPromptBuilder } from "@/services/claude/config/prompt-builder";
 import { patchRegistry } from "@/lib/orchestrator/patches";
 import { OperationLogger } from "@/lib/orchestrator/utils/OperationLogger";
+import { wrapPhase } from "@/lib/orchestrator/utils/wrapPhase";
 import pLimit from "p-limit";
 
 /**
  * Runner for the configuration phase (OPTIMIZED)
  * Uses node essentials for 95% token reduction
  */
-export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, ConfigurationOutput> {
+export class ConfigurationRunner
+  implements PhaseRunner<ConfigurationInput, ConfigurationOutput>
+{
   private promptBuilder: ConfigurationPromptBuilder;
-  
+
   constructor(private deps: ConfigurationRunnerDeps) {
     this.promptBuilder = new ConfigurationPromptBuilder();
+
+    // Wrap the run method with wrapPhase for automatic operation persistence
+    this.run = wrapPhase("configuration", this.run.bind(this));
   }
 
   /**
@@ -30,18 +36,19 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
    */
   async run(input: ConfigurationInput): Promise<ConfigurationOutput> {
     const { sessionId } = input;
-    
+
     // ====================================================================
     // Set up token tracking for this phase
     // ====================================================================
-    const operationLogger = new OperationLogger(sessionId, 'configuration');
-    const { logger: _logger, onTokenUsage } = operationLogger.withTokenTracking();
-    
+    const operationLogger = new OperationLogger(sessionId, "configuration");
+    const { logger: _logger, onTokenUsage } =
+      operationLogger.withTokenTracking();
+
     // Connect token callback to Claude service
     if (this.deps.claudeService.setOnUsageCallback) {
       this.deps.claudeService.setOnUsageCallback(onTokenUsage);
     }
-    
+
     try {
       // Get session to build context for configuration
       const { discoveredNodes, userPrompt } =
@@ -72,40 +79,46 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
       const configured: ConfiguredNode[] = [];
       const operations: WorkflowOperation[] = [];
       const reasoning: string[] = [];
-      
+
       // Prefetch node essentials for ALL nodes at the start
       const nodeEssentials = await this.prefetchNodeEssentials(discoveredNodes);
-      
+
       // Log that we have the essentials cached in memory
       this.deps.loggers.orchestrator.info(
         `   💾 Cached essentials for ${nodeEssentials.size} nodes in memory`
       );
 
       // Add phase transition operation
-      operations.push({ type: 'setPhase', phase: 'configuration' });
+      operations.push({ type: "setPhase", phase: "configuration" });
 
-      // Create concurrency limiter (max 3 parallel configurations for essentials)
-      const limit = pLimit(3);
-      
+      // Create concurrency limiter (max 5 parallel configurations for essentials)
+      const limit = pLimit(5);
+
       const startTime = Date.now();
-      
+
       // Simply configure ALL discovered nodes - no need to filter by IDs
       // This includes both task nodes and gap nodes
       this.deps.loggers.orchestrator.info(
-        `⚙️  Configuring ${discoveredNodes.length} nodes in parallel (max 3 concurrent)`
+        `⚙️  Configuring ${discoveredNodes.length} nodes in parallel (max 5 concurrent)`
       );
       this.deps.loggers.orchestrator.debug(
-        `Nodes to configure: ${discoveredNodes.map(n => `${n.type} (${n.id})`).join(', ')}`
+        `Nodes to configure: ${discoveredNodes
+          .map((n) => `${n.type} (${n.id})`)
+          .join(", ")}`
       );
-      
+
       // Process nodes in parallel with concurrency control
-      const configurationTasks = discoveredNodes.map((node, index) => 
+      const configurationTasks = discoveredNodes.map((node, index) =>
         limit(async () => {
           this.deps.loggers.orchestrator.info(
-            `   [${index + 1}/${discoveredNodes.length}] Starting configuration for ${node.type} (${node.id})`
+            `   [${index + 1}/${
+              discoveredNodes.length
+            }] Starting configuration for ${node.type} (${node.id})`
           );
           this.deps.loggers.orchestrator.debug(
-            `   ${node.type} is ${node.isPreConfigured ? 'a task template' : 'a searched node'}`
+            `   ${node.type} is ${
+              node.isPreConfigured ? "a task template" : "a searched node"
+            }`
           );
 
           try {
@@ -115,94 +128,142 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
               sessionId,
               nodeEssentials
             );
-            
+
             // Only show success checkmark if actually valid
             if (result.isValid) {
               this.deps.loggers.orchestrator.info(
-                `   ✅ [${index + 1}/${discoveredNodes.length}] Successfully configured ${node.type}`
+                `   ✅ [${index + 1}/${
+                  discoveredNodes.length
+                }] Successfully configured ${node.type}`
               );
             } else {
               this.deps.loggers.orchestrator.warn(
-                `   ⚠️  [${index + 1}/${discoveredNodes.length}] Completed configuration for ${node.type} with errors`
+                `   ⚠️  [${index + 1}/${
+                  discoveredNodes.length
+                }] Completed configuration for ${node.type} with errors`
               );
             }
-            
+
             return {
               node,
-              ...result
+              ...result,
             };
           } catch (error) {
             this.deps.loggers.orchestrator.error(
-              `   ❌ [${index + 1}/${discoveredNodes.length}] Failed to configure ${node.type} (${node.id}):`,
+              `   ❌ [${index + 1}/${
+                discoveredNodes.length
+              }] Failed to configure ${node.type} (${node.id}):`,
               error
             );
             return {
               node,
               finalConfig: {},
               isValid: false,
-              validationErrors: [error instanceof Error ? error.message : 'Unknown error'],
-              nodeReasoning: [`Failed to configure ${node.type}: ${error instanceof Error ? error.message : 'Unknown error'}`],
-              configOperations: []
+              validationErrors: [
+                error instanceof Error ? error.message : "Unknown error",
+              ],
+              nodeReasoning: [
+                `Failed to configure ${node.type}: ${
+                  error instanceof Error ? error.message : "Unknown error"
+                }`,
+              ],
+              configOperations: [],
             };
           }
         })
       );
 
       // Wait for all configurations to complete
-      this.deps.loggers.orchestrator.info(`   ⏳ Waiting for all configuration tasks to complete...`);
+      this.deps.loggers.orchestrator.info(
+        `   ⏳ Waiting for all configuration tasks to complete...`
+      );
       const results = await Promise.allSettled(configurationTasks);
-      this.deps.loggers.orchestrator.info(`   ✅ All ${results.length} configuration tasks completed`);
-      
+      this.deps.loggers.orchestrator.info(
+        `   ✅ All ${results.length} configuration tasks completed`
+      );
+
       // Process results in order
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
         const nodeBeingConfigured = discoveredNodes[i];
-        
-        if (result.status === 'rejected') {
+
+        if (result.status === "rejected") {
           // Handle rejected promises - this should not happen with our error handling
           this.deps.loggers.orchestrator.error(
             `   ❌ Configuration task ${i + 1} was rejected:`,
             result.reason
           );
-          
+
           // Still add to configured array to track the failure
           configured.push({
-            id: nodeBeingConfigured?.id || 'unknown',
-            type: nodeBeingConfigured?.type || 'unknown',
-            purpose: nodeBeingConfigured?.purpose || 'Failed to configure',
+            id: nodeBeingConfigured?.id || "unknown",
+            type: nodeBeingConfigured?.type || "unknown",
+            purpose: nodeBeingConfigured?.purpose || "Failed to configure",
             config: {},
             validated: false,
             validationErrors: [`Task rejected: ${result.reason}`],
-            category: nodeBeingConfigured?.category || 'unknown'
+            category: nodeBeingConfigured?.category || "unknown",
           });
-          
-          reasoning.push(`Configuration task ${i + 1} failed: ${result.reason}`);
-          continue;
-        }
-        
-        if (!result.value) {
-          // This shouldn't happen anymore with our improved error handling
-          this.deps.loggers.orchestrator.error(
-            `   ❌ Configuration task ${i + 1} returned null - this is unexpected`
+
+          reasoning.push(
+            `Configuration task ${i + 1} failed: ${result.reason}`
           );
           continue;
         }
-        
-        const { node, finalConfig, isValid, validationErrors, nodeReasoning, configOperations } = result.value;
-        
+
+        if (!result.value) {
+          // This shouldn't happen anymore with our improved error handling
+          this.deps.loggers.orchestrator.error(
+            `   ❌ Configuration task ${
+              i + 1
+            } returned null - this is unexpected`
+          );
+          continue;
+        }
+
+        const {
+          node,
+          finalConfig,
+          isValid,
+          validationErrors,
+          nodeReasoning,
+          configOperations,
+        } = result.value;
+
         operations.push(...configOperations);
         reasoning.push(...nodeReasoning);
+
+        // Check if this node was replaced with NoOp
+        const wasReplacedWithNoOp =
+          finalConfig.notes?.includes("This node replaced") && isValid;
+        const nodeType = wasReplacedWithNoOp
+          ? "n8n-nodes-base.noOp"
+          : node.type;
 
         // Add to configured nodes
         configured.push({
           id: node.id,
-          type: node.type,
+          type: nodeType,
           purpose: node.purpose,
           config: finalConfig,
           validated: isValid,
           validationErrors: isValid ? undefined : validationErrors,
-          category: node.category, // Preserve category from discovery
+          category: wasReplacedWithNoOp ? "transform" : node.category, // NoOp nodes should be categorized as transform
         });
+
+        // CRITICAL: Add configureNode operation so the configured node gets persisted to session state
+        // This fixes the broken bridge between configuration and building phases
+        operations.push({
+          type: "configureNode",
+          nodeId: node.id,
+          nodeType: nodeType,
+          purpose: node.purpose,
+          config: finalConfig,
+        });
+
+        this.deps.loggers.orchestrator.debug(
+          `Added configureNode operation for ${nodeType} (${node.id})`
+        );
 
         // Add validation operation for tracking
         operations.push({
@@ -213,21 +274,33 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
             errors: validationErrors.map((error: any) => ({
               nodeId: node.id,
               message: error,
-              severity: 'error' as const
+              severity: "error" as const,
             })),
           },
         });
 
         if (isValid) {
-          this.deps.loggers.orchestrator.debug(
-            `✅ ${node.type} configured and validated successfully`
-          );
-          reasoning.push(`${node.type} configured and validated successfully`);
+          if (wasReplacedWithNoOp) {
+            this.deps.loggers.orchestrator.debug(
+              `⚠️ ${node.type} replaced with NoOp placeholder due to validation errors`
+            );
+            reasoning.push(
+              `${node.type} replaced with NoOp placeholder - manual configuration required`
+            );
+          } else {
+            this.deps.loggers.orchestrator.debug(
+              `✅ ${node.type} configured and validated successfully`
+            );
+            reasoning.push(
+              `${node.type} configured and validated successfully`
+            );
+          }
         } else {
           // Store detailed errors for summary later
-          const errorMsg = validationErrors.length > 0 
-            ? `: ${validationErrors.join(", ")}`
-            : "";
+          const errorMsg =
+            validationErrors.length > 0
+              ? `: ${validationErrors.join(", ")}`
+              : "";
           this.deps.loggers.orchestrator.debug(
             `❌ ${node.type} validation failed${errorMsg}`
           );
@@ -245,18 +318,18 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
 
       // Log detailed summary if there were failures
       if (invalidNodes.length > 0) {
-        this.deps.loggers.orchestrator.info(
-          `\n   📊 Configuration Results:`
-        );
+        this.deps.loggers.orchestrator.info(`\n   📊 Configuration Results:`);
         this.deps.loggers.orchestrator.info(
           `      ✅ Successful: ${validCount}/${configured.length} nodes`
         );
         this.deps.loggers.orchestrator.info(
           `      ❌ Failed: ${invalidNodes.length}/${configured.length} nodes`
         );
-        invalidNodes.forEach(node => {
+        invalidNodes.forEach((node) => {
           this.deps.loggers.orchestrator.info(
-            `         - ${node.type} (${node.id}): ${node.validationErrors?.join(', ')}`
+            `         - ${node.type} (${
+              node.id
+            }): ${node.validationErrors?.join(", ")}`
           );
         });
       }
@@ -268,12 +341,13 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
       this.deps.loggers.orchestrator.info(
         `   Nodes configured: ${configured.length}`
       );
-      
+
       // Log node types configured
       if (configured.length > 0) {
         // Count pre-configured task nodes based on discovery flag
-        const taskNodes = discoveredNodes
-          .filter(n => n.isPreConfigured && !!n.config).length;
+        const taskNodes = discoveredNodes.filter(
+          (n) => n.isPreConfigured && !!n.config
+        ).length;
         const searchNodes = configured.length - taskNodes;
         this.deps.loggers.orchestrator.info(
           `   - Task templates customized: ${taskNodes}`
@@ -282,28 +356,24 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
           `   - Search nodes configured: ${searchNodes}`
         );
       }
-      
+
       // Log validation summary with proper error details
       if (validCount === configured.length) {
         this.deps.loggers.orchestrator.info(
           `   ✅ All nodes validated successfully`
         );
       } else {
-        const failedNodes = configured.filter(n => !n.validated);
+        const failedNodes = configured.filter((n) => !n.validated);
         this.deps.loggers.orchestrator.info(
           `   ⚠️  Validation: ${validCount}/${configured.length} passed`
         );
         // List failed nodes with their errors at INFO level
-        failedNodes.forEach(node => {
+        failedNodes.forEach((node) => {
           if (node.validationErrors && node.validationErrors.length > 0) {
             // If we have specific errors, show them
-            this.deps.loggers.orchestrator.info(
-              `      ❌ ${node.type}:`
-            );
-            node.validationErrors.forEach(error => {
-              this.deps.loggers.orchestrator.info(
-                `         - ${error}`
-              );
+            this.deps.loggers.orchestrator.info(`      ❌ ${node.type}:`);
+            node.validationErrors.forEach((error) => {
+              this.deps.loggers.orchestrator.info(`         - ${error}`);
             });
           } else {
             // If no specific errors, check if it's from a failed Claude call
@@ -313,23 +383,15 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
           }
         });
       }
-      
-      this.deps.loggers.orchestrator.info(
-        `   ⏱️  Duration: ${elapsedTime}ms`
-      );
+
+      this.deps.loggers.orchestrator.info(`   ⏱️  Duration: ${elapsedTime}ms`);
 
       // Add phase completion operation if successful
       if (allValid) {
-        operations.push({ type: 'completePhase', phase: 'configuration' });
-      }
-      
-      // Persist operations before forcing save
-      if (operations.length > 0) {
-        await this.deps.sessionRepo.persistOperations(sessionId, operations);
+        operations.push({ type: "completePhase", phase: "configuration" });
       }
 
-      // Force save at phase completion
-      await this.deps.sessionRepo.save(sessionId);
+      // Persistence is now handled automatically by wrapPhase wrapper
 
       return {
         success: allValid,
@@ -351,8 +413,12 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
       };
     } catch (error) {
       // Record error in Supabase
-      await this.deps.sessionRepo.recordError(sessionId, error, "configuration");
-      
+      await this.deps.sessionRepo.recordError(
+        sessionId,
+        error,
+        "configuration"
+      );
+
       return {
         success: false,
         operations: [],
@@ -407,39 +473,43 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
         this.deps.loggers.orchestrator.debug(
           `      → ${node.type} is pre-configured, customizing task template`
         );
-        
+
         // Step 1: Restructure the flat config from MCP into proper n8n format
         this.deps.loggers.orchestrator.debug(
-          `Original task template from MCP:`, JSON.stringify(node.config, null, 2)
+          `Original task template from MCP:`,
+          JSON.stringify(node.config, null, 2)
         );
         const restructuredTemplate = this.restructureTaskConfig(node.config);
         this.deps.loggers.orchestrator.debug(
-          `Restructured template:`, JSON.stringify(restructuredTemplate, null, 2)
+          `Restructured template:`,
+          JSON.stringify(restructuredTemplate, null, 2)
         );
-        
+
         // Apply preconfiguration patches to fix known issues
-        const { config: patchedTemplate, patchesApplied } = 
+        const { config: patchedTemplate, patchesApplied } =
           this.applyPreconfigurationPatches(node.type, restructuredTemplate);
-        
+
         if (patchesApplied.length > 0) {
           this.deps.loggers.orchestrator.debug(
-            `Applied ${patchesApplied.length} patches to task template: ${patchesApplied.join(', ')}`
+            `Applied ${
+              patchesApplied.length
+            } patches to task template: ${patchesApplied.join(", ")}`
           );
         }
-        
+
         // Log customization step
         this.deps.loggers.orchestrator.debug(
           `   Applying user requirements to ${node.type} template`
         );
-        
+
         // Step 2: Build targeted prompt using task template and rules
         const prompt = this.promptBuilder.buildPrompt({
           node,
           essentials: patchedTemplate, // Pass patched template as "essentials"
           workflowContext: {
             description: userPrompt,
-            userPrompt: userPrompt
-          }
+            userPrompt: userPrompt,
+          },
         });
 
         // Log that a task customization prompt was created
@@ -451,7 +521,7 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
         this.deps.loggers.orchestrator.debug(
           `Customizing task template for ${node.type} based on user requirements`
         );
-        
+
         const claudeResult = await this.deps.claudeService.execute(
           {
             prompt: prompt,
@@ -462,17 +532,17 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
               nodeProperties: {},
               nodeTemplates: { [node.type]: patchedTemplate }, // Also as template
               nodeDocumentation: {},
-              enrichedContext: { 
-                optimized: true, 
-                taskTemplate: true, 
+              enrichedContext: {
+                optimized: true,
+                taskTemplate: true,
                 customPrompt: true,
-                preConfigured: true 
-              }
-            }
+                preConfigured: true,
+              },
+            },
           },
           { sessionId }
         );
-        
+
         if (!claudeResult.success || !claudeResult.data) {
           throw new Error(`Failed to customize task template for ${node.type}`);
         }
@@ -480,23 +550,24 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
         // Extract configuration from response
         let nodeConfig: any = {};
         let configFound = false;
-        
+
         for (const operation of claudeResult.data.operations) {
-          if (operation.type === "configureNode" && operation.nodeId === node.id) {
+          if (
+            operation.type === "configureNode" &&
+            operation.nodeId === node.id
+          ) {
             nodeConfig = operation.config;
             configFound = true;
-            operations.push({
-              ...operation,
-              nodeType: node.type,
-              purpose: node.purpose,
-              customizedFromTemplate: true
-            });
+            // Don't push Claude's configureNode operation here to avoid duplicates
+            // We'll create a standardized configureNode operation later (around line 217)
             break;
           }
         }
-        
+
         if (!configFound) {
-          throw new Error(`No configuration generated for task node ${node.id}`);
+          throw new Error(
+            `No configuration generated for task node ${node.id}`
+          );
         }
 
         if (claudeResult.data.reasoning) {
@@ -506,35 +577,42 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
         // Step 4: Merge Claude's config with the patched template
         // This preserves node-level properties while applying Claude's customizations
         const mergedConfig = this.mergeTaskConfig(patchedTemplate, nodeConfig);
-        
+
         // Apply patches again after merge to ensure fixes are preserved
-        const { config: finalPatchedConfig, patchesApplied: postMergePatches } = 
+        const { config: finalPatchedConfig, patchesApplied: postMergePatches } =
           this.applyPreconfigurationPatches(node.type, mergedConfig);
-        
+
         if (postMergePatches.length > 0) {
           this.deps.loggers.orchestrator.debug(
-            `Applied ${postMergePatches.length} post-merge patches: ${postMergePatches.join(', ')}`
+            `Applied ${
+              postMergePatches.length
+            } post-merge patches: ${postMergePatches.join(", ")}`
           );
         }
-        
+
         this.deps.loggers.orchestrator.debug(
-          `Final patched config for ${node.type}:`, 
+          `Final patched config for ${node.type}:`,
           JSON.stringify(finalPatchedConfig, null, 2)
         );
 
         // Step 5: Validate and attempt to fix the merged configuration
-        let validation = await this.validateConfig(node.type, finalPatchedConfig);
-        
+        let validation = await this.validateConfig(
+          node.type,
+          finalPatchedConfig
+        );
+
         // Debug log to understand validation result
         this.deps.loggers.orchestrator.info(
-          `   🔍 Validation result for ${node.type}: isValid=${validation.isValid}, errors=${validation.validationErrors?.length || 0}`
+          `   🔍 Validation result for ${node.type}: isValid=${
+            validation.isValid
+          }, errors=${validation.validationErrors?.length || 0}`
         );
         if (validation.validationErrors?.length > 0) {
           this.deps.loggers.orchestrator.info(
-            `      Errors: ${validation.validationErrors.join(', ')}`
+            `      Errors: ${validation.validationErrors.join(", ")}`
           );
         }
-        
+
         // Use the shared fix method
         const fixResult = await this.attemptToFixValidationErrors(
           node,
@@ -556,10 +634,10 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
       this.deps.loggers.orchestrator.debug(
         `      → Configuring search node: ${node.type}`
       );
-      
+
       // Get cached essentials from the passed Map
       let essentials = nodeEssentials.get(node.type);
-      
+
       if (!essentials) {
         // Fallback: fetch if not in cache (shouldn't happen)
         this.deps.loggers.orchestrator.warn(
@@ -571,7 +649,7 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
           `      → Using cached essentials for ${node.type}`
         );
       }
-      
+
       if (!essentials) {
         this.deps.loggers.orchestrator.warn(
           `      → No essentials available for ${node.type}, using basic config`
@@ -584,8 +662,8 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
         essentials: essentials || {},
         workflowContext: {
           description: userPrompt,
-          userPrompt: userPrompt
-        }
+          userPrompt: userPrompt,
+        },
       });
 
       // Log that a prompt was created (without showing the full content)
@@ -597,7 +675,7 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
       this.deps.loggers.orchestrator.debug(
         `Generating configuration for ${node.type} with essentials-based prompt`
       );
-      
+
       const claudeResult = await this.deps.claudeService.execute(
         {
           prompt: prompt, // Use the built prompt instead of userPrompt
@@ -609,77 +687,104 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
             nodeProperties: {},
             nodeTemplates: {},
             nodeDocumentation: {},
-            enrichedContext: { optimized: true, essentialsOnly: true, customPrompt: true }
-          }
+            enrichedContext: {
+              optimized: true,
+              essentialsOnly: true,
+              customPrompt: true,
+            },
+          },
         },
         { sessionId }
       );
-      
+
       if (!claudeResult.success || !claudeResult.data) {
-        throw new Error(`Failed to generate configuration for ${node.type}`);
+        // JSON parsing failed or Claude call failed - create NoOp immediately
+        this.deps.loggers.orchestrator.warn(
+          `   ⚠️ Failed to get valid configuration from Claude for ${node.type} - creating NoOp placeholder`
+        );
+        this.deps.loggers.orchestrator.info(
+          `      Reason: ${claudeResult.error?.message || "Unknown error"}`
+        );
+        return this.createNoOpForParsingFailure(
+          node,
+          claudeResult.error?.message
+        );
+      }
+
+      // Check if operations array exists - if not, likely a JSON parsing issue
+      if (
+        !claudeResult.data.operations ||
+        !Array.isArray(claudeResult.data.operations)
+      ) {
+        this.deps.loggers.orchestrator.warn(
+          `   ⚠️ Claude response missing valid operations array for ${node.type} - creating NoOp placeholder`
+        );
+        this.deps.loggers.orchestrator.info(
+          `      Response data keys: ${Object.keys(
+            claudeResult.data || {}
+          ).join(", ")}`
+        );
+        return this.createNoOpForParsingFailure(
+          node,
+          "Invalid operations array in Claude response"
+        );
       }
 
       // Log what operations Claude returned to debug node ID mismatches
-      if (claudeResult.data?.operations) {
-        this.deps.loggers.orchestrator.info(
-          `   📥 Claude returned ${claudeResult.data.operations.length} operations for ${node.id}`
-        );
-        claudeResult.data.operations.forEach((op: any) => {
-          if (op.type === 'configureNode') {
-            this.deps.loggers.orchestrator.info(
-              `      - configureNode for nodeId: ${op.nodeId} (expected: ${node.id})`
-            );
-          }
-        });
-      }
+      this.deps.loggers.orchestrator.info(
+        `   📥 Claude returned ${claudeResult.data.operations.length} operations for ${node.id}`
+      );
+      claudeResult.data.operations.forEach((op: any) => {
+        if (op.type === "configureNode") {
+          this.deps.loggers.orchestrator.info(
+            `      - configureNode for nodeId: ${op.nodeId} (expected: ${node.id})`
+          );
+        }
+      });
 
       // Extract configuration from response
       // Note: We're flexible with node IDs - Claude might generate different IDs
       // We'll take the first configureNode operation since we only asked for one node
       let nodeConfig: any = {};
       let configFound = false;
-      
+
       for (const operation of claudeResult.data.operations) {
         if (operation.type === "configureNode") {
           // Accept any configureNode operation since we're configuring one node at a time
           nodeConfig = operation.config;
           configFound = true;
-          
+
           // Log if there's a mismatch but still use the config
           if (operation.nodeId !== node.id) {
             this.deps.loggers.orchestrator.info(
               `      Note: Using config for nodeId ${operation.nodeId} (requested ${node.id})`
             );
           }
-          
+
           operations.push({
             ...operation,
             nodeId: node.id, // Override with our expected ID
             nodeType: node.type,
-            purpose: node.purpose
+            purpose: node.purpose,
           });
           break;
         }
       }
-      
+
       if (!configFound) {
-        // Log the issue but don't throw - return an empty config that will fail validation
+        // Claude returned operations but no configureNode - create NoOp immediately
         this.deps.loggers.orchestrator.warn(
-          `   ⚠️ Claude did not generate a configuration for ${node.type} (${node.id})`
+          `   ⚠️ Claude did not generate a configureNode operation for ${node.type} (${node.id})`
         );
         this.deps.loggers.orchestrator.info(
-          `      This node will be marked as invalid and may need manual configuration`
+          `      Available operations: ${claudeResult.data.operations
+            .map((op: any) => op.type)
+            .join(", ")}`
         );
-        
-        // Return early with invalid configuration
-        return {
-          finalConfig: {},
-          isValid: false,
-          validationErrors: [`No configuration generated for node ${node.id}`],
-          nodeReasoning: [`Failed to generate configuration for ${node.type}: Claude did not return a configureNode operation for this node`],
-          configOperations: operations,
-          allOperations: claudeResult.data.operations
-        };
+        return this.createNoOpForParsingFailure(
+          node,
+          `No configureNode operation found in Claude response`
+        );
       }
 
       if (claudeResult.data.reasoning) {
@@ -687,18 +792,20 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
       }
 
       // Apply preconfiguration patches to fix known issues
-      const { config: patchedConfig, patchesApplied } = 
+      const { config: patchedConfig, patchesApplied } =
         this.applyPreconfigurationPatches(node.type, nodeConfig);
-      
+
       if (patchesApplied.length > 0) {
         this.deps.loggers.orchestrator.debug(
-          `Applied ${patchesApplied.length} patches to ${node.type}: ${patchesApplied.join(', ')}`
+          `Applied ${patchesApplied.length} patches to ${
+            node.type
+          }: ${patchesApplied.join(", ")}`
         );
       }
 
       // Step 4: Validate and attempt to fix the configuration
       let validation = await this.validateConfig(node.type, patchedConfig);
-      
+
       // Use the shared fix method
       const fixResult = await this.attemptToFixValidationErrors(
         node,
@@ -714,7 +821,6 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
         nodeReasoning: reasoning,
         configOperations: operations,
       };
-      
     } catch (error) {
       this.deps.loggers.orchestrator.error(
         `Failed to configure ${node.type}:`,
@@ -723,9 +829,15 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
       return {
         finalConfig: {},
         isValid: false,
-        validationErrors: [error instanceof Error ? error.message : 'Unknown error'],
-        nodeReasoning: [`Failed to configure ${node.type}: ${error instanceof Error ? error.message : 'Unknown error'}`],
-        configOperations: []
+        validationErrors: [
+          error instanceof Error ? error.message : "Unknown error",
+        ],
+        nodeReasoning: [
+          `Failed to configure ${node.type}: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+        ],
+        configOperations: [],
       };
     }
   }
@@ -735,8 +847,11 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
    */
   private async getNodeEssentials(nodeType: string): Promise<any> {
     try {
-      this.deps.loggers.orchestrator.debug(`Getting essentials for ${nodeType}`);
-      const essentialsResult = await this.deps.nodeContextService.getNodeEssentials(nodeType);
+      this.deps.loggers.orchestrator.debug(
+        `Getting essentials for ${nodeType}`
+      );
+      const essentialsResult =
+        await this.deps.nodeContextService.getNodeEssentials(nodeType);
       return essentialsResult;
     } catch (error) {
       this.deps.loggers.orchestrator.error(
@@ -747,30 +862,33 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
     return null;
   }
 
-
   /**
    * Validate node configuration and return FULL validation details
    * Note: The NodeContextService will extract just the parameters object for MCP validation
    * since validate_node_operation expects only parameters, not the full node config structure
    */
   private async validateConfig(nodeType: string, config: any) {
-    const validation = await this.deps.nodeContextService.validateNodeConfig(nodeType, config);
-    
+    const validation = await this.deps.nodeContextService.validateNodeConfig(
+      nodeType,
+      config
+    );
+
     // Log validation details at debug level for troubleshooting
     if (!validation.isValid) {
       this.deps.loggers.orchestrator.debug(
         `Validation details for ${nodeType}:`,
-        { 
+        {
           isValid: validation.isValid,
           errors: validation.validationErrors,
           errorCount: validation.validationErrors?.length || 0,
           hasAutofix: !!validation.autofix,
           hasSuggestions: !!validation.suggestions,
-          fixableErrors: validation.errors?.filter((e: any) => e.fix).length || 0
+          fixableErrors:
+            validation.errors?.filter((e: any) => e.fix).length || 0,
         }
       );
     }
-    
+
     // Return the FULL validation result, not just isValid/errors
     // This includes autofix, suggestions, examples, etc.
     return {
@@ -783,7 +901,7 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
   /**
    * Attempt to fix validation errors for a node configuration
    * This is a shared method used by both task nodes and regular nodes
-   * 
+   *
    * @returns The fixed configuration and validation result
    */
   private async attemptToFixValidationErrors(
@@ -798,24 +916,27 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
   }> {
     let finalConfig = initialConfig;
     let currentValidation = validation;
-    
+
     // If already valid, return immediately
     if (currentValidation.isValid) {
       return {
         finalConfig,
         validation: currentValidation,
-        fixAttempts: 0
+        fixAttempts: 0,
       };
     }
-    
+
     // Check if we have missingRequiredFields that we can auto-fix FIRST
     if (currentValidation.fullValidation?.missingRequiredFields?.length > 0) {
-      const missingFields = currentValidation.fullValidation.missingRequiredFields;
-      
+      const missingFields =
+        currentValidation.fullValidation.missingRequiredFields;
+
       this.deps.loggers.orchestrator.info(
-        `   🔧 Attempting automatic fix for missing fields: ${missingFields.join(', ')}`
+        `   🔧 Attempting automatic fix for missing fields: ${missingFields.join(
+          ", "
+        )}`
       );
-      
+
       // Get cached essentials from session (need to get sessionId from somewhere)
       // For now, we'll try to get it from the node essentials we cached
       const { fixedConfig, fixes } = this.autoFixMissingFields(
@@ -823,18 +944,20 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
         missingFields,
         currentValidation.fullValidation // Pass the validation result which might have essentials
       );
-      
+
       if (fixes.length > 0) {
         this.deps.loggers.orchestrator.info(
           `   ✅ Auto-fixed ${fixes.length} missing fields`
         );
-        
+
         finalConfig = fixedConfig;
-        reasoning.push(`Auto-fixed missing fields: ${fixes.map(f => f.field).join(', ')}`);
-        
+        reasoning.push(
+          `Auto-fixed missing fields: ${fixes.map((f) => f.field).join(", ")}`
+        );
+
         // Re-validate after auto-fix
         currentValidation = await this.validateConfig(node.type, finalConfig);
-        
+
         if (currentValidation.isValid) {
           this.deps.loggers.orchestrator.info(
             `   ✅ Auto-fix successful! Configuration now valid for ${node.type}`
@@ -842,127 +965,60 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
           return {
             finalConfig,
             validation: currentValidation,
-            fixAttempts: 0
+            fixAttempts: 0,
           };
         }
       }
     }
-    
-    // Log initial validation result if not auto-fixed
-    this.deps.loggers.orchestrator.info(
-      `   ⚠️ Initial validation failed for ${node.type} (${node.id}):`
-    );
-    this.deps.loggers.orchestrator.info(
-      `      Errors: ${currentValidation.validationErrors.join(", ")}`
-    );
-    
-    // Try to fix validation errors with Claude
-    const MAX_FIX_ATTEMPTS = 2;
-    let fixAttempt = 0;
-    let previousErrors = JSON.stringify(currentValidation.validationErrors);
-    
-    while (!currentValidation.isValid && fixAttempt < MAX_FIX_ATTEMPTS) {
-      fixAttempt++;
-      this.deps.loggers.orchestrator.info(
-        `   🔧 Attempting to fix validation errors for ${node.type} (attempt ${fixAttempt}/${MAX_FIX_ATTEMPTS})`
-      );
-      
-      this.deps.loggers.orchestrator.info(
-        `      Errors to fix: ${currentValidation.validationErrors.join(", ")}`
-      );
-      
-      this.deps.loggers.orchestrator.info(
-        `      🤖 Calling Claude to generate fixes...`
-      );
-      
-      // Log what we have available for fixing
-      if (currentValidation.fullValidation) {
-        this.deps.loggers.orchestrator.info(
-          `         Validation data available: ${Object.keys(currentValidation.fullValidation).join(', ')}`
-        );
-      } else {
-        this.deps.loggers.orchestrator.info(
-          `         No validation data available - using error messages only`
-        );
-      }
-      
-      const fixResult = await this.deps.claudeService.generateConfigurationFixes({
-        nodeId: node.id,
-        nodeType: node.type,
-        currentConfig: finalConfig,
-        validationResult: currentValidation.fullValidation
-      });
-      
-      if (fixResult.success && fixResult.data) {
-        finalConfig = fixResult.data.fixedConfig;
-        reasoning.push(...fixResult.data.reasoning);
-        
-        this.deps.loggers.orchestrator.info(
-          `      🤖 Claude generated fix with reasoning:`
-        );
-        this.deps.loggers.orchestrator.info(
-          `         "${fixResult.data.reasoning.join('; ')}"`
-        );
-        
-        // Re-validate the fixed configuration
-        this.deps.loggers.orchestrator.info(
-          `      📝 Re-validating fixed configuration...`
-        );
-        currentValidation = await this.validateConfig(node.type, finalConfig);
-        
-        if (currentValidation.isValid) {
-          this.deps.loggers.orchestrator.info(
-            `      ✅ Fix successful! Configuration now valid for ${node.type}`
-          );
-          reasoning.push(`✅ ${node.type} configured and fixed successfully`);
-          break;
-        } else {
-          // Check if errors changed
-          const currentErrors = JSON.stringify(currentValidation.validationErrors);
-          this.deps.loggers.orchestrator.info(
-            `      ❌ Fix attempt ${fixAttempt} failed. Remaining errors:`
-          );
-          this.deps.loggers.orchestrator.info(
-            `         ${currentValidation.validationErrors.join(", ")}`
-          );
-          
-          if (currentErrors === previousErrors) {
-            this.deps.loggers.orchestrator.info(
-              `      ⚠️ Errors unchanged after fix - stopping attempts`
-            );
-            break;
-          }
-          previousErrors = currentErrors;
-        }
-      } else {
-        this.deps.loggers.orchestrator.info(
-          `      ❌ Claude failed to generate fixes for ${node.type} on attempt ${fixAttempt}`
-        );
-        if (fixResult.error) {
-          this.deps.loggers.orchestrator.info(
-            `         Error: ${fixResult.error.message}`
-          );
-        }
-        break;
-      }
-    }
-    
+
+    // If still invalid after auto-fix, replace with NoOp placeholder
     if (!currentValidation.isValid) {
-      this.deps.loggers.orchestrator.info(
-        `   ❌ Configuration still invalid after ${fixAttempt} fix attempt${fixAttempt !== 1 ? 's' : ''} for ${node.type}`
+      // Log that we're replacing the node
+      this.deps.loggers.orchestrator.warn(
+        `   ⚠️ Replacing ${node.type} with NoOp placeholder due to validation errors`
       );
       this.deps.loggers.orchestrator.info(
-        `      Final errors: ${currentValidation.validationErrors.join(", ")}`
+        `      Original node: ${node.type} (${node.id})`
       );
+      this.deps.loggers.orchestrator.info(
+        `      Purpose: ${node.purpose || "Not specified"}`
+      );
+      this.deps.loggers.orchestrator.info(
+        `      Validation errors: ${currentValidation.validationErrors.join(
+          ", "
+        )}`
+      );
+
+      // Create NoOp replacement configuration
+      const noOpConfig = this.createNoOpReplacement(
+        node,
+        currentValidation.validationErrors
+      );
+
+      // Update the final config to be the NoOp
+      finalConfig = noOpConfig;
+
+      // Add reasoning about the replacement
       reasoning.push(
-        `⚠️ ${node.type} configuration still has issues after ${fixAttempt} fix attempts: ${currentValidation.validationErrors.join(", ")}`
+        `⚠️ Replaced ${node.type} with NoOp placeholder due to validation errors that could not be auto-fixed. Manual configuration required.`
+      );
+
+      // Mark as valid since NoOp is always valid
+      currentValidation = {
+        isValid: true,
+        validationErrors: [],
+        fullValidation: { replacedWithNoOp: true },
+      };
+
+      this.deps.loggers.orchestrator.info(
+        `   ✅ Successfully replaced with NoOp placeholder - workflow can continue`
       );
     }
-    
+
     return {
       finalConfig,
       validation: currentValidation,
-      fixAttempts: fixAttempt
+      fixAttempts: 1,
     };
   }
 
@@ -974,36 +1030,36 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
     // Define node-level properties that should NOT be in parameters
     // Based on N8nNode interface in types/n8n/node.ts
     const NODE_LEVEL_PROPERTIES = [
-      'onError',
-      'retryOnFail',
-      'maxTries',
-      'waitBetweenTries',
-      'alwaysOutputData',
-      'continueOnFail',
-      'notes',
-      'typeVersion',
-      'disabled',
-      'executeOnce',
-      'credentials',
-      'color',
-      'issues'
+      "onError",
+      "retryOnFail",
+      "maxTries",
+      "waitBetweenTries",
+      "alwaysOutputData",
+      "continueOnFail",
+      "notes",
+      "typeVersion",
+      "disabled",
+      "executeOnce",
+      "credentials",
+      "color",
+      "issues",
     ];
-    
+
     const restructured: any = {
-      parameters: {}
+      parameters: {},
     };
-    
+
     // Separate node-level from parameter-level properties
     for (const [key, value] of Object.entries(flatConfig)) {
       if (NODE_LEVEL_PROPERTIES.includes(key)) {
         // Place at node level
         restructured[key] = value;
       } else {
-        // Place in parameters  
+        // Place in parameters
         restructured.parameters[key] = value;
       }
     }
-    
+
     return restructured;
   }
 
@@ -1013,33 +1069,33 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
    */
   private mergeTaskConfig(template: any, claudeConfig: any): any {
     const merged: any = {};
-    
+
     // First, copy all node-level properties from template
     for (const [key, value] of Object.entries(template)) {
-      if (key !== 'parameters') {
+      if (key !== "parameters") {
         merged[key] = value;
       }
     }
-    
+
     // Then apply Claude's config, which may override some values
     for (const [key, value] of Object.entries(claudeConfig)) {
-      if (key === 'parameters') {
+      if (key === "parameters") {
         // Merge parameters objects
         merged.parameters = {
           ...template.parameters,
-          ...claudeConfig.parameters
+          ...claudeConfig.parameters,
         };
       } else {
         // Override node-level properties if Claude specified them
         merged[key] = value;
       }
     }
-    
+
     // Ensure we have a parameters object even if empty
     if (!merged.parameters) {
       merged.parameters = {};
     }
-    
+
     return merged;
   }
 
@@ -1060,45 +1116,131 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
    * Prefetch node essentials for all nodes at the start of configuration
    * This allows us to cache them and reuse throughout the phase
    */
-  private async prefetchNodeEssentials(nodes: DiscoveredNode[]): Promise<Map<string, any>> {
+  private async prefetchNodeEssentials(
+    nodes: DiscoveredNode[]
+  ): Promise<Map<string, any>> {
     const essentialsMap = new Map<string, any>();
-    
+
+    // Get unique node types to avoid fetching duplicates
+    const uniqueNodeTypes = [...new Set(nodes.map((n) => n.type))];
+
     this.deps.loggers.orchestrator.info(
-      `   📚 Fetching node essentials for ${nodes.length} nodes...`
+      `   📚 Fetching node essentials for ${uniqueNodeTypes.length} unique node types (from ${nodes.length} total nodes)...`
     );
-    
-    // Fetch all essentials in parallel for better performance
-    const essentialPromises = nodes.map(async (node) => {
+
+    // Fetch essentials for each unique node type
+    const essentialPromises = uniqueNodeTypes.map(async (nodeType) => {
       try {
-        const essentials = await this.deps.nodeContextService.getNodeEssentials(node.type);
+        const essentials = await this.deps.nodeContextService.getNodeEssentials(
+          nodeType
+        );
         if (essentials) {
           this.deps.loggers.orchestrator.info(
-            `      ✅ Fetched essentials for ${node.type}`
+            `      ✅ Fetched essentials for ${nodeType}`
           );
-          return { type: node.type, essentials };
+          return { type: nodeType, essentials };
         }
       } catch (error) {
         this.deps.loggers.orchestrator.warn(
-          `      ⚠️ Failed to fetch essentials for ${node.type}: ${error}`
+          `      ⚠️ Failed to fetch essentials for ${nodeType}: ${error}`
         );
       }
       return null;
     });
-    
+
     const results = await Promise.all(essentialPromises);
-    
+
     // Store in map
     for (const result of results) {
       if (result) {
         essentialsMap.set(result.type, result.essentials);
       }
     }
-    
+
     this.deps.loggers.orchestrator.info(
-      `   ✅ Fetched essentials for ${essentialsMap.size}/${nodes.length} nodes`
+      `   ✅ Fetched essentials for ${essentialsMap.size}/${uniqueNodeTypes.length} unique node types`
     );
-    
+
     return essentialsMap;
+  }
+
+  /**
+   * Create a NoOp placeholder node configuration
+   * This replaces nodes that fail validation and can't be auto-fixed
+   */
+  private createNoOpReplacement(
+    node: DiscoveredNode,
+    validationErrors: string[]
+  ): any {
+    const noOpConfig = {
+      // Keep basic node structure
+      parameters: {},
+      // NoOp nodes need minimal configuration
+      typeVersion: 1,
+      // Add a detailed note explaining the replacement
+      notes: `This node replaced ${node.type} with purpose "${
+        node.purpose || "Not specified"
+      }" (original category: ${node.category || "unknown"}) due to validation errors our agent could not handle. Please manually replace this node.\n\nOriginal validation errors:\n${validationErrors
+        .map((e) => `- ${e}`)
+        .join("\n")}`,
+    };
+
+    this.deps.loggers.orchestrator.debug(
+      `Created NoOp replacement for ${node.type} with notes about validation errors`
+    );
+
+    return noOpConfig;
+  }
+
+  /**
+   * Create a NoOp replacement for JSON parsing failures
+   * This handles cases where Claude returns explanatory text instead of valid JSON
+   */
+  private createNoOpForParsingFailure(
+    node: DiscoveredNode,
+    error?: string
+  ): {
+    finalConfig: any;
+    isValid: boolean;
+    validationErrors: string[];
+    nodeReasoning: string[];
+    configOperations: any[];
+    allOperations: any[];
+  } {
+    this.deps.loggers.orchestrator.info(
+      `   🔧 Creating NoOp replacement for ${node.type} due to JSON parsing failure`
+    );
+
+    const noOpConfig = {
+      parameters: {},
+      typeVersion: 1,
+      notes: `This node replaced ${node.type} with purpose "${
+        node.purpose || "Not specified"
+      }" (original category: ${node.category || "unknown"}) due to JSON parsing failure. Our agent could not generate valid configuration JSON.\n\nOriginal error:\n${
+        error || "Unknown parsing error"
+      }\n\nPlease manually replace this node with proper configuration.`,
+    };
+
+    return {
+      finalConfig: noOpConfig,
+      isValid: true, // NoOp is always valid
+      validationErrors: [],
+      nodeReasoning: [
+        `⚠️ Replaced ${node.type} with NoOp due to JSON parsing failure: ${
+          error || "Unknown error"
+        }`,
+      ],
+      configOperations: [
+        {
+          type: "configureNode",
+          nodeId: node.id,
+          nodeType: "n8n-nodes-base.noOp", // This will be handled by the calling code
+          config: noOpConfig,
+          reasoning: `JSON parsing failed for ${node.type}, replaced with NoOp placeholder`,
+        },
+      ],
+      allOperations: [],
+    };
   }
 
   /**
@@ -1112,55 +1254,60 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
   ): { fixedConfig: any; fixes: MissingFieldFix[] } {
     const fixedConfig = JSON.parse(JSON.stringify(config)); // Deep clone
     const fixes: MissingFieldFix[] = [];
-    
+
     if (!fixedConfig.parameters) {
       fixedConfig.parameters = {};
     }
-    
+
     for (const fieldDisplayName of missingFields) {
       // Special case for common fields
-      if (fieldDisplayName.toLowerCase() === 'schema') {
-        fixedConfig.parameters.schema = 'public';
+      if (fieldDisplayName.toLowerCase() === "schema") {
+        fixedConfig.parameters.schema = "public";
         fixes.push({
           field: fieldDisplayName,
-          parameterName: 'schema',
-          defaultValue: 'public',
-          source: 'default'
+          parameterName: "schema",
+          defaultValue: "public",
+          source: "default",
         });
         this.deps.loggers.orchestrator.info(
           `         ➕ Added default: schema = "public"`
         );
         continue;
       }
-      
+
       // Try to find the field in node essentials
       if (nodeEssentials?.properties) {
-        for (const [paramName, paramDef] of Object.entries(nodeEssentials.properties)) {
+        for (const [paramName, paramDef] of Object.entries(
+          nodeEssentials.properties
+        )) {
           const def = paramDef as any;
-          if (def.displayName === fieldDisplayName || 
-              def.name === fieldDisplayName ||
-              paramName === fieldDisplayName) {
+          if (
+            def.displayName === fieldDisplayName ||
+            def.name === fieldDisplayName ||
+            paramName === fieldDisplayName
+          ) {
             // Found the field! Add default value
-            const defaultValue = def.default || 
-                                this.getDefaultForType(def.type) || 
-                                '';
-            
+            const defaultValue =
+              def.default || this.getDefaultForType(def.type) || "";
+
             fixedConfig.parameters[paramName] = defaultValue;
             fixes.push({
               field: fieldDisplayName,
               parameterName: paramName,
               defaultValue,
-              source: 'essentials'
+              source: "essentials",
             });
             this.deps.loggers.orchestrator.info(
-              `         ➕ Added from essentials: ${paramName} = ${JSON.stringify(defaultValue)}`
+              `         ➕ Added from essentials: ${paramName} = ${JSON.stringify(
+                defaultValue
+              )}`
             );
             break;
           }
         }
       }
     }
-    
+
     return { fixedConfig, fixes };
   }
 
@@ -1169,14 +1316,20 @@ export class ConfigurationRunner implements PhaseRunner<ConfigurationInput, Conf
    */
   private getDefaultForType(type: string): any {
     switch (type) {
-      case 'string': return '';
-      case 'number': return 0;
-      case 'boolean': return false;
-      case 'options': return '';
-      case 'collection': return {};
-      case 'fixedCollection': return {};
-      default: return '';
+      case "string":
+        return "";
+      case "number":
+        return 0;
+      case "boolean":
+        return false;
+      case "options":
+        return "";
+      case "collection":
+        return {};
+      case "fixedCollection":
+        return {};
+      default:
+        return "";
     }
   }
-
 }

@@ -118,7 +118,7 @@ Return ONLY a JSON object with this structure:
 
 ### Phases Instructions:
 
-- **Group connected nodes** by function: trigger (start), data_collection (fetch/read), data_processing (transform/filter), decision (if/switch/router), aggregation (merge/combine), notification (send/alert), storage (save/update), integration (sync/update external), error_handling (catch/retry errors)
+- **Group connected nodes** by function: trigger (start), data_collection (fetch/read), data_processing (transform/filter), decision (if/switch/router), aggregation (merge/combine inputs), notification (send/alert), storage (save/update), integration (sync/update external), error_handling (catch/retry errors)
 - **Order chronologically** from workflow start to finish - phases array should follow execution order
 - **Every node ID must appear** in exactly one phase - group 1-5 related nodes per phase
 - **Row assignment**: Nodes connected to a trigger stay in that trigger's row. There can only be a row 2 if there is a second trigger.
@@ -128,4 +128,5 @@ Return ONLY a JSON object with this structure:
 1. **Preserve Configuration**: Use the exact parameters from each configured node
 2. **Logical Flow**: Ensure connections follow the user's intent
 3. **Complete Structure**: Include all required fields (name, nodes, connections, settings)
-4. **Valid JSON**: Ensure output is valid, parseable JSON
+4. IF nodes MUST have different destinations for true/false outputs
+5. **Valid JSON**: Ensure output is valid, parseable JSON

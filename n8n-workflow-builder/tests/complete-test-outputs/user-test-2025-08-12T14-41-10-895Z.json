@@ -1,0 +1,386 @@
+{
+  "name": "Daily Shopify Inventory Management & Multi-Platform Sync",
+  "nodes": [
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        470,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        },
+        "triggerAtHour": 9
+      },
+      "name": "Daily Inventory Check",
+      "typeVersion": 1.2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "shopify_1",
+      "type": "n8n-nodes-base.shopify",
+      "position": [
+        870,
+        300
+      ],
+      "parameters": {
+        "resource": "product",
+        "operation": "getAll",
+        "authentication": "oAuth2"
+      },
+      "name": "Get Shopify Products",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1270,
+        200
+      ],
+      "parameters": {
+        "url": "https://sellingpartnerapi-na.amazon.com/inventory/v1/summaries",
+        "method": "PUT",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "inventoryDetails",
+              "value": "={{ $json }}"
+            }
+          ]
+        }
+      },
+      "name": "Sync Amazon Stock",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "httpRequest_2",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1470,
+        400
+      ],
+      "parameters": {
+        "url": "https://api.ebay.com/sell/inventory/v1/inventory_item",
+        "method": "PUT",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.eBayApi.accessToken }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "availability",
+              "value": "={{ { quantity: $json.inventory_quantity } }}"
+            }
+          ]
+        }
+      },
+      "name": "Sync eBay Stock",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 2
+    },
+    {
+      "id": "if_1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1870,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "low_stock_check",
+              "leftValue": "={{ $json.inventory_quantity }}",
+              "rightValue": 10,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ]
+        }
+      },
+      "name": "Check Low Stock",
+      "typeVersion": 2.2
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        2270,
+        200
+      ],
+      "parameters": {
+        "text": "{{ `🚨 *Low Stock Alert*\n\nProduct: ${$json.title}\nSKU: ${$json.sku}\nCurrent Stock: ${$json.inventory_quantity}\nReorder Level: 10\n\n⚠️ Immediate restocking required!` }}",
+        "channel": "#inventory-alerts",
+        "username": "Inventory Bot"
+      },
+      "name": "Send Low Stock Alert",
+      "typeVersion": 2.3,
+      "onError": "continueRegularOutput",
+      "maxTries": 2
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        2470,
+        400
+      ],
+      "parameters": {
+        "fromEmail": "inventory@company.com",
+        "toEmail": "{{ $json.supplier_email }}",
+        "subject": "{{ 'Purchase Order - ' + $json.title + ' (SKU: ' + $json.sku + ')' }}",
+        "message": "{{ 'Dear Supplier,\\n\\nWe need to place an urgent purchase order:\\n\\nProduct: ' + $json.title + '\\nSKU: ' + $json.sku + '\\nCurrent Stock: ' + $json.inventory_quantity + '\\nQuantity Needed: ' + Math.max(50 - $json.inventory_quantity, 25) + '\\n\\nPlease confirm availability and delivery timeline.\\n\\nBest regards,\\nInventory Management Team' }}",
+        "options": {
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "name": "Send Purchase Order",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "googleSheets_1",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        2870,
+        500
+      ],
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": "1234567890abcdef",
+        "sheetName": "Daily Inventory",
+        "range": "A:F",
+        "keyRowIndex": 1,
+        "dataMode": "defineBelow",
+        "valueInputMode": "USER_ENTERED",
+        "values": {
+          "values": [
+            {
+              "Date": "={{ new Date().toISOString().split('T')[0] }}",
+              "SKU": "={{ $json.sku }}",
+              "Product": "={{ $json.title }}",
+              "Stock Level": "={{ $json.inventory_quantity }}",
+              "Amazon Synced": "Yes",
+              "eBay Synced": "Yes"
+            }
+          ]
+        }
+      },
+      "name": "Update Inventory Sheet",
+      "typeVersion": 4.6
+    },
+    {
+      "id": "sticky_triggers_1755009670351",
+      "name": "Triggers Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        390,
+        -40
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nDaily schedule trigger that initiates the inventory management workflow at 9 AM every day to ensure consistent monitoring and synchronization across all platforms.",
+        "height": 680,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_inputs_1755009670351",
+      "name": "Inputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        790,
+        -40
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nRetrieves all product inventory data from Shopify including stock levels, SKUs, and product details needed for multi-platform synchronization and monitoring.",
+        "height": 680,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_integration_1755009670351",
+      "name": "Integration Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1230,
+        -40
+      ],
+      "parameters": {
+        "content": "## 🔗 Integration\nSynchronizes inventory levels with external marketplaces (Amazon Seller Central and eBay) to maintain consistent stock information across all sales channels.",
+        "height": 680,
+        "width": 430,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_decision_1755009670351",
+      "name": "Decision Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1790,
+        -40
+      ],
+      "parameters": {
+        "content": "## 🔀 Decision\nEvaluates inventory levels against reorder thresholds to identify products requiring immediate attention for restocking and supplier communication.",
+        "height": 680,
+        "width": 310,
+        "color": 2
+      }
+    },
+    {
+      "id": "sticky_outputs_1755009670351",
+      "name": "Outputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2230,
+        -40
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends automated alerts and purchase orders when low stock conditions are detected, notifying team via Slack and suppliers via email for immediate action.",
+        "height": 680,
+        "width": 430,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_storage_1755009670351",
+      "name": "Storage Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2790,
+        -40
+      ],
+      "parameters": {
+        "content": "## 💾 Storage\nCreates daily inventory snapshots in Google Sheets with comprehensive data including stock levels, sync status, and timestamps for historical tracking and reporting.",
+        "height": 680,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_promo_1755009670351",
+      "name": "Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        50,
+        -40
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 680,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Daily Inventory Check": {
+      "main": [
+        [
+          {
+            "node": "Get Shopify Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Shopify Products": {
+      "main": [
+        [
+          {
+            "node": "Sync Amazon Stock",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sync eBay Stock",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check Low Stock",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Inventory Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Low Stock": {
+      "main": [
+        [
+          {
+            "node": "Send Low Stock Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Purchase Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T14:41:10.896Z",
+  "versionId": null
+}

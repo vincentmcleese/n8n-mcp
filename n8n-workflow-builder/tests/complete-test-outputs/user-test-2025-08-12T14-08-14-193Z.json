@@ -1,0 +1,468 @@
+{
+  "name": "Typeform Survey Feedback Analysis & Reporting Workflow",
+  "nodes": [
+    {
+      "id": "typeformTrigger_1",
+      "type": "n8n-nodes-base.typeformTrigger",
+      "position": [
+        470,
+        300
+      ],
+      "parameters": {
+        "formId": "your-form-id",
+        "onlyAnswers": true,
+        "authentication": "accessToken"
+      },
+      "name": "Typeform Survey Response",
+      "typeVersion": 1.1
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        1070,
+        300
+      ],
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "model": "gpt-3.5-turbo",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Analyze survey feedback and return JSON with: {\"theme\": \"UX|pricing|support|other\", \"sentiment\": \"positive|negative|neutral\", \"priority\": \"high|medium|low\"}"
+            },
+            {
+              "role": "user",
+              "content": "={{ $json.feedback }}"
+            }
+          ]
+        }
+      },
+      "name": "AI Categorization & Sentiment",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "postgres_1",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        1470,
+        300
+      ],
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "survey_responses",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "response_id": "={{ $('Typeform Survey Response').item.json.token }}",
+            "feedback": "={{ $('Typeform Survey Response').item.json.feedback }}",
+            "theme": "={{ JSON.parse($json.choices[0].message.content).theme }}",
+            "sentiment": "={{ JSON.parse($json.choices[0].message.content).sentiment }}",
+            "priority": "={{ JSON.parse($json.choices[0].message.content).priority }}",
+            "created_at": "={{ new Date().toISOString() }}"
+          }
+        }
+      },
+      "name": "Store Survey Data",
+      "typeVersion": 2.6,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "if_1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1870,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ JSON.parse($('AI Categorization & Sentiment').item.json.choices[0].message.content).sentiment }}",
+              "rightValue": "negative",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "leftValue": "={{ JSON.parse($('AI Categorization & Sentiment').item.json.choices[0].message.content).priority }}",
+              "rightValue": "high",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        }
+      },
+      "name": "Check for Issues",
+      "typeVersion": 2.2
+    },
+    {
+      "id": "jira_1",
+      "type": "n8n-nodes-base.jira",
+      "position": [
+        2270,
+        200
+      ],
+      "parameters": {
+        "resource": "issue",
+        "operation": "create",
+        "project": {
+          "key": "DEV"
+        },
+        "issueType": {
+          "name": "Bug"
+        },
+        "summary": "Survey Feedback Issue: {{ JSON.parse($('AI Categorization & Sentiment').item.json.choices[0].message.content).theme }}",
+        "description": "Customer feedback: {{ $('Typeform Survey Response').item.json.feedback }}\n\nSentiment: {{ JSON.parse($('AI Categorization & Sentiment').item.json.choices[0].message.content).sentiment }}\nPriority: {{ JSON.parse($('AI Categorization & Sentiment').item.json.choices[0].message.content).priority }}",
+        "labels": [
+          "survey-feedback",
+          "={{ JSON.parse($('AI Categorization & Sentiment').item.json.choices[0].message.content).theme.toLowerCase() }}"
+        ]
+      },
+      "name": "Create Jira Issue",
+      "typeVersion": 1
+    },
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        670,
+        600
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "month",
+              "triggerAtDay": 1,
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "name": "Monthly Report Trigger",
+      "typeVersion": 1.2
+    },
+    {
+      "id": "postgres_2",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        2670,
+        600
+      ],
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "survey_responses",
+        "where": {
+          "values": [
+            {
+              "column": "created_at",
+              "condition": ">=",
+              "value": "={{ new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString() }}"
+            }
+          ]
+        }
+      },
+      "name": "Query Monthly Data",
+      "typeVersion": 2.6
+    },
+    {
+      "id": "apiTemplateIo_1",
+      "type": "n8n-nodes-base.apiTemplateIo",
+      "position": [
+        3070,
+        600
+      ],
+      "parameters": {
+        "resource": "pdf",
+        "operation": "create",
+        "pdfTemplateId": "your-template-id",
+        "templateData": {
+          "uxFeedback": "={{ $json.filter(item => item.theme === 'UX').length }}",
+          "pricingFeedback": "={{ $json.filter(item => item.theme === 'pricing').length }}",
+          "supportFeedback": "={{ $json.filter(item => item.theme === 'support').length }}",
+          "positiveSentiment": "={{ $json.filter(item => item.sentiment === 'positive').length }}",
+          "negativeSentiment": "={{ $json.filter(item => item.sentiment === 'negative').length }}",
+          "neutralSentiment": "={{ $json.filter(item => item.sentiment === 'neutral').length }}",
+          "totalResponses": "={{ $json.length }}",
+          "reportMonth": "={{ new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }}"
+        }
+      },
+      "name": "Generate PDF Report",
+      "typeVersion": 1
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        3470,
+        600
+      ],
+      "parameters": {
+        "fromEmail": "reports@company.com",
+        "toEmail": "management@company.com",
+        "subject": "Monthly Survey Feedback Report - {{ new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }}",
+        "message": "Please find attached the monthly survey feedback analysis report.",
+        "attachments": "={{ $json.download_url }}",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "data"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Send Report to Management",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "sticky_triggers_row1_1755007693520",
+      "name": "Triggers Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        430,
+        -40
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWorkflow starts when a new survey response is submitted through Typeform, capturing customer feedback for analysis.\n\nMonthly scheduled trigger initiates the reporting workflow to generate comprehensive feedback analysis reports for management review.",
+        "height": 680,
+        "width": 430,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_row1_1755007693520",
+      "name": "Transform Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        990,
+        -40
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nAI analyzes the survey feedback to categorize it into themes (UX, pricing, support) and determines sentiment (positive, negative, neutral) with priority levels.",
+        "height": 680,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_storage_row1_1755007693520",
+      "name": "Storage Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1390,
+        -40
+      ],
+      "parameters": {
+        "content": "## 💾 Storage\nProcessed survey data with AI-generated categories and sentiment analysis is stored in PostgreSQL database for future reporting and analysis.",
+        "height": 680,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_decision_row1_1755007693520",
+      "name": "Decision Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1790,
+        -40
+      ],
+      "parameters": {
+        "content": "## 🔀 Decision\nEvaluates if the feedback requires immediate attention by checking for negative sentiment or high priority issues that should create development tickets.",
+        "height": 680,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_integration_row1_1755007693520",
+      "name": "Integration Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2190,
+        -40
+      ],
+      "parameters": {
+        "content": "## 🔗 Integration\nCreates Jira tickets for negative or high-priority feedback to ensure development team addresses customer concerns promptly.",
+        "height": 680,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_inputs_row1_1755007693520",
+      "name": "Inputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2590,
+        -40
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nRetrieves all survey responses from the past month including categorized themes, sentiment analysis, and associated metadata for report generation.",
+        "height": 680,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_aggregation_row1_1755007693520",
+      "name": "Aggregation Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2990,
+        -40
+      ],
+      "parameters": {
+        "content": "## 🔄 Aggregation\nGenerates professional PDF reports summarizing monthly survey feedback with theme breakdowns, sentiment analysis, and key metrics using APITemplate.io.",
+        "height": 680,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_outputs_row1_1755007693520",
+      "name": "Outputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3390,
+        -40
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nDelivers the monthly PDF report to management via email, providing insights into customer feedback trends and development team actions.",
+        "height": 680,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_promo_1755007693521",
+      "name": "Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        50,
+        -40
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 680,
+        "width": 280,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Typeform Survey Response": {
+      "main": [
+        [
+          {
+            "node": "AI Categorization & Sentiment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Categorization & Sentiment": {
+      "main": [
+        [
+          {
+            "node": "Store Survey Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Survey Data": {
+      "main": [
+        [
+          {
+            "node": "Check for Issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Issues": {
+      "main": [
+        [
+          {
+            "node": "Create Jira Issue",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Monthly Report Trigger": {
+      "main": [
+        [
+          {
+            "node": "Query Monthly Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Monthly Data": {
+      "main": [
+        [
+          {
+            "node": "Generate PDF Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate PDF Report": {
+      "main": [
+        [
+          {
+            "node": "Send Report to Management",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T14:08:14.194Z",
+  "versionId": null
+}

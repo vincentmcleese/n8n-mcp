@@ -1,0 +1,357 @@
+{
+  "name": "Podcast Content Distribution Workflow",
+  "nodes": [
+    {
+      "id": "rssFeedReadTrigger_1",
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "position": [
+        470,
+        300
+      ],
+      "parameters": {
+        "feedUrl": "https://example.com/podcast/rss.xml"
+      },
+      "name": "RSS Feed Monitor",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        870,
+        300
+      ],
+      "parameters": {
+        "url": "={{ $json.enclosure.url }}",
+        "method": "GET"
+      },
+      "name": "Download Audio File",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "httpRequest_2",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1270,
+        300
+      ],
+      "parameters": {
+        "url": "https://api.openai.com/v1/audio/transcriptions",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.openAiApi.apiKey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $binary.data }}"
+            },
+            {
+              "name": "model",
+              "value": "whisper-1"
+            }
+          ]
+        }
+      },
+      "name": "Transcribe Audio",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        1470,
+        300
+      ],
+      "parameters": {
+        "model": "gpt-4",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a content marketing expert. Generate a blog article, LinkedIn post, and Twitter thread from the provided podcast transcript."
+            },
+            {
+              "role": "user",
+              "content": "Transcript: {{ $json.text }}\n\nPlease create:\n1. A blog article (800-1200 words)\n2. A LinkedIn post (300-500 words)\n3. A Twitter thread (5-7 tweets)\n\nReturn as JSON with keys: blogArticle, linkedInPost, twitterThread"
+            }
+          ]
+        }
+      },
+      "name": "Generate Content",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "twitter_1",
+      "type": "n8n-nodes-base.twitter",
+      "position": [
+        1870,
+        200
+      ],
+      "parameters": {
+        "text": "={{ $json.twitterThread }}",
+        "resource": "tweet",
+        "operation": "create"
+      },
+      "name": "Post Twitter Thread",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "linkedIn_1",
+      "type": "n8n-nodes-base.linkedIn",
+      "position": [
+        2070,
+        300
+      ],
+      "parameters": {
+        "text": "={{ $json.linkedInPost }}",
+        "resource": "post",
+        "operation": "create"
+      },
+      "name": "Post LinkedIn",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "notion_1",
+      "type": "n8n-nodes-base.notion",
+      "position": [
+        2470,
+        400
+      ],
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "create",
+        "databaseId": "{{ $credentials.notion.databaseId }}",
+        "properties": {
+          "Title": {
+            "title": [
+              {
+                "text": {
+                  "content": "{{ $('RSS Feed Monitor').first().json.title }}"
+                }
+              }
+            ]
+          },
+          "Transcript": {
+            "rich_text": [
+              {
+                "text": {
+                  "content": "{{ $('Transcribe Audio').first().json.text }}"
+                }
+              }
+            ]
+          },
+          "Blog Article": {
+            "rich_text": [
+              {
+                "text": {
+                  "content": "{{ $json.blogArticle }}"
+                }
+              }
+            ]
+          },
+          "LinkedIn Post": {
+            "rich_text": [
+              {
+                "text": {
+                  "content": "{{ $json.linkedInPost }}"
+                }
+              }
+            ]
+          },
+          "Twitter Thread": {
+            "rich_text": [
+              {
+                "text": {
+                  "content": "{{ $json.twitterThread }}"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "name": "Archive in Notion",
+      "typeVersion": 2.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "sticky_triggers_1755010253489",
+      "name": "Triggers Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        390,
+        -40
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nMonitors RSS feed for new podcast episodes and automatically triggers the workflow when new content is detected.",
+        "height": 580,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_inputs_1755010253489",
+      "name": "Inputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        790,
+        -40
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nDownloads the podcast audio file from the RSS feed URL to prepare it for transcription processing.",
+        "height": 580,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1755010253489",
+      "name": "Transform Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1230,
+        -40
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nTranscribes the podcast audio using OpenAI Whisper API to convert speech to text, then generates marketing content including blog articles, LinkedIn posts, and Twitter threads using GPT-4.",
+        "height": 580,
+        "width": 430,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_integration_1755010253489",
+      "name": "Integration Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1830,
+        -40
+      ],
+      "parameters": {
+        "content": "## 🔗 Integration\nDistributes the generated content across social media platforms by posting to Twitter and LinkedIn simultaneously.",
+        "height": 580,
+        "width": 430,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_storage_1755010253489",
+      "name": "Storage Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2390,
+        -40
+      ],
+      "parameters": {
+        "content": "## 💾 Storage\nArchives all generated content including the original transcript, blog article, and social media posts in Notion database for future reference and content management.",
+        "height": 580,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_promo_1755010253490",
+      "name": "Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        50,
+        -40
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 580,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "RSS Feed Monitor": {
+      "main": [
+        [
+          {
+            "node": "Download Audio File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Audio File": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Audio": {
+      "main": [
+        [
+          {
+            "node": "Generate Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Content": {
+      "main": [
+        [
+          {
+            "node": "Post Twitter Thread",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Post LinkedIn",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Archive in Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T14:50:53.983Z",
+  "versionId": null
+}

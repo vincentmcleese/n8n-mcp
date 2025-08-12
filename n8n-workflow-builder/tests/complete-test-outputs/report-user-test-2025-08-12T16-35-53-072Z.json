@@ -1,0 +1,42 @@
+{
+  "testName": "User Test",
+  "prompt": "automate something useful",
+  "generatedAt": "2025-08-12T16:35:53.073Z",
+  "workflowFile": "user-test-2025-08-12T16-35-53-072Z.json",
+  "workflow": {
+    "name": "Automated Data Export Pipeline",
+    "nodeCount": 10,
+    "connectionCount": 4
+  },
+  "phases": {
+    "discovery": {
+      "success": true,
+      "nodeCount": 5,
+      "duration": 0
+    },
+    "configuration": {
+      "success": true,
+      "configuredCount": 5,
+      "duration": 0
+    },
+    "building": {
+      "success": true,
+      "duration": 0
+    },
+    "validation": {
+      "success": true,
+      "attempts": 1,
+      "issuesFixed": 0,
+      "duration": 0
+    },
+    "documentation": {
+      "success": true,
+      "stickyNotesAdded": 5,
+      "duration": 0
+    }
+  },
+  "overall": {
+    "success": true,
+    "totalDuration": 0
+  }
+}

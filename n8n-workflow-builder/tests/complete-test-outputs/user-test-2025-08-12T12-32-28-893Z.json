@@ -1,0 +1,337 @@
+{
+  "name": "Apollo Lead Enrichment & Outreach Automation",
+  "nodes": [
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        420,
+        300
+      ],
+      "parameters": {
+        "qs": {
+          "page_size": "100",
+          "sort_by_field": "created_at",
+          "sort_ascending": "false"
+        },
+        "url": "https://api.apollo.io/v1/mixed_people/search",
+        "method": "GET",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "apolloApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "page_size",
+              "value": "100"
+            },
+            {
+              "name": "sort_by_field",
+              "value": "created_at"
+            }
+          ]
+        }
+      },
+      "name": "Apollo Lead Retrieval",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "linkedIn_1",
+      "type": "n8n-nodes-base.linkedIn",
+      "position": [
+        820,
+        200
+      ],
+      "parameters": {
+        "person": "={{ $json.linkedinProfileId || $json.email }}",
+        "postAs": "person",
+        "resource": "post"
+      },
+      "name": "LinkedIn Profile Enrichment",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "clearbit_1",
+      "type": "n8n-nodes-base.clearbit",
+      "position": [
+        1020,
+        400
+      ],
+      "parameters": {
+        "domain": "={{ $json.company_domain || $json.domain }}",
+        "resource": "company"
+      },
+      "name": "Company Data Enrichment",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        1220,
+        300
+      ],
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4",
+        "messages": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are a lead scoring AI. Analyze the provided lead data and score from 1-100 based on ICP criteria. Return JSON with score and reasoning."
+            },
+            {
+              "role": "user",
+              "content": "Lead Data: {{ JSON.stringify($json) }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "name": "AI Lead Scoring",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "if_1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1620,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "score_threshold",
+              "leftValue": "={{ $json.score }}",
+              "rightValue": 70,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "name": "Lead Score Filter",
+      "typeVersion": 2.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "gmail_1",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        2020,
+        250
+      ],
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "message": "={{ $json.personalizedEmail }}",
+        "subject": "{{ $json.emailSubject }}",
+        "operation": "send"
+      },
+      "name": "Send Cold Email",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "hubspot_1",
+      "type": "n8n-nodes-base.hubspot",
+      "position": [
+        2220,
+        400
+      ],
+      "parameters": {
+        "email": "={{ $json.email }}",
+        "resource": "contact",
+        "operation": "upsert",
+        "additionalFields": {
+          "leadScore": "={{ $json.score }}",
+          "lastContactDate": "={{ new Date().toISOString() }}",
+          "leadSource": "Apollo.io"
+        }
+      },
+      "name": "Log Activity in HubSpot",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        1750,
+        300
+      ],
+      "parameters": {
+        "rule": "interval",
+        "notice": "",
+        "interval": 5,
+        "unit": "days"
+      },
+      "name": "Follow-up Reminder Scheduler",
+      "typeVersion": 1.2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "sticky_inputs_1755001948297",
+      "name": "Inputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        340,
+        -90
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nRetrieves new leads from Apollo.io API using HTTP request. This is the initial data source that feeds the entire lead processing pipeline.",
+        "height": 630,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1755001948298",
+      "name": "Transform Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        780,
+        -90
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nEnriches lead data by fetching LinkedIn profile information and company data from Clearbit. These parallel processes enhance lead profiles with social and firmographic data.\n\nUses OpenAI to analyze enriched lead data and generate ICP-based scores. The AI evaluates leads against ideal customer profile criteria to prioritize outreach efforts.",
+        "height": 630,
+        "width": 630,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_decision_1755001948298",
+      "name": "Decision Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        -90
+      ],
+      "parameters": {
+        "content": "## 🔀 Decision\nFilters leads based on AI scoring results, only allowing high-scoring leads (70+ score) to proceed to outreach. This ensures resources focus on the most promising prospects.",
+        "height": 630,
+        "width": 310,
+        "color": 3
+      }
+    },
+    {
+      "id": "sticky_outputs_1755001948298",
+      "name": "Outputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1980,
+        -90
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends personalized cold emails to qualified leads via Gmail and logs all activity in HubSpot CRM. This dual action ensures outreach execution and proper record keeping.",
+        "height": 630,
+        "width": 430,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Apollo Lead Retrieval": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn Profile Enrichment",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Company Data Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn Profile Enrichment": {
+      "main": [
+        [
+          {
+            "node": "AI Lead Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company Data Enrichment": {
+      "main": [
+        [
+          {
+            "node": "AI Lead Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Lead Scoring": {
+      "main": [
+        [
+          {
+            "node": "Lead Score Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Score Filter": {
+      "main": [
+        [
+          {
+            "node": "Send Cold Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Activity in HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Cold Email": {
+      "main": [
+        [
+          {
+            "node": "Follow-up Reminder Scheduler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T12:32:28.894Z",
+  "versionId": null
+}

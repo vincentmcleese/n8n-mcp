@@ -1,0 +1,313 @@
+{
+  "name": "Xero Overdue Invoice Payment Reminder Workflow",
+  "nodes": [
+    {
+      "id": "xero_1",
+      "type": "n8n-nodes-base.xero",
+      "position": [
+        470,
+        300
+      ],
+      "parameters": {
+        "limit": 50,
+        "filters": {
+          "where": "Status=\"AUTHORISED\" AND DueDate<DateTime.Now"
+        }
+      },
+      "name": "Get Overdue Invoices",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        870,
+        300
+      ],
+      "parameters": {
+        "url": "={{ 'https://api.xero.com/api.xro/2.0/Payments?where=Invoice.InvoiceID=Guid(\"' + $json.InvoiceID + '\")&order=Date%20DESC' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "xeroOAuth2Api"
+      },
+      "name": "Check Payment History",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "if_1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1270,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.AmountDue }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ]
+        }
+      },
+      "name": "Check Payment Status",
+      "typeVersion": 2.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1670,
+        300
+      ],
+      "parameters": {
+        "fromEmail": "finance@company.com",
+        "toEmail": "={{ $json.Contact.EmailAddress }}",
+        "subject": "={{ 'Payment Reminder - Invoice ' + $json.InvoiceNumber }}",
+        "text": "={{ 'Dear ' + $json.Contact.Name + ',\\n\\nWe hope this message finds you well. We wanted to reach out regarding Invoice ' + $json.InvoiceNumber + ' dated ' + $json.Date + ', which appears to be overdue.\\n\\nInvoice Details:\\n- Invoice Number: ' + $json.InvoiceNumber + '\\n- Amount Due: $' + $json.AmountDue + '\\n- Due Date: ' + $json.DueDate + '\\n\\nIf you have already processed this payment, please disregard this message. If you have any questions or need assistance, please don\\'t hesitate to contact us.\\n\\nThank you for your prompt attention to this matter.\\n\\nBest regards,\\nAccounts Receivable Team' }}"
+      },
+      "name": "Send Payment Reminder",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1870,
+        300
+      ],
+      "parameters": {
+        "channel": "#finance",
+        "text": "={{ `🔔 Overdue Invoice Alert\n\n*Customer:* ${$json.Contact.Name}\n*Invoice:* ${$json.InvoiceNumber}\n*Amount Due:* $${$json.AmountDue}\n*Days Overdue:* ${Math.floor((new Date() - new Date($json.DueDate)) / (1000 * 60 * 60 * 24))}\n*Due Date:* ${$json.DueDate}\n\nPayment reminder email has been sent to ${$json.Contact.EmailAddress}` }}",
+        "otherOptions": {}
+      },
+      "name": "Notify Finance Team",
+      "typeVersion": 2.3,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "wait_1",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        1750,
+        200
+      ],
+      "parameters": {
+        "unit": "days",
+        "amount": 14,
+        "resume": "timeInterval"
+      },
+      "name": "Wait 14 Days",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "hubspot_1",
+      "type": "n8n-nodes-base.hubspot",
+      "position": [
+        2270,
+        300
+      ],
+      "parameters": {
+        "resource": "engagement",
+        "operation": "create",
+        "type": "call",
+        "properties": {
+          "hs_task_subject": "={{ 'Follow-up call for overdue invoice ' + $json.InvoiceNumber }}",
+          "hs_task_body": "={{ 'Customer ' + $json.Contact.Name + ' has an overdue invoice (' + $json.InvoiceNumber + ') for $' + $json.AmountDue + '. Payment reminder was sent 14 days ago. Please call to discuss payment arrangements.' }}",
+          "hs_task_priority": "HIGH",
+          "hs_task_status": "NOT_STARTED",
+          "hs_task_type": "CALL"
+        }
+      },
+      "name": "Create Follow-up Call Task",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "sticky_triggers_row1_1755006402130",
+      "name": "Triggers Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        390,
+        60
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nRetrieves overdue invoices from Xero to initiate the payment reminder workflow. This serves as the trigger point for processing unpaid invoices.",
+        "height": 400,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_inputs_row1_1755006402130",
+      "name": "Inputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        790,
+        60
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nFetches payment history for each overdue invoice to understand the customer's payment behavior and current status.",
+        "height": 400,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_decision_row1_1755006402130",
+      "name": "Decision Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1190,
+        60
+      ],
+      "parameters": {
+        "content": "## 🔀 Decision\nEvaluates whether the invoice still has an outstanding balance and determines if payment reminder actions should proceed.",
+        "height": 400,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_outputs_row1_1755006402130",
+      "name": "Outputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1630,
+        60
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends polite payment reminder email to customers and notifies the finance team via Slack about overdue invoices requiring attention.",
+        "height": 400,
+        "width": 430,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_integration_row1_1755006402130",
+      "name": "Integration Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2190,
+        60
+      ],
+      "parameters": {
+        "content": "## 🔗 Integration\nWaits 14 days and then creates a follow-up call task in HubSpot for unpaid invoices to ensure persistent collection efforts.",
+        "height": 400,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_promo_1755006402131",
+      "name": "Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        50,
+        60
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 400,
+        "width": 280,
+        "color": 3
+      }
+    }
+  ],
+  "connections": {
+    "Get Overdue Invoices": {
+      "main": [
+        [
+          {
+            "node": "Check Payment History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Payment History": {
+      "main": [
+        [
+          {
+            "node": "Check Payment Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Payment Status": {
+      "main": [
+        [
+          {
+            "node": "Send Payment Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Payment Reminder": {
+      "main": [
+        [
+          {
+            "node": "Notify Finance Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Finance Team": {
+      "main": [
+        [
+          {
+            "node": "Wait 14 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 14 Days": {
+      "main": [
+        [
+          {
+            "node": "Create Follow-up Call Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T13:46:42.563Z",
+  "versionId": null
+}

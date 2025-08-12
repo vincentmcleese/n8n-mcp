@@ -1,0 +1,42 @@
+{
+  "testName": "User Test-FAILED",
+  "prompt": "“After a Zoom meeting ends, download the transcript, summarize key decisions, extract action items with deadlines, and add them directly to my project management tool.”",
+  "generatedAt": "2025-08-12T09:04:27.514Z",
+  "workflowFile": "user-test-failed-2025-08-12T09-04-27-513Z.json",
+  "workflow": {
+    "name": "Zoom Meeting Transcript to Action Items Workflow",
+    "nodeCount": 6,
+    "connectionCount": 4
+  },
+  "phases": {
+    "discovery": {
+      "success": true,
+      "nodeCount": 6,
+      "duration": 0
+    },
+    "configuration": {
+      "success": true,
+      "configuredCount": 6,
+      "duration": 0
+    },
+    "building": {
+      "success": true,
+      "duration": 0
+    },
+    "validation": {
+      "success": true,
+      "attempts": 2,
+      "issuesFixed": 0,
+      "duration": 0
+    },
+    "documentation": {
+      "success": true,
+      "stickyNotesAdded": 4,
+      "duration": 0
+    }
+  },
+  "overall": {
+    "success": true,
+    "totalDuration": 0
+  }
+}

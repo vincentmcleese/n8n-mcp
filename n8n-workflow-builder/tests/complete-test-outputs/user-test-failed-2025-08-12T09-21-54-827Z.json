@@ -1,0 +1,281 @@
+{
+  "name": "Daily News Digest - What's New Today",
+  "nodes": [
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "cronExpression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Daily Morning Trigger",
+      "typeVersion": 1.2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "reddit_1",
+      "type": "n8n-nodes-base.reddit",
+      "position": [
+        650,
+        200
+      ],
+      "parameters": {
+        "limit": 10,
+        "category": "top",
+        "resource": "post",
+        "operation": "getAll",
+        "subreddit": "technology,programming,artificial,startups,entrepreneur"
+      },
+      "name": "Reddit Posts Scraper",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "rssFeedRead_1",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "url": "https://techcrunch.com/feed/"
+      },
+      "name": "Industry Blogs RSS Reader",
+      "typeVersion": 1.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "rssFeedRead_2",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "position": [
+        1050,
+        350
+      ],
+      "parameters": {
+        "url": "https://www.wired.com/feed/"
+      },
+      "name": "Industry Blog 2",
+      "typeVersion": 1.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "rssFeedRead_3",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "position": [
+        1250,
+        400
+      ],
+      "parameters": {
+        "url": "https://feeds.feedburner.com/venturebeat/SZYF"
+      },
+      "name": "Industry Blog 3",
+      "typeVersion": 1.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "googleCloudNaturalLanguage_1",
+      "type": "n8n-nodes-base.googleCloudNaturalLanguage",
+      "position": [
+        1450,
+        450
+      ],
+      "parameters": {
+        "source": "content",
+        "content": "trending technology topics today",
+        "operation": "analyzeSentiment"
+      },
+      "name": "Google Trends Analyzer",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "merge_1",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        1850,
+        300
+      ],
+      "parameters": {
+        "mode": "append"
+      },
+      "name": "Content Aggregator",
+      "typeVersion": 3.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        2250,
+        300
+      ],
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "model": "gpt-3.5-turbo",
+        "prompt": "You are a professional news curator. Create a concise, engaging daily digest summarizing the most important and interesting content from Reddit posts, industry blogs, and trending topics. Format it as a newsletter with clear sections and bullet points.\n\nContent to summarize:\n={{ JSON.stringify($json) }}"
+      },
+      "name": "AI Content Summarizer",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        2650,
+        300
+      ],
+      "parameters": {
+        "fromEmail": "digest@yourcompany.com",
+        "toEmail": "team@yourcompany.com",
+        "subject": "What's New Today - {{ new Date().toLocaleDateString() }}",
+        "message": "={{ $json.choices[0].message.content }}",
+        "options": {
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "name": "Daily Digest Email Sender",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    }
+  ],
+  "connections": {
+    "Daily Morning Trigger": {
+      "main": [
+        [
+          {
+            "node": "Reddit Posts Scraper",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Industry Blogs RSS Reader",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Industry Blog 2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Industry Blog 3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google Trends Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit Posts Scraper": {
+      "main": [
+        [
+          {
+            "node": "Content Aggregator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Industry Blogs RSS Reader": {
+      "main": [
+        [
+          {
+            "node": "Content Aggregator",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Industry Blog 2": {
+      "main": [
+        [
+          {
+            "node": "Content Aggregator",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Industry Blog 3": {
+      "main": [
+        [
+          {
+            "node": "Content Aggregator",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Google Trends Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Content Aggregator",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Content Aggregator": {
+      "main": [
+        [
+          {
+            "node": "AI Content Summarizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Content Summarizer": {
+      "main": [
+        [
+          {
+            "node": "Daily Digest Email Sender",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T09:21:54.827Z",
+  "versionId": null
+}

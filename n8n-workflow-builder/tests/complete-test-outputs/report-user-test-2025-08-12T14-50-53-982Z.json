@@ -1,0 +1,42 @@
+{
+  "testName": "User Test",
+  "prompt": "Create an n8n workflow that: 1) fetches a new podcast episode from RSS, 2) transcribes it via Whisper API, 3) generates blog articles, LinkedIn posts, and Twitter threads from the transcript, 4) posts them to respective channels, and 5) stores all assets in Notion for archive.",
+  "generatedAt": "2025-08-12T14:50:53.985Z",
+  "workflowFile": "user-test-2025-08-12T14-50-53-982Z.json",
+  "workflow": {
+    "name": "Podcast Content Distribution Workflow",
+    "nodeCount": 13,
+    "connectionCount": 4
+  },
+  "phases": {
+    "discovery": {
+      "success": true,
+      "nodeCount": 9,
+      "duration": 0
+    },
+    "configuration": {
+      "success": true,
+      "configuredCount": 9,
+      "duration": 0
+    },
+    "building": {
+      "success": true,
+      "duration": 0
+    },
+    "validation": {
+      "success": true,
+      "attempts": 3,
+      "issuesFixed": 0,
+      "duration": 0
+    },
+    "documentation": {
+      "success": true,
+      "stickyNotesAdded": 6,
+      "duration": 0
+    }
+  },
+  "overall": {
+    "success": true,
+    "totalDuration": 0
+  }
+}

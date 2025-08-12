@@ -1,0 +1,318 @@
+{
+  "name": "Crypto Price Monitor with Sentiment Alerts",
+  "nodes": [
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        420,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 10
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "typeVersion": 1.2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        820,
+        300
+      ],
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/simple/price?ids=sui,ethereum,bitcoin&vs_currencies=usd&include_24hr_change=true",
+        "method": "GET",
+        "options": {}
+      },
+      "name": "Fetch Crypto Prices",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "memoryBufferWindow_1",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "position": [
+        1020,
+        300
+      ],
+      "parameters": {
+        "sessionKey": "crypto_price_history",
+        "sessionIdType": "customKey",
+        "windowSize": 6
+      },
+      "name": "Price History Memory",
+      "typeVersion": 1.3
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1420,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Calculate percentage price changes for SUI, ETH, and BTC over the last hour\nconst currentPrices = $input.first().json;\nconst memory = $('Price History Memory').first().json;\n\n// Extract current prices\nconst prices = {\n  sui: currentPrices.sui?.usd || 0,\n  ethereum: currentPrices.ethereum?.usd || 0,\n  bitcoin: currentPrices.bitcoin?.usd || 0\n};\n\n// Get previous prices from memory (if available)\nconst previousPrices = memory?.previousPrices || prices;\n\n// Calculate percentage changes\nconst changes = {\n  sui: previousPrices.sui ? ((prices.sui - previousPrices.sui) / previousPrices.sui) * 100 : 0,\n  ethereum: previousPrices.ethereum ? ((prices.ethereum - previousPrices.ethereum) / previousPrices.ethereum) * 100 : 0,\n  bitcoin: previousPrices.bitcoin ? ((prices.bitcoin - previousPrices.bitcoin) / previousPrices.bitcoin) * 100 : 0\n};\n\n// Check if any change exceeds 3%\nconst significantChanges = [];\nif (Math.abs(changes.sui) >= 3) significantChanges.push({ coin: 'SUI', change: changes.sui, price: prices.sui });\nif (Math.abs(changes.ethereum) >= 3) significantChanges.push({ coin: 'ETH', change: changes.ethereum, price: prices.ethereum });\nif (Math.abs(changes.bitcoin) >= 3) significantChanges.push({ coin: 'BTC', change: changes.bitcoin, price: prices.bitcoin });\n\nreturn {\n  currentPrices: prices,\n  previousPrices: previousPrices,\n  changes: changes,\n  significantChanges: significantChanges,\n  hasSignificantChange: significantChanges.length > 0,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "name": "Calculate Price Changes",
+      "typeVersion": 2
+    },
+    {
+      "id": "if_1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1820,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.hasSignificantChange }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ]
+        }
+      },
+      "name": "Check Price Movement",
+      "typeVersion": 2.2
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        2220,
+        200
+      ],
+      "parameters": {
+        "modelId": "gpt-3.5-turbo",
+        "messages": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are a cryptocurrency market analyst. Provide a brief sentiment summary based on recent market movements."
+            },
+            {
+              "role": "user",
+              "content": "={{ 'Crypto prices have moved significantly: ' + $('Calculate Price Changes').first().json.significantChanges.map(c => c.coin + ': ' + (c.change > 0 ? '+' : '') + c.change.toFixed(2) + '%').join(', ') + '. Provide a brief 2-sentence sentiment summary about what this might indicate for the crypto market.' }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 100
+        }
+      },
+      "name": "Generate Sentiment Summary",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "telegram_1",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        2620,
+        200
+      ],
+      "parameters": {
+        "text": "={{ '🚨 *Crypto Price Alert* 🚨\\n\\n' + $('Calculate Price Changes').first().json.significantChanges.map(c => '*' + c.coin + '*: ' + (c.change > 0 ? '📈 +' : '📉 ') + c.change.toFixed(2) + '% ($' + c.price.toLocaleString() + ')').join('\\n') + '\\n\\n💭 *Market Sentiment:*\\n' + $('Generate Sentiment Summary').first().json.choices[0].message.content + '\\n\\n⏰ ' + new Date().toLocaleString() }}",
+        "chatId": "@your_telegram_chat_id",
+        "parseMode": "Markdown"
+      },
+      "name": "Send Alert",
+      "typeVersion": 1.2
+    },
+    {
+      "id": "sticky_triggers_1754999090808",
+      "name": "Triggers Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        340,
+        -90
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nInitiates the workflow every 10 minutes to monitor cryptocurrency prices. This ensures regular price checking without manual intervention.",
+        "height": 450,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754999090809",
+      "name": "Inputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        780,
+        -90
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nFetches current cryptocurrency prices for SUI, ETH, and BTC from CoinGecko API. Also retrieves and stores historical price data in memory for comparison calculations.",
+        "height": 450,
+        "width": 430,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754999090809",
+      "name": "Transform Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        -90
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nCalculates percentage price changes over the last hour by comparing current prices with stored historical data. Identifies which cryptocurrencies have moved more than 3%.",
+        "height": 450,
+        "width": 310,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_decision_1754999090810",
+      "name": "Decision Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1740,
+        -90
+      ],
+      "parameters": {
+        "content": "## 🔀 Decision\nEvaluates whether any cryptocurrency has experienced a significant price movement (>3%) that warrants sending an alert notification.",
+        "height": 450,
+        "width": 310,
+        "color": 3
+      }
+    },
+    {
+      "id": "sticky_integration_1754999090810",
+      "name": "Integration Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2140,
+        -90
+      ],
+      "parameters": {
+        "content": "## 🔗 Integration\nGenerates an AI-powered sentiment summary of the market movements using OpenAI to provide context for the price changes.",
+        "height": 450,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_outputs_1754999090811",
+      "name": "Outputs Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2540,
+        -90
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends a formatted Telegram message containing the price movement details and sentiment analysis to alert the user of significant market changes.",
+        "height": 450,
+        "width": 310,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Crypto Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Crypto Prices": {
+      "main": [
+        [
+          {
+            "node": "Price History Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Price History Memory": {
+      "main": [
+        [
+          {
+            "node": "Calculate Price Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Price Changes": {
+      "main": [
+        [
+          {
+            "node": "Check Price Movement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Price Movement": {
+      "main": [
+        [
+          {
+            "node": "Generate Sentiment Summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Generate Sentiment Summary": {
+      "main": [
+        [
+          {
+            "node": "Send Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T11:44:51.433Z",
+  "versionId": null
+}

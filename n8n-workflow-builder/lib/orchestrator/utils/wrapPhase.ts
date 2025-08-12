@@ -103,6 +103,19 @@ export function wrapPhase<TInput, TOutput extends PhaseResult<any>>(
       // Call the actual phase implementation
       const result = await runMethod.call(this, input, context);
       
+      // CRITICAL: Persist operations before returning to ensure they're available for next phase
+      // This fixes the race condition where operations weren't being saved between phases
+      if (result.success && result.operations && result.operations.length > 0) {
+        loggers.orchestrator.debug(
+          `Persisting ${result.operations.length} operations from ${phaseName} phase`
+        );
+        await sessionRepo.persistOperations(sessionId, result.operations);
+        await sessionRepo.save(sessionId); // Force flush to ensure operations are saved
+        loggers.orchestrator.debug(
+          `Successfully persisted operations for ${phaseName} phase`
+        );
+      }
+      
       // Log successful completion
       const duration = Date.now() - startTime;
       loggers.orchestrator.info(

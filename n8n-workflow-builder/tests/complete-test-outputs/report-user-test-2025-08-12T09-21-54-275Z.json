@@ -1,0 +1,42 @@
+{
+  "testName": "User Test",
+  "prompt": "“Every morning, scrape top posts from 5 chosen subreddits, 3 industry blogs, and trending Google searches, summarize them with AI, and send a single ‘What’s New Today’ email.”",
+  "generatedAt": "2025-08-12T09:21:54.277Z",
+  "workflowFile": "user-test-2025-08-12T09-21-54-275Z.json",
+  "workflow": {
+    "name": "Daily News Digest - What's New Today",
+    "nodeCount": 14,
+    "connectionCount": 8
+  },
+  "phases": {
+    "discovery": {
+      "success": true,
+      "nodeCount": 7,
+      "duration": 0
+    },
+    "configuration": {
+      "success": true,
+      "configuredCount": 7,
+      "duration": 0
+    },
+    "building": {
+      "success": true,
+      "duration": 0
+    },
+    "validation": {
+      "success": true,
+      "attempts": 2,
+      "issuesFixed": 0,
+      "duration": 0
+    },
+    "documentation": {
+      "success": true,
+      "stickyNotesAdded": 5,
+      "duration": 0
+    }
+  },
+  "overall": {
+    "success": true,
+    "totalDuration": 0
+  }
+}

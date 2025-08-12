@@ -1,0 +1,42 @@
+{
+  "testName": "User Test",
+  "prompt": "“Monitor SUI, ETH, and BTC prices every 10 minutes, and if they move more than 3% in an hour, send me a Telegram alert with a quick sentiment summary from news headlines",
+  "generatedAt": "2025-08-12T11:44:51.435Z",
+  "workflowFile": "user-test-2025-08-12T11-44-51-433Z.json",
+  "workflow": {
+    "name": "Crypto Price Monitor with Sentiment Alerts",
+    "nodeCount": 13,
+    "connectionCount": 6
+  },
+  "phases": {
+    "discovery": {
+      "success": true,
+      "nodeCount": 7,
+      "duration": 0
+    },
+    "configuration": {
+      "success": true,
+      "configuredCount": 7,
+      "duration": 0
+    },
+    "building": {
+      "success": true,
+      "duration": 0
+    },
+    "validation": {
+      "success": true,
+      "attempts": 3,
+      "issuesFixed": 0,
+      "duration": 0
+    },
+    "documentation": {
+      "success": true,
+      "stickyNotesAdded": 6,
+      "duration": 0
+    }
+  },
+  "overall": {
+    "success": true,
+    "totalDuration": 0
+  }
+}

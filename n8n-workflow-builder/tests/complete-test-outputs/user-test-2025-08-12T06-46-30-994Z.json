@@ -1,0 +1,320 @@
+{
+  "name": "Smart Meter Daily Usage Monitor",
+  "nodes": [
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "cronExpression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Daily Trigger",
+      "typeVersion": 1.2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        650,
+        300
+      ],
+      "parameters": {
+        "url": "https://api.smartmeter.com/v1/usage/daily",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "smartMeterApi",
+        "options": {
+          "timeout": 30000,
+          "retry": {
+            "enabled": true,
+            "maxTries": 3,
+            "waitBetween": 1000
+          }
+        }
+      },
+      "name": "Fetch Smart Meter Data",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1050,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Compare current electricity usage with last week's data\nconst currentData = $input.all();\nconst today = new Date();\nconst lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);\n\n// Extract current and last week usage\nconst currentUsage = currentData[0].json.dailyUsage || 0;\nconst lastWeekUsage = currentData[0].json.lastWeekUsage || 0;\n\n// Calculate percentage increase\nconst percentageIncrease = lastWeekUsage > 0 ? ((currentUsage - lastWeekUsage) / lastWeekUsage) * 100 : 0;\nconst isHighUsage = percentageIncrease > 20;\n\n// Prepare output data\nconst outputData = {\n  currentUsage,\n  lastWeekUsage,\n  percentageIncrease: Math.round(percentageIncrease * 100) / 100,\n  isHighUsage,\n  date: today.toISOString().split('T')[0],\n  usageDifference: Math.round((currentUsage - lastWeekUsage) * 100) / 100\n};\n\nreturn [outputData];"
+      },
+      "name": "Compare Usage Data",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "if_1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1650,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "condition1",
+              "leftValue": "={{ $json.isHighUsage }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ]
+        }
+      },
+      "name": "Check High Usage",
+      "typeVersion": 2.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        1250,
+        200
+      ],
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-3.5-turbo",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an energy efficiency expert. Analyze electricity usage data and provide concise insights about high usage with possible causes and quick fixes."
+            },
+            {
+              "role": "user",
+              "content": "{{ 'Current usage: ' + $json.currentUsage + 'kWh, Last week: ' + $json.lastWeekUsage + 'kWh, Increase: ' + $json.percentageIncrease + '%. Provide 2-3 possible causes and quick fixes in under 200 characters for WhatsApp.' }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 150
+        }
+      },
+      "name": "Generate Usage Insights",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "whatsApp_1",
+      "type": "n8n-nodes-base.whatsApp",
+      "position": [
+        2050,
+        200
+      ],
+      "parameters": {
+        "resource": "message",
+        "phoneNumberId": "123456789012345",
+        "recipientPhoneNumber": "+1234567890",
+        "textBody": "{{ `🚨 *High Electricity Usage Alert*\n\n📊 Today: ${$('Compare Usage Data').item.json.currentUsage}kWh\n📈 Last Week: ${$('Compare Usage Data').item.json.lastWeekUsage}kWh\n⚡ Increase: ${$('Compare Usage Data').item.json.percentageIncrease}%\n\n💡 *AI Insights:*\n${$json.choices[0].message.content}\n\n_Smart Meter Monitor_` }}",
+        "phoneNumber": "+1234567890"
+      },
+      "name": "Send Usage Alert",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "sticky_triggers_1754981190511",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        -90
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nDaily schedule trigger that initiates the workflow at 8 AM every day to monitor electricity usage patterns.",
+        "height": 530,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754981190511",
+      "name": "Inputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        610,
+        -90
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nFetches current electricity usage data from the smart meter API with retry logic and error handling.",
+        "height": 530,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754981190511",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1010,
+        -90
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcesses and compares current usage with last week's data, calculating percentage increase and determining if usage is unusually high.\n\nUses AI to analyze usage patterns and generate insights about possible causes and quick fixes for high electricity consumption.",
+        "height": 530,
+        "width": 430,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_decision_1754981190511",
+      "name": "Decision Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1610,
+        -90
+      ],
+      "parameters": {
+        "content": "## 🔀 Decision\nEvaluates whether electricity usage is unusually high (>20% increase) and branches the workflow accordingly.",
+        "height": 530,
+        "width": 310,
+        "color": 3
+      }
+    },
+    {
+      "id": "sticky_outputs_1754981190511",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2010,
+        -90
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends WhatsApp alert with usage statistics and AI-generated insights when electricity consumption is unusually high.",
+        "height": 530,
+        "width": 310,
+        "color": 7
+      }
+    },
+    {
+      "id": "sticky_promo_1754981190511",
+      "name": "Ghost Team Promo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -90
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 530,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Smart Meter Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Smart Meter Data": {
+      "main": [
+        [
+          {
+            "node": "Compare Usage Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare Usage Data": {
+      "main": [
+        [
+          {
+            "node": "Check High Usage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check High Usage": {
+      "main": [
+        [
+          {
+            "node": "Generate Usage Insights",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Generate Usage Insights": {
+      "main": [
+        [
+          {
+            "node": "Send Usage Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T06:46:30.994Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "“Pull daily electricity usage data from my smart meter API, compare to last week, and if usage is unusually high, send me a WhatsApp message with possible causes and quick fixes.”",
+    "testName": "User Test",
+    "generatedAt": "2025-08-12T06:46:30.994Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 6
+  }
+}

@@ -1,12 +1,12 @@
 /**
  * Prompt Builder for Building Phase
- * 
+ *
  * Builds workflow assembly prompts from configured nodes
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import type { ConfiguredNode } from '@/lib/orchestrator/contracts/configuration.types';
+import * as fs from "fs";
+import * as path from "path";
+import type { ConfiguredNode } from "@/types/orchestrator/configuration";
 
 export interface BuildingPromptInput {
   userIntent: string;
@@ -22,21 +22,21 @@ export interface BuildingPromptParts {
 export class BuildingPromptBuilder {
   private templatePath: string;
   private template: string | null = null;
-  
+
   constructor() {
     this.templatePath = path.join(
       process.cwd(),
-      'services/claude/prompts/buildprompt.md'
+      "services/claude/prompts/buildprompt.md"
     );
   }
-  
+
   /**
    * Load the prompt template
    */
   private loadTemplate(): string {
     if (!this.template) {
       try {
-        this.template = fs.readFileSync(this.templatePath, 'utf-8');
+        this.template = fs.readFileSync(this.templatePath, "utf-8");
       } catch (error) {
         // Fallback to inline template if file not found
         this.template = this.getInlineTemplate();
@@ -44,24 +44,24 @@ export class BuildingPromptBuilder {
     }
     return this.template;
   }
-  
+
   /**
    * Build workflow assembly prompt - returns properly structured prompt parts
    */
   buildPrompt(input: BuildingPromptInput): BuildingPromptParts {
     const { userIntent, configuredNodes } = input;
     const template = this.loadTemplate();
-    
+
     // Format configured nodes for prompt
     const nodesDescription = this.formatConfiguredNodes(configuredNodes);
-    
+
     // Split template into system context and user request
     // The template contains the rules and format, we add the specific task
     const systemPrompt = template
       .replace(/\[USER_INTENT\]/g, userIntent)
-      .replace('[CONFIGURED_NODES]', nodesDescription)
-      .replace('[NODE_COUNT]', configuredNodes.length.toString());
-    
+      .replace("[CONFIGURED_NODES]", nodesDescription)
+      .replace("[NODE_COUNT]", configuredNodes.length.toString());
+
     // User message is the specific request
     const userPrompt = `Build a complete n8n workflow that achieves: "${userIntent}"
     
@@ -69,52 +69,54 @@ Using these ${configuredNodes.length} configured nodes:
 ${nodesDescription}
 
 Connect them logically and return the complete workflow JSON.`;
-    
+
     return {
       system: systemPrompt,
       user: userPrompt,
-      prefill: '{\n  "name": "'
+      prefill: '{\n  "name": "',
     };
   }
-  
+
   /**
    * Format configured nodes for the prompt
    */
   private formatConfiguredNodes(nodes: ConfiguredNode[]): string {
-    return nodes.map((node, index) => {
-      // Config is just passed as-is from configuration phase
-      const config = node.config || {};
-      
-      // Create a summary of the configuration
-      const configSummary = this.createConfigSummary(config);
-      
-      return `${index + 1}. **${node.type}** (ID: ${node.id})
-   - Purpose: ${node.purpose || 'Process data'}
+    return nodes
+      .map((node, index) => {
+        // Config is just passed as-is from configuration phase
+        const config = node.config || {};
+
+        // Create a summary of the configuration
+        const configSummary = this.createConfigSummary(config);
+
+        return `${index + 1}. **${node.type}** (ID: ${node.id})
+   - Purpose: ${node.purpose || "Process data"}
    - Configuration: ${configSummary}`;
-    }).join('\n\n');
+      })
+      .join("\n\n");
   }
-  
+
   /**
    * Create a summary of key configuration parameters
    */
   private createConfigSummary(config: any): string {
-    if (!config || typeof config !== 'object') {
-      return 'No configuration';
+    if (!config || typeof config !== "object") {
+      return "No configuration";
     }
-    
+
     // Just provide a compact JSON representation
     try {
       const jsonStr = JSON.stringify(config, null, 2);
       // Limit to reasonable length for prompt
       if (jsonStr.length > 200) {
-        return jsonStr.slice(0, 200) + '...';
+        return jsonStr.slice(0, 200) + "...";
       }
       return jsonStr;
     } catch {
-      return 'Complex configuration';
+      return "Complex configuration";
     }
   }
-  
+
   /**
    * Inline template as fallback
    */

@@ -1,0 +1,42 @@
+{
+  "testName": "User Test",
+  "prompt": "Create a research agent which uses apify to scrape top performing LinkedIn posts and YouTube videos based on a keyword which I put in. Then, output a all the links to the top performing posts and YouTube videos into a Google sheets",
+  "generatedAt": "2025-08-12T15:08:10.669Z",
+  "workflowFile": "user-test-2025-08-12T15-08-10-668Z.json",
+  "workflow": {
+    "name": "Research Agent - LinkedIn & YouTube Scraper to Google Sheets",
+    "nodeCount": 13,
+    "connectionCount": 4
+  },
+  "phases": {
+    "discovery": {
+      "success": true,
+      "nodeCount": 7,
+      "duration": 0
+    },
+    "configuration": {
+      "success": true,
+      "configuredCount": 7,
+      "duration": 0
+    },
+    "building": {
+      "success": true,
+      "duration": 0
+    },
+    "validation": {
+      "success": true,
+      "attempts": 3,
+      "issuesFixed": 0,
+      "duration": 0
+    },
+    "documentation": {
+      "success": true,
+      "stickyNotesAdded": 6,
+      "duration": 0
+    }
+  },
+  "overall": {
+    "success": true,
+    "totalDuration": 0
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "testName": "User Test",
+  "prompt": "Build an n8n workflow that: 1) collects survey responses from Typeform, 2) uses AI to categorize feedback into themes (e.g., UX, pricing, support), 3) tags sentiment, 4) logs issues in Jira for dev team, and 5) sends monthly reports to management in PDF form",
+  "generatedAt": "2025-08-12T14:08:14.196Z",
+  "workflowFile": "user-test-2025-08-12T14-08-14-193Z.json",
+  "workflow": {
+    "name": "Typeform Survey Feedback Analysis & Reporting Workflow",
+    "nodeCount": 18,
+    "connectionCount": 7
+  },
+  "phases": {
+    "discovery": {
+      "success": true,
+      "nodeCount": 10,
+      "duration": 0
+    },
+    "configuration": {
+      "success": true,
+      "configuredCount": 10,
+      "duration": 0
+    },
+    "building": {
+      "success": true,
+      "duration": 0
+    },
+    "validation": {
+      "success": true,
+      "attempts": 5,
+      "issuesFixed": 0,
+      "duration": 0
+    },
+    "documentation": {
+      "success": true,
+      "stickyNotesAdded": 9,
+      "duration": 0
+    }
+  },
+  "overall": {
+    "success": true,
+    "totalDuration": 0
+  }
+}

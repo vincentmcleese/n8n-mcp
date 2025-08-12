@@ -1,0 +1,42 @@
+{
+  "testName": "User Test",
+  "prompt": "use apify to scrape linkedin jobs every monday and find the hiring mangers from the scrape object and add them to a google sheet",
+  "generatedAt": "2025-08-12T16:15:01.303Z",
+  "workflowFile": "user-test-2025-08-12T16-15-01-299Z.json",
+  "workflow": {
+    "name": "LinkedIn Job Scraper with Hiring Manager Extraction",
+    "nodeCount": 9,
+    "connectionCount": 3
+  },
+  "phases": {
+    "discovery": {
+      "success": true,
+      "nodeCount": 4,
+      "duration": 0
+    },
+    "configuration": {
+      "success": true,
+      "configuredCount": 4,
+      "duration": 0
+    },
+    "building": {
+      "success": true,
+      "duration": 0
+    },
+    "validation": {
+      "success": true,
+      "attempts": 2,
+      "issuesFixed": 0,
+      "duration": 0
+    },
+    "documentation": {
+      "success": true,
+      "stickyNotesAdded": 5,
+      "duration": 0
+    }
+  },
+  "overall": {
+    "success": true,
+    "totalDuration": 0
+  }
+}

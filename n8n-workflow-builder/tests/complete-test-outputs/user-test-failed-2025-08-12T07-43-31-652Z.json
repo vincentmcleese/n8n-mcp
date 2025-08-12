@@ -1,0 +1,224 @@
+{
+  "name": "Zoom Meeting Transcript to Action Items Workflow",
+  "nodes": [
+    {
+      "id": "zoom_1",
+      "type": "n8n-nodes-base.zoom",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "resource": "meeting",
+        "meetingId": "={{ $json.meetingId }}",
+        "operation": "get"
+      },
+      "name": "Zoom Meeting Trigger",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        650,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Zoom Meeting Trigger').item.json.transcript_url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "zoomApi",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "name": "Download Transcript",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        1050,
+        300
+      ],
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "model": "gpt-4",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an expert meeting analyst. Extract key decisions, action items with deadlines, and create a structured summary from meeting transcripts."
+            },
+            {
+              "role": "user",
+              "content": "Analyze this meeting transcript and extract: 1) Key decisions made, 2) Action items with assigned persons and deadlines, 3) Important discussion points. Format as JSON with fields: decisions[], action_items[{item, assignee, deadline, priority}], summary. Transcript: {{ $('Download Transcript').item.json.body }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 2000
+        }
+      },
+      "name": "Analyze Transcript",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1250,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform Zoom transcript analysis into structured action items for project management\nconst aiResponse = $('Analyze Transcript').item.json.choices[0].message.content;\nlet parsedData;\n\ntry {\n  parsedData = JSON.parse(aiResponse);\n} catch (error) {\n  // Fallback parsing if JSON is malformed\n  parsedData = {\n    decisions: [],\n    action_items: [],\n    summary: aiResponse\n  };\n}\n\n// Transform action items into format suitable for project management tools\nconst transformedItems = [];\n\nif (parsedData.action_items && Array.isArray(parsedData.action_items)) {\n  parsedData.action_items.forEach((item, index) => {\n    transformedItems.push({\n      id: `action_${index + 1}`,\n      title: item.item || `Action Item ${index + 1}`,\n      description: `Meeting Decision: ${parsedData.summary}\\n\\nAction: ${item.item}`,\n      assignee: item.assignee || 'Unassigned',\n      due_date: item.deadline || null,\n      priority: item.priority || 'medium',\n      source: 'zoom_meeting',\n      meeting_date: new Date().toISOString().split('T')[0]\n    });\n  });\n}\n\nreturn {\n  action_items: transformedItems,\n  decisions: parsedData.decisions || [],\n  meeting_summary: parsedData.summary || '',\n  total_items: transformedItems.length\n};"
+      },
+      "name": "Transform Action Items",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "asana_1",
+      "type": "n8n-nodes-base.asana",
+      "position": [
+        1650,
+        300
+      ],
+      "parameters": {
+        "resource": "task",
+        "operation": "create",
+        "workspace": "{{ $vars.asana_workspace_id }}",
+        "name": "{{ $('Transform Action Items').item.json.action_items[0].title }}",
+        "projectId": "{{ $vars.asana_project_id }}",
+        "assignee": "{{ $('Transform Action Items').item.json.action_items[0].assignee }}",
+        "dueOn": "{{ $('Transform Action Items').item.json.action_items[0].due_date }}",
+        "additionalFields": {
+          "priority": "{{ $('Transform Action Items').item.json.action_items[0].priority }}"
+        }
+      },
+      "name": "Create Asana Tasks",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "notes": "{{ $('Transform Action Items').item.json.action_items[0].description }}"
+    },
+    {
+      "id": "httpRequest_2",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1850,
+        500
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "{{ $vars.pm_tool_webhook_url }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "meeting_summary",
+              "value": "={{ $('Transform Action Items').item.json.meeting_summary }}"
+            },
+            {
+              "name": "decisions",
+              "value": "={{ $('Transform Action Items').item.json.decisions }}"
+            },
+            {
+              "name": "action_items_count",
+              "value": "={{ $('Transform Action Items').item.json.total_items }}"
+            },
+            {
+              "name": "source",
+              "value": "zoom_meeting_workflow"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "name": "Send Summary to PM Tool",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 2
+    }
+  ],
+  "connections": {
+    "Zoom Meeting Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Transcript": {
+      "main": [
+        [
+          {
+            "node": "Analyze Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Transcript": {
+      "main": [
+        [
+          {
+            "node": "Transform Action Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Action Items": {
+      "main": [
+        [
+          {
+            "node": "Create Asana Tasks",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Summary to PM Tool",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T07:43:31.652Z",
+  "versionId": null
+}

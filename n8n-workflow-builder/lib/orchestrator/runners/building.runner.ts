@@ -5,21 +5,27 @@ import {
   BuildingInput,
   BuildingOutput,
   BuildingRunnerDeps,
-} from "@/lib/orchestrator/contracts/building.types";
+} from "@/types/orchestrator/building";
 import { WorkflowOperation } from "@/types/workflow";
-import { ConfiguredNode } from "@/lib/orchestrator/contracts/configuration.types";
+import type { ConfiguredNode } from "@/types/orchestrator/configuration";
 import { BuildingPromptBuilder } from "@/services/claude/config/building-prompt-builder";
 import { OperationLogger } from "@/lib/orchestrator/utils/OperationLogger";
+import { wrapPhase } from "@/lib/orchestrator/utils/wrapPhase";
 
 /**
  * Runner for the building phase
  * Handles workflow assembly from configured nodes
  */
-export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput> {
+export class BuildingRunner
+  implements PhaseRunner<BuildingInput, BuildingOutput>
+{
   private promptBuilder: BuildingPromptBuilder;
-  
+
   constructor(private deps: BuildingRunnerDeps) {
     this.promptBuilder = new BuildingPromptBuilder();
+
+    // Wrap the run method with wrapPhase for automatic operation persistence
+    this.run = wrapPhase("building", this.run.bind(this));
   }
 
   /**
@@ -27,21 +33,24 @@ export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput
    */
   async run(input: BuildingInput): Promise<BuildingOutput> {
     const { sessionId } = input;
-    
+
     // ====================================================================
     // Set up token tracking for this phase
     // ====================================================================
-    const operationLogger = new OperationLogger(sessionId, 'building');
-    const { logger: _logger, onTokenUsage } = operationLogger.withTokenTracking();
-    
+    const operationLogger = new OperationLogger(sessionId, "building");
+    const { logger: _logger, onTokenUsage } =
+      operationLogger.withTokenTracking();
+
     // Connect token callback to Claude service
     if (this.deps.claudeService.setOnUsageCallback) {
       this.deps.claudeService.setOnUsageCallback(onTokenUsage);
     }
-    
+
     try {
       // Get session to retrieve validated configurations
-      const { configuredNodes, userPrompt } = await this.getBuildingContext(sessionId);
+      const { configuredNodes, userPrompt } = await this.getBuildingContext(
+        sessionId
+      );
 
       // Validate we have configured nodes
       if (configuredNodes.length === 0) {
@@ -82,11 +91,11 @@ export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput
       this.deps.loggers.orchestrator.debug(
         `Building workflow with ${validatedNodes.length} validated nodes`
       );
-      
+
       const operations: WorkflowOperation[] = [];
-      
+
       // Add phase transition operation
-      operations.push({ type: 'setPhase', phase: 'building' });
+      operations.push({ type: "setPhase", phase: "building" });
 
       // Build the prompt using the prompt builder
       const promptParts = this.promptBuilder.buildPrompt({
@@ -97,23 +106,25 @@ export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput
       // Have Claude build the complete workflow with the built prompt parts
       const claudeResult = await this.deps.claudeService.execute(
         {
-          promptParts,  // Pass the properly structured prompt parts
+          promptParts, // Pass the properly structured prompt parts
           userPrompt,
           configuredNodes: validatedNodes,
         },
         { sessionId }
       );
-      
+
       if (!claudeResult.success || !claudeResult.data) {
         // Include raw response in error for debugging
-        const error = new Error('Failed to build workflow') as any;
+        const error = new Error("Failed to build workflow") as any;
         error.raw = (claudeResult as any).raw;
         throw error;
       }
       const claudeResponse = claudeResult.data;
-      
+
       this.deps.loggers.orchestrator.info(
-        `📊 BUILD PHASE: Claude response has phases: ${!!claudeResponse.phases}, count: ${claudeResponse.phases?.length || 0}`
+        `📊 BUILD PHASE: Claude response has phases: ${!!claudeResponse.phases}, count: ${
+          claudeResponse.phases?.length || 0
+        }`
       );
 
       // Extract workflow from Claude's response
@@ -131,10 +142,12 @@ export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput
       };
 
       // Enrich nodes with categories from configured nodes
-      const categoryMap = new Map(validatedNodes.map(n => [n.id, n.category]));
+      const categoryMap = new Map(
+        validatedNodes.map((n) => [n.id, n.category])
+      );
       workflow.nodes = workflow.nodes.map((node: any) => ({
         ...node,
-        category: categoryMap.get(node.id) || undefined
+        category: categoryMap.get(node.id) || undefined,
       }));
 
       this.deps.loggers.orchestrator.debug(
@@ -142,16 +155,20 @@ export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput
       );
 
       // Add setWorkflow operation
-      operations.push({ type: 'setWorkflow', workflow } as WorkflowOperation);
-      
+      operations.push({ type: "setWorkflow", workflow } as WorkflowOperation);
+
       // Store phases separately in session state if they exist
       if (claudeResponse.phases) {
-        operations.push({ type: 'setBuildPhases', phases: claudeResponse.phases } as any);
+        operations.push({
+          type: "setBuildPhases",
+          phases: claudeResponse.phases,
+        } as any);
         this.deps.loggers.orchestrator.info(
           `📊 BUILD PHASE: Storing ${claudeResponse.phases.length} phases in session state`
         );
         this.deps.loggers.orchestrator.info(
-          `📊 BUILD PHASE: Phases content:`, JSON.stringify(claudeResponse.phases, null, 2)
+          `📊 BUILD PHASE: Phases content:`,
+          JSON.stringify(claudeResponse.phases, null, 2)
         );
       } else {
         this.deps.loggers.orchestrator.warn(
@@ -160,18 +177,12 @@ export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput
       }
 
       // Add phase completion operation
-      operations.push({ type: 'completePhase', phase: 'building' });
-      
-      // Persist ALL operations together in one batch
-      if (operations.length > 0) {
-        await this.deps.sessionRepo.persistOperations(sessionId, operations);
-        this.deps.loggers.orchestrator.debug(
-          `Persisted ${operations.length} operations including workflow and phases`
-        );
-      }
+      operations.push({ type: "completePhase", phase: "building" });
 
-      // Force save at phase completion
-      await this.deps.sessionRepo.save(sessionId);
+      // Persistence is now handled automatically by wrapPhase wrapper
+      this.deps.loggers.orchestrator.debug(
+        `Generated ${operations.length} operations including workflow and phases`
+      );
 
       return {
         success: true,
@@ -183,7 +194,7 @@ export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput
     } catch (error) {
       // Record error in Supabase
       await this.deps.sessionRepo.recordError(sessionId, error, "building");
-      
+
       return {
         success: false,
         phase: "building",
@@ -211,9 +222,9 @@ export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput
     if (session) {
       // Handle Map type for configured nodes
       const configured = session.state.configured;
-      
+
       let configArray: any[] = [];
-      
+
       if (configured instanceof Map) {
         // Convert Map to array
         configArray = Array.from(configured.values());
@@ -225,49 +236,50 @@ export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput
         this.deps.loggers.orchestrator.debug(
           `BuildingRunner: Configured is an array with ${configured.length} entries`
         );
-      } else if (configured && typeof configured === 'object') {
+      } else if (configured && typeof configured === "object") {
         // Fallback for plain object
         configArray = Object.values(configured);
         this.deps.loggers.orchestrator.debug(
-          `BuildingRunner: Configured is an object with ${Object.keys(configured).length} entries`
+          `BuildingRunner: Configured is an object with ${
+            Object.keys(configured).length
+          } entries`
         );
       }
-      
+
       this.deps.loggers.orchestrator.debug(
         `BuildingRunner: configArray length: ${configArray.length}`
       );
-      
+
       // Add validated property based on validation state
       const validated = session.state.validated;
       configuredNodes = configArray.map((node: any) => {
         const nodeId = node.nodeId || node.id;
         let validationResult;
-        
+
         if (validated instanceof Map) {
           validationResult = validated.get(nodeId);
-        } else if (validated && typeof validated === 'object') {
+        } else if (validated && typeof validated === "object") {
           validationResult = validated[nodeId];
         }
-        
+
         const mappedNode = {
           id: node.nodeId || node.id,
-          type: node.nodeType || node.type || '', 
-          purpose: node.purpose || '', 
+          type: node.nodeType || node.type || "",
+          purpose: node.purpose || "",
           config: node.parameters || node.config || {}, // Just pass config as-is
-          validated: validationResult ? validationResult.valid : true
+          validated: validationResult ? validationResult.valid : true,
         };
-        
+
         return mappedNode;
       });
-      
+
       userPrompt = session.state.userPrompt || "";
     }
-    
+
     this.deps.loggers.orchestrator.debug(
       `BuildingRunner: Final configuredNodes count: ${configuredNodes.length}`
     );
 
     return { configuredNodes, userPrompt };
   }
-
 }

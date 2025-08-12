@@ -97,6 +97,8 @@ Before identifying capabilities, trace through:
 - Multi-condition validation
 - Batch operations with loops
 
+### "Scraping or Scrape" means GETTING data, often through httpRequest node, such as Firecrawl API or Apify API.
+
 ### DON'T use transform_data for:
 - Simple expressions: \`{{ $json.field.toLowerCase() }}\`
 - Basic math: \`{{ $json.price * 1.2 }}\`

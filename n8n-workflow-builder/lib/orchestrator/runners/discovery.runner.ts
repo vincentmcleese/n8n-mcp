@@ -6,7 +6,7 @@ import {
   DiscoveryOutput,
   ClarificationInput,
   DiscoveryRunnerDeps,
-} from "@/lib/orchestrator/contracts/discovery.types";
+} from "@/types/orchestrator/discovery";
 import { DiscoveredNode, WorkflowOperation } from "@/types/workflow";
 import { wrapPhase, PhaseContext } from "@/lib/orchestrator/utils/wrapPhase";
 import { TaskService, GapSearchService } from "@/services/mcp";
@@ -37,6 +37,9 @@ export class DiscoveryRunner
       undefined;
     this.taskService = new TaskService(mcpClient);
     this.gapSearchService = new GapSearchService(mcpClient);
+
+    // Note: run method is already wrapped with wrapPhase in its definition (line 48)
+    // Do NOT double-wrap here as it causes operations to be persisted multiple times
   }
 
   /**
@@ -193,7 +196,9 @@ export class DiscoveryRunner
         taskNodes = taskResult.successful.map((task) => {
           // LOG CATEGORY FROM TASK
           this.deps.loggers.orchestrator.info(
-            `📦 Task node ${task.taskName}: type=${task.nodeType}, category=${task.category || 'MISSING'}`
+            `📦 Task node ${task.taskName}: type=${task.nodeType}, category=${
+              task.category || "MISSING"
+            }`
           );
           return {
             id: task.nodeId,
@@ -314,9 +319,9 @@ export class DiscoveryRunner
             this.deps.loggers.orchestrator.info(
               `Claude selected ${gapNodes.length} nodes from search results`
             );
-            
+
             // Log what nodes were actually selected
-            gapNodes.forEach(node => {
+            gapNodes.forEach((node) => {
               this.deps.loggers.orchestrator.debug(
                 `Selected gap node: ${node.type} - ${node.displayName} (${node.purpose})`
               );
@@ -337,10 +342,8 @@ export class DiscoveryRunner
       const allOperations = [...taskOperations, ...gapOperations];
       const selectedNodeIds = allDiscoveredNodes.map((n) => n.id);
 
-      // Log operations via OperationLogger
-      if (allOperations.length > 0) {
-        await operationLogger.logBatch(allOperations);
-      }
+      // Note: Operations are persisted automatically by wrapPhase wrapper
+      // No need to manually log them here as it causes duplication
 
       // Log phase completion
       await operationLogger.logPhaseCompletion(
@@ -371,13 +374,6 @@ export class DiscoveryRunner
           `Searched for ${intentAnalysis.unmatched_capabilities.length} capability gaps`,
           `Total nodes discovered: ${allDiscoveredNodes.length}`,
         ],
-        // Include metadata for configuration phase
-        metadata: {
-          taskNodes: taskNodes.map((n) => n.id),
-          searchedNodes: gapNodes.map((n) => n.id),
-          workflow_pattern: intentAnalysis.workflow_pattern,
-          complexity: intentAnalysis.complexity,
-        },
       };
     }
   );
@@ -431,14 +427,10 @@ export class DiscoveryRunner
         reason: "clarification" as const,
       },
     ];
-    await this.deps.sessionRepo.persistOperations(sessionId, ops);
-    await this.deps.sessionRepo.save(sessionId);
+    // Persistence is now handled automatically by wrapPhase wrapper
 
     // Re-run discovery with clarified prompt (session already exists)
-    return this.run(
-      { sessionId, prompt: clarifiedPrompt },
-      { sessionId, operationLogger: null as any } // Provided by wrapPhase
-    );
+    return this.run({ sessionId, prompt: clarifiedPrompt });
   }
 
   /**
@@ -458,15 +450,18 @@ export class DiscoveryRunner
     for (const operation of operations) {
       if (operation.type === "discoverNode") {
         // Replace gap_node_placeholder with proper search_node_ ID
-        const nodeId = operation.node.id === "gap_node_placeholder" 
-          ? `search_node_${searchNodeCounter++}`
-          : operation.node.id;
-        
+        const nodeId =
+          operation.node.id === "gap_node_placeholder"
+            ? `search_node_${searchNodeCounter++}`
+            : operation.node.id;
+
         // LOG CATEGORY FROM GAP NODE
         this.deps.loggers.orchestrator.info(
-          `🔍 Gap node ${nodeId}: type=${operation.node.type}, category=${operation.node.category || 'MISSING'}`
+          `🔍 Gap node ${nodeId}: type=${operation.node.type}, category=${
+            operation.node.category || "MISSING"
+          }`
         );
-        
+
         const node: DiscoveredNode = {
           id: nodeId,
           type: operation.node.type,
@@ -476,11 +471,11 @@ export class DiscoveryRunner
           needsConfiguration: true, // Gap nodes need configuration
         };
         discoveredNodes.push(node);
-        
+
         // Update operation with new ID
         processedOps.push({
           ...operation,
-          node: { ...operation.node, id: nodeId }
+          node: { ...operation.node, id: nodeId },
         });
       } else if (operation.type === "selectNode") {
         // Update selectNode operations that reference the placeholder
@@ -490,7 +485,7 @@ export class DiscoveryRunner
           if (prevOp?.type === "discoverNode") {
             processedOps.push({
               ...operation,
-              nodeId: prevOp.node.id
+              nodeId: prevOp.node.id,
             });
           } else {
             // Shouldn't happen, but handle gracefully

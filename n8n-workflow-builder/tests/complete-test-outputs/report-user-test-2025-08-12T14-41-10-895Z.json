@@ -1,0 +1,42 @@
+{
+  "testName": "User Test",
+  "prompt": "Build an n8n workflow that: 1) checks Shopify inventory daily, 2) syncs stock levels with Amazon Seller Central and eBay, 3) sends low-stock alerts to Slack, 4) auto-generates purchase orders for suppliers via email, and 5) updates Google Sheets with daily inventory snapshots.",
+  "generatedAt": "2025-08-12T14:41:10.899Z",
+  "workflowFile": "user-test-2025-08-12T14-41-10-895Z.json",
+  "workflow": {
+    "name": "Daily Shopify Inventory Management & Multi-Platform Sync",
+    "nodeCount": 15,
+    "connectionCount": 3
+  },
+  "phases": {
+    "discovery": {
+      "success": true,
+      "nodeCount": 9,
+      "duration": 0
+    },
+    "configuration": {
+      "success": true,
+      "configuredCount": 9,
+      "duration": 0
+    },
+    "building": {
+      "success": true,
+      "duration": 0
+    },
+    "validation": {
+      "success": true,
+      "attempts": 3,
+      "issuesFixed": 0,
+      "duration": 0
+    },
+    "documentation": {
+      "success": true,
+      "stickyNotesAdded": 7,
+      "duration": 0
+    }
+  },
+  "overall": {
+    "success": true,
+    "totalDuration": 0
+  }
+}
