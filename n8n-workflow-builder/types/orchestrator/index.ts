@@ -10,3 +10,4 @@ export * from './configuration';
 export * from './building';
 export * from './validation';
 export * from './documentation';
+export * from './patches';

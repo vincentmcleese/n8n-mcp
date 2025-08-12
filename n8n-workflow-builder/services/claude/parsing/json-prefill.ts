@@ -76,8 +76,7 @@ export function parseWithPrefill<T = any>(
           error: {
             message: 'Schema validation failed',
             originalError: validationResult.error,
-          },
-          raw: parsed
+          }
         };
       }
       return { success: true, data: validationResult.data };
@@ -240,26 +239,90 @@ function truncateAfterJson(content: string): string {
  * Balance braces and brackets in JSON
  */
 export function balanceBraces(content: string): string {
-  // Count opening and closing braces/brackets
-  const openBraces = (content.match(/\{/g) || []).length;
-  const closeBraces = (content.match(/\}/g) || []).length;
-  const openBrackets = (content.match(/\[/g) || []).length;
-  const closeBrackets = (content.match(/\]/g) || []).length;
+  // First check if the content appears to be truncated mid-string
+  // This often happens with large configurations
+  const lastQuoteIndex = content.lastIndexOf('"');
+  const lastChar = content[content.length - 1];
+  
+  // If the last character isn't a closing brace/bracket and we have an unclosed string,
+  // try to close the string first
+  if (lastChar !== '}' && lastChar !== ']' && lastChar !== '"') {
+    // Check if we're in the middle of a string value
+    let quoteCount = 0;
+    let inString = false;
+    let escapeNext = false;
+    
+    for (let i = 0; i < content.length; i++) {
+      if (escapeNext) {
+        escapeNext = false;
+        continue;
+      }
+      if (content[i] === '\\') {
+        escapeNext = true;
+        continue;
+      }
+      if (content[i] === '"') {
+        inString = !inString;
+        quoteCount++;
+      }
+    }
+    
+    // If we have an odd number of quotes, we're likely in a string
+    if (quoteCount % 2 === 1) {
+      content += '"';
+      loggers.claude.debug('Added missing closing quote for truncated string');
+    }
+  }
+  
+  // Count opening and closing braces/brackets properly, ignoring those in strings
+  let openBraces = 0;
+  let closeBraces = 0;
+  let openBrackets = 0;
+  let closeBrackets = 0;
+  let inString = false;
+  let escapeNext = false;
+  
+  for (let i = 0; i < content.length; i++) {
+    if (escapeNext) {
+      escapeNext = false;
+      continue;
+    }
+    
+    const char = content[i];
+    
+    if (char === '\\' && inString) {
+      escapeNext = true;
+      continue;
+    }
+    
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+    
+    if (!inString) {
+      if (char === '{') openBraces++;
+      else if (char === '}') closeBraces++;
+      else if (char === '[') openBrackets++;
+      else if (char === ']') closeBrackets++;
+    }
+  }
   
   let result = content;
+  
+  // Need to properly close arrays before objects
+  // This is important for nested structures like Switch node rules
+  if (openBrackets > closeBrackets) {
+    const missing = openBrackets - closeBrackets;
+    result += ']'.repeat(missing);
+    loggers.claude.debug(`Added ${missing} missing closing bracket(s)`);
+  }
   
   // Add missing closing braces
   if (openBraces > closeBraces) {
     const missing = openBraces - closeBraces;
     result += '}'.repeat(missing);
     loggers.claude.debug(`Added ${missing} missing closing brace(s)`);
-  }
-  
-  // Add missing closing brackets
-  if (openBrackets > closeBrackets) {
-    const missing = openBrackets - closeBrackets;
-    result += ']'.repeat(missing);
-    loggers.claude.debug(`Added ${missing} missing closing bracket(s)`);
   }
   
   return result;

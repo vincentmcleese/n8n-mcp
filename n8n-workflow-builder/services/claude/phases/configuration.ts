@@ -17,6 +17,7 @@ import type {
   WorkflowOperation
 } from '@/types';
 import { CONFIGURATION_TOOLS } from '@/lib/mcp-tools/definitions';
+import { ConfigurationPrompts } from '../prompts/configuration';
 
 // ==========================================
 // Type Definitions
@@ -133,5 +134,93 @@ export class ConfigurationPhaseService extends BasePhaseService<ConfigurationInp
 
   // Removed analyzeNodeRequirements - not needed with essentials
   // Removed fixNodeConfig - single-pass configuration is accurate enough
+
+  /**
+   * Generate configuration fixes based on validation errors
+   * Prioritizes the validation's own fix suggestions and autofix objects
+   */
+  async generateConfigurationFixes(
+    input: {
+      nodeId: string;
+      nodeType: string;
+      currentConfig: any;
+      validationResult: any; // Full validation result with errors, fixes, autofix
+    }
+  ): Promise<PhaseResult<{
+    fixedConfig: any;
+    reasoning: string[];
+  }>> {
+    const { nodeId, nodeType, currentConfig, validationResult } = input;
+    
+    this.logger.verbose(`Generating configuration fixes for ${nodeType} (${nodeId})`);
+    
+    // Handle both errors and missingRequiredFields formats
+    const errors = validationResult.errors || [];
+    const missingFields = validationResult.missingRequiredFields || [];
+    
+    // Combine all issues
+    const allIssues = [
+      ...errors,
+      ...missingFields.map((f: string) => `Missing required field: ${f}`)
+    ];
+    
+    if (allIssues.length === 0) {
+      return {
+        success: true,
+        data: {
+          fixedConfig: currentConfig,
+          reasoning: ['No validation errors to fix'],
+        },
+      };
+    }
+    
+    try {
+      // Generate the fixes prompt with full validation context
+      const promptParts = ConfigurationPrompts.getConfigurationFixesPrompt(
+        nodeId,
+        nodeType,
+        currentConfig,
+        validationResult
+      );
+      
+      // Call Claude for fixes - no schema validation needed, we want flexibility
+      const result = await this.callClaude<{
+        fixedConfig: any;
+        reasoning: string[];
+      }>(
+        promptParts,
+        TOKEN_LIMITS.configuration, // Reuse configuration token limit
+        undefined, // No schema validation - we need flexibility in the response
+        'generateConfigurationFixes'
+      );
+      
+      if (!result.success || !result.data) {
+        return {
+          success: false,
+          error: result.error || new Error('Failed to generate configuration fixes'),
+          usage: result.usage,
+        };
+      }
+      
+      this.logSuccess('Configuration fixes generated', {
+        nodeType,
+        errorCount: allIssues.length,
+        hasAutofix: !!validationResult.autofix,
+        fixSuggestions: validationResult.errors?.filter((e: any) => e.fix).length || 0,
+      });
+      
+      return {
+        success: true,
+        data: result.data,
+        usage: result.usage,
+      };
+    } catch (error) {
+      this.logError('generateConfigurationFixes', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error : new Error(String(error)),
+      };
+    }
+  }
 
 }

@@ -1,0 +1,392 @@
+{
+  "name": "Google Sheets Multi-API Data Sync Workflow",
+  "nodes": [
+    {
+      "id": "googleSheetsTrigger_1",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "event": "anyUpdate",
+        "sheetName": "",
+        "documentId": "your-google-sheet-id",
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        }
+      },
+      "name": "Google Sheets Monitor",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform Google Sheets data into JSON and XML formats\nconst results = [];\n\nfor (const item of $input.all()) {\n  // Validate required fields\n  if (!item.json.name || !item.json.email) {\n    console.log('Skipping invalid row:', item.json);\n    continue;\n  }\n  \n  // Transform for CRM format\n  const crmData = {\n    contact: {\n      firstName: item.json.name?.split(' ')[0] || '',\n      lastName: item.json.name?.split(' ').slice(1).join(' ') || '',\n      email: item.json.email,\n      phone: item.json.phone || '',\n      company: item.json.company || ''\n    },\n    source: 'google_sheets',\n    timestamp: new Date().toISOString()\n  };\n  \n  // Transform for inventory format\n  const inventoryData = {\n    product: {\n      sku: item.json.sku || '',\n      name: item.json.product_name || '',\n      quantity: parseInt(item.json.quantity) || 0,\n      price: parseFloat(item.json.price) || 0\n    },\n    lastUpdated: new Date().toISOString()\n  };\n  \n  // Transform for email marketing format\n  const emailData = {\n    subscriber: {\n      email: item.json.email,\n      firstName: item.json.name?.split(' ')[0] || '',\n      tags: item.json.tags?.split(',') || [],\n      customFields: {\n        source: 'google_sheets',\n        lastActivity: new Date().toISOString()\n      }\n    }\n  };\n  \n  results.push({\n    json: {\n      originalData: item.json,\n      crmData,\n      inventoryData,\n      emailData,\n      rowIndex: item.json.row_number || 0\n    }\n  });\n}\n\nreturn results;"
+      },
+      "name": "Data Validation & Transform",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "xml_1",
+      "type": "n8n-nodes-base.xml",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "mode": "jsonToxml",
+        "dataPropertyName": "data"
+      },
+      "name": "Convert to XML",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "splitInBatches_1",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "options": {
+          "reset": false
+        },
+        "batchSize": 10
+      },
+      "name": "Split for Parallel APIs",
+      "typeVersion": 3,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1450,
+        150
+      ],
+      "parameters": {
+        "url": "https://api.crm-system.com/contacts",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $vars.CRM_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "data",
+              "value": "={{ $json.crmData }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "retry": {
+            "enabled": true,
+            "maxRetries": 3,
+            "retryInterval": 1000
+          }
+        }
+      },
+      "name": "CRM API Call",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 5
+    },
+    {
+      "id": "httpRequest_2",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1450,
+        300
+      ],
+      "parameters": {
+        "url": "https://api.inventory-system.com/products",
+        "method": "PUT",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $vars.INVENTORY_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "data",
+              "value": "={{ $json.inventoryData }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "retry": {
+            "enabled": true,
+            "maxRetries": 3,
+            "retryInterval": 1000
+          }
+        }
+      },
+      "name": "Inventory API Call",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 5
+    },
+    {
+      "id": "httpRequest_3",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1450,
+        450
+      ],
+      "parameters": {
+        "url": "https://api.email-platform.com/subscribers",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $vars.EMAIL_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "data",
+              "value": "={{ $json.emailData }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "retry": {
+            "enabled": true,
+            "maxRetries": 3,
+            "retryInterval": 1000
+          }
+        }
+      },
+      "name": "Email Marketing API Call",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 5
+    },
+    {
+      "id": "merge_1",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        1750,
+        300
+      ],
+      "parameters": {
+        "mode": "append",
+        "outputDataFrom": "both"
+      },
+      "name": "Merge API Results",
+      "typeVersion": 3.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "sticky_triggers_1754908632770",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        -140
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nMonitors Google Sheets document for any changes (row additions or updates) and triggers the workflow when changes are detected.",
+        "height": 730,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_transforms_1754908632770",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        -140
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nValidates incoming Google Sheets data using custom logic, transforms it into multiple formats (JSON structures for different APIs), and converts to XML format for compatibility requirements.\n\nSplits the validated and transformed data into batches to enable parallel processing across multiple API endpoints.\n\nMerges the results from all three API calls to provide a consolidated view of the synchronization status across all systems.",
+        "height": 730,
+        "width": 1430,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754908632770",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1410,
+        -140
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSimultaneously pushes the transformed data to three different external APIs (CRM system, inventory management, and email marketing platform) with comprehensive error handling and retry logic for each endpoint.",
+        "height": 730,
+        "width": 230,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Google Sheets Monitor": {
+      "main": [
+        [
+          {
+            "node": "Data Validation & Transform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Validation & Transform": {
+      "main": [
+        [
+          {
+            "node": "Convert to XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to XML": {
+      "main": [
+        [
+          {
+            "node": "Split for Parallel APIs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split for Parallel APIs": {
+      "main": [
+        [
+          {
+            "node": "CRM API Call",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Inventory API Call",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email Marketing API Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM API Call": {
+      "main": [
+        [
+          {
+            "node": "Merge API Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inventory API Call": {
+      "main": [
+        [
+          {
+            "node": "Merge API Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Email Marketing API Call": {
+      "main": [
+        [
+          {
+            "node": "Merge API Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-11T10:37:13.252Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Build a workflow that monitors changes in a Google Sheets document, validates the data using custom logic, transforms it into different formats (JSON, XML), and simultaneously pushes updates to 3 different APIs (CRM, inventory system, and email marketing platform) with proper error handling for each endpoint.",
+    "testName": "User Test",
+    "generatedAt": "2025-08-11T10:37:13.252Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 2,
+    "stickyNotesAdded": 3
+  }
+}

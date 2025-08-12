@@ -1,0 +1,311 @@
+{
+  "name": "Social Media Brand Monitoring & Auto-Reply Workflow",
+  "nodes": [
+    {
+      "id": "twitter_1",
+      "type": "n8n-nodes-base.twitter",
+      "position": [
+        250,
+        200
+      ],
+      "parameters": {
+        "limit": 50,
+        "resource": "tweet",
+        "operation": "search",
+        "searchText": "your brand OR @yourbrand OR \"your company\"",
+        "returnAll": false
+      },
+      "name": "Twitter Monitor",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "linkedIn_1",
+      "type": "n8n-nodes-base.linkedIn",
+      "position": [
+        250,
+        400
+      ],
+      "parameters": {
+        "person": "",
+        "postAs": "person",
+        "resource": "post",
+        "operation": "create"
+      },
+      "name": "LinkedIn Monitor",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "merge_1",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "mode": "append"
+      },
+      "name": "Combine Social Data",
+      "typeVersion": 3.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "model": "gpt-4",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a brand monitoring assistant. Analyze social media mentions for sentiment (positive, negative, neutral) and generate personalized reply drafts in the user's voice. Format response as JSON with fields: sentiment, confidence, summary, draft_reply."
+            },
+            {
+              "role": "user",
+              "content": "=Analyze this social media mention: {{ $json.text || $json.content }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 500
+        }
+      },
+      "name": "AI Sentiment & Reply Generator",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "postgres_1",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        1150,
+        200
+      ],
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "brand_mentions",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "values": {
+            "platform": "={{ $('Combine Social Data').item.json.platform }}",
+            "mention_text": "={{ $('Combine Social Data').item.json.text || $('Combine Social Data').item.json.content }}",
+            "sentiment": "={{ JSON.parse($json.choices[0].message.content).sentiment }}",
+            "confidence": "={{ JSON.parse($json.choices[0].message.content).confidence }}",
+            "summary": "={{ JSON.parse($json.choices[0].message.content).summary }}",
+            "draft_reply": "={{ JSON.parse($json.choices[0].message.content).draft_reply }}",
+            "created_at": "={{ new Date().toISOString() }}"
+          }
+        }
+      },
+      "name": "Store Analysis Results",
+      "typeVersion": 2.6,
+      "onError": "stopWorkflow",
+      "maxTries": 2
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1150,
+        400
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": "#brand-monitoring",
+        "text": "{{ `🔍 New Brand Mention Detected!\n\n*Platform:* ${$('Combine Social Data').item.json.platform}\n*Sentiment:* ${JSON.parse($json.choices[0].message.content).sentiment} (${JSON.parse($json.choices[0].message.content).confidence}% confidence)\n\n*Summary:* ${JSON.parse($json.choices[0].message.content).summary}\n\n*Draft Reply:*\n\\`\\`\\`${JSON.parse($json.choices[0].message.content).draft_reply}\\`\\`\\`\n\n*Original Mention:*\n${$('Combine Social Data').item.json.text || $('Combine Social Data').item.json.content}\n\n_Please review and approve the draft reply._` }}",
+        "attachments": [],
+        "otherOptions": {
+          "includeLinkToWorkflow": true
+        }
+      },
+      "name": "Send Approval Notification",
+      "typeVersion": 2.3,
+      "onError": "continueRegularOutput",
+      "maxTries": 2
+    },
+    {
+      "id": "sticky_inputs_1754944428113",
+      "name": "Inputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -130
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nMonitor Twitter and LinkedIn platforms for brand mentions and keyword tracking. These nodes run in parallel to collect social media data from both platforms simultaneously.",
+        "height": 710,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_aggregation_1754944428113",
+      "name": "Aggregation Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        890,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🔄 Aggregation\nCombine social media data from Twitter and LinkedIn into a unified dataset for processing. This ensures all mentions are processed consistently regardless of source platform.",
+        "height": 710,
+        "width": 310,
+        "color": 2
+      }
+    },
+    {
+      "id": "sticky_transforms_1754944428113",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        -130
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nAnalyze combined social media mentions using AI to determine sentiment, generate summaries, and create personalized reply drafts in the user's voice.",
+        "height": 710,
+        "width": 310,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_storage_1754944428113",
+      "name": "Storage Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1710,
+        -130
+      ],
+      "parameters": {
+        "content": "## 💾 Storage\nStore the analysis results including sentiment scores, summaries, and draft replies in PostgreSQL database for historical tracking and reporting.",
+        "height": 710,
+        "width": 310,
+        "color": 8
+      }
+    },
+    {
+      "id": "sticky_outputs_1754944428113",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2120,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSend formatted notification to Slack channel with mention details, sentiment analysis, and draft reply for human review and approval before posting.",
+        "height": 710,
+        "width": 310,
+        "color": 7
+      }
+    },
+    {
+      "id": "sticky_promo_1754944428113",
+      "name": "Ghost Team Promo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 710,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Twitter Monitor": {
+      "main": [
+        [
+          {
+            "node": "Combine Social Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn Monitor": {
+      "main": [
+        [
+          {
+            "node": "Combine Social Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combine Social Data": {
+      "main": [
+        [
+          {
+            "node": "AI Sentiment & Reply Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Sentiment & Reply Generator": {
+      "main": [
+        [
+          {
+            "node": "Store Analysis Results",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Approval Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-11T20:33:48.613Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "“Monitor LinkedIn and Twitter for mentions of my brand or product keywords, summarize the sentiment, and auto-draft a reply in my voice, ready for approval.”",
+    "testName": "User Test",
+    "generatedAt": "2025-08-11T20:33:48.613Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 6
+  }
+}

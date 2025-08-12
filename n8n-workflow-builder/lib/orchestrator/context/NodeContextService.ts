@@ -199,9 +199,10 @@ export class NodeContextService {
   /**
    * Validate node configuration
    */
-  async validateNodeConfig(nodeType: string, config: any): Promise<NodeValidationResult> {
+  async validateNodeConfig(nodeType: string, config: any): Promise<NodeValidationResult & { fullValidation?: any }> {
     let validationErrors: string[] = [];
     let isValid = false;
+    let fullValidation: any = null;
 
     try {
       const candidates = buildNodeTypeCandidates(nodeType);
@@ -216,8 +217,8 @@ export class NodeContextService {
       let validationResult: any = null;
       for (const candidate of candidates) {
         try {
-          // Use validateNodeOperation with just the parameters object
-          validationResult = await this.mcpClient.validateNodeOperation(candidate, parametersToValidate, 'ai-friendly');
+          // Use validateNodeMinimal for less strict validation that accepts expressions
+          validationResult = await this.mcpClient.validateNodeMinimal(candidate, parametersToValidate);
           const text = validationResult?.content?.[0]?.type === "text" ? validationResult.content[0].text : '';
           const lower = (text || '').toLowerCase();
           if (lower.includes("not found") || lower.startsWith("error executing tool")) {
@@ -240,17 +241,36 @@ export class NodeContextService {
             try {
               const data = JSON.parse(text);
               loggers.orchestrator.debug(`Parsed validation data:`, data);
-              const missing: string[] = Array.isArray((data as any).missingRequiredFields)
-                ? (data as any).missingRequiredFields
-                : [];
-              if (missing.length > 0) {
-                isValid = false;
-                validationErrors = missing.map((f: string) => `Missing required field: ${f}`);
+              
+              // Store the full validation response
+              fullValidation = data;
+              
+              // Extract errors first - check multiple possible locations
+              if (data.errors && Array.isArray(data.errors)) {
+                validationErrors = data.errors.map((e: any) => 
+                  typeof e === 'string' ? e : (e.message || e.error || JSON.stringify(e))
+                );
+              } else if (data.missingRequiredFields && Array.isArray(data.missingRequiredFields)) {
+                validationErrors = data.missingRequiredFields.map((f: string) => `Missing required field: ${f}`);
               } else {
-                // If 'valid' present, trust it; otherwise consider empty missing as valid
-                isValid = (data as any).valid !== undefined ? !!(data as any).valid : true;
                 validationErrors = [];
               }
+              
+              // Extract validation status - if there are errors, it's invalid
+              if (validationErrors.length > 0) {
+                isValid = false;
+              } else if (data.valid !== undefined) {
+                isValid = !!data.valid;
+              } else {
+                // Default to true only if no errors and no explicit valid field
+                isValid = true;
+              }
+              
+              // If marked invalid but no specific errors found, add generic error
+              if (!isValid && validationErrors.length === 0) {
+                validationErrors = ['Validation failed - check configuration'];
+              }
+              
               parsedFromJson = true;
               break;
             } catch { /* try next part */ }
@@ -269,7 +289,11 @@ export class NodeContextService {
       isValid = true; // Assume valid if validation service fails
     }
 
-    return { isValid, validationErrors };
+    return { 
+      isValid, 
+      validationErrors,
+      fullValidation // Include the complete MCP validation response
+    } as NodeValidationResult & { fullValidation?: any };
   }
 
   /**

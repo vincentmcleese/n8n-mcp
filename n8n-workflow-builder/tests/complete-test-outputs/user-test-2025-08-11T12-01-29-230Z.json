@@ -1,0 +1,315 @@
+{
+  "name": "Google Sheets Multi-API Sync with Data Validation",
+  "nodes": [
+    {
+      "id": "googleSheetsTrigger_1",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "event": "anyUpdate",
+        "sheetName": "",
+        "documentId": ""
+      },
+      "name": "Google Sheets Monitor",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform and validate Google Sheets data for multi-API distribution"
+      },
+      "name": "Data Validator & Transformer",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "xml_1",
+      "type": "n8n-nodes-base.xml",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "mode": "jsonToxml",
+        "dataPropertyName": "xmlData"
+      },
+      "name": "XML Converter",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "splitOut_1",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "include": "noOtherFields"
+      },
+      "name": "Parallel API Splitter",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1450,
+        150
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.crm.com/contacts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "name": "CRM API Update",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 5
+    },
+    {
+      "id": "httpRequest_2",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1450,
+        300
+      ],
+      "parameters": {
+        "method": "PUT",
+        "url": "https://api.inventory.com/items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "name": "Inventory System Update",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "httpRequest_3",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1450,
+        450
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.emailmarketing.com/subscribers",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "name": "Email Marketing Update",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "merge_1",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        1750,
+        300
+      ],
+      "parameters": {
+        "mode": "append",
+        "outputDataFrom": "both"
+      },
+      "name": "Results Aggregator",
+      "typeVersion": 3.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "sticky_triggers_1754913688589",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        -140
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nMonitors Google Sheets document for any changes to trigger the workflow. Acts as the entry point that detects data modifications and initiates the synchronization process.",
+        "height": 730,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_transforms_1754913688589",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        -140
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nValidates incoming Google Sheets data using custom logic and transforms it into multiple formats. Converts data to both JSON and XML formats to ensure compatibility with different API endpoints.\n\nSplits the transformed data into separate items to enable parallel processing. This allows simultaneous API calls to multiple endpoints for improved performance.",
+        "height": 730,
+        "width": 830,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754913688589",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1410,
+        -140
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSimultaneously pushes validated and transformed data to three different external systems. Each API call includes robust error handling and retry logic to ensure reliable data synchronization.",
+        "height": 730,
+        "width": 230,
+        "color": 7
+      }
+    },
+    {
+      "id": "sticky_finalization_1754913688589",
+      "name": "Finalization Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1710,
+        -140
+      ],
+      "parameters": {
+        "content": "## ✅ Finalization\nPost-output processing and aggregation",
+        "height": 730,
+        "width": 230,
+        "color": 1
+      }
+    }
+  ],
+  "connections": {
+    "Google Sheets Monitor": {
+      "main": [
+        [
+          {
+            "node": "Data Validator & Transformer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Validator & Transformer": {
+      "main": [
+        [
+          {
+            "node": "XML Converter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "XML Converter": {
+      "main": [
+        [
+          {
+            "node": "Parallel API Splitter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parallel API Splitter": {
+      "main": [
+        [
+          {
+            "node": "CRM API Update",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Inventory System Update",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email Marketing Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM API Update": {
+      "main": [
+        [
+          {
+            "node": "Results Aggregator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inventory System Update": {
+      "main": [
+        [
+          {
+            "node": "Results Aggregator",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Email Marketing Update": {
+      "main": [
+        [
+          {
+            "node": "Results Aggregator",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-11T12:01:29.231Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Build a workflow that monitors changes in a Google Sheets document, validates the data using custom logic, transforms it into different formats (JSON, XML), and simultaneously pushes updates to 3 different APIs (CRM, inventory system, and email marketing platform) with proper error handling for each endpoint.",
+    "testName": "User Test",
+    "generatedAt": "2025-08-11T12:01:29.231Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 2,
+    "stickyNotesAdded": 4
+  }
+}

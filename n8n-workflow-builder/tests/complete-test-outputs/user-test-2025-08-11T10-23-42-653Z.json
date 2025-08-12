@@ -1,0 +1,344 @@
+{
+  "name": "Customer Support Ticket Processing with AI Categorization",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "support-tickets",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Support Ticket Webhook",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "agent_1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "{{ `You are a customer support ticket analyzer. Analyze the following ticket and provide:\n1. Urgency level (low/medium/high/critical)\n2. Sentiment (positive/neutral/negative)\n3. Brief reasoning\n\nTicket: ${$json.subject} - ${$json.description}` }}",
+        "hasOutputParser": true,
+        "outputParser": "structuredOutputParser",
+        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"urgency\": {\n      \"type\": \"string\",\n      \"enum\": [\"low\", \"medium\", \"high\", \"critical\"]\n    },\n    \"sentiment\": {\n      \"type\": \"string\",\n      \"enum\": [\"positive\", \"neutral\", \"negative\"]\n    },\n    \"reasoning\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\"urgency\", \"sentiment\", \"reasoning\"]\n}",
+        "options": {}
+      },
+      "name": "AI Ticket Analyzer",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Transform customer support tickets and assign teams based on keywords and AI categorization\nconst ticketData = $input.first();\nconst aiAnalysis = $input.last();\n\n// Extract ticket information\nconst ticket = {\n  id: ticketData.json.id || Date.now(),\n  subject: ticketData.json.subject || '',\n  description: ticketData.json.description || '',\n  customer: ticketData.json.customer || 'Unknown',\n  email: ticketData.json.email || '',\n  timestamp: new Date().toISOString()\n};\n\n// Extract AI analysis\nconst analysis = {\n  urgency: aiAnalysis.json.urgency || 'medium',\n  sentiment: aiAnalysis.json.sentiment || 'neutral',\n  reasoning: aiAnalysis.json.reasoning || 'No analysis available'\n};\n\n// Team assignment logic based on keywords\nfunction assignTeam(subject, description, urgency) {\n  const content = (subject + ' ' + description).toLowerCase();\n  \n  // Critical issues go to escalation team\n  if (urgency === 'critical') {\n    return 'escalation';\n  }\n  \n  // Technical keywords\n  if (content.includes('api') || content.includes('integration') || content.includes('bug') || content.includes('error')) {\n    return 'technical';\n  }\n  \n  // Billing keywords\n  if (content.includes('billing') || content.includes('payment') || content.includes('invoice') || content.includes('refund')) {\n    return 'billing';\n  }\n  \n  // Account keywords\n  if (content.includes('account') || content.includes('login') || content.includes('password') || content.includes('access')) {\n    return 'account';\n  }\n  \n  // Default to general support\n  return 'general';\n}\n\nconst assignedTeam = assignTeam(ticket.subject, ticket.description, analysis.urgency);\n\n// Priority mapping for notifications\nconst priorityMap = {\n  'critical': 'HIGH',\n  'high': 'HIGH', \n  'medium': 'MEDIUM',\n  'low': 'LOW'\n};\n\nreturn {\n  json: {\n    ticket: ticket,\n    analysis: analysis,\n    assignedTeam: assignedTeam,\n    priority: priorityMap[analysis.urgency],\n    slackChannel: `#support-${assignedTeam}`,\n    processed: true\n  }\n};"
+      },
+      "name": "Ticket Data Processor",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "switch_1",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.assignedTeam }}",
+                    "rightValue": "technical",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "technical"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.assignedTeam }}",
+                    "rightValue": "billing",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "billing"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.assignedTeam }}",
+                    "rightValue": "escalation",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "escalation"
+            }
+          ]
+        },
+        "fallbackOutput": "extra",
+        "options": {}
+      },
+      "name": "Team Router",
+      "typeVersion": 3.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1450,
+        200
+      ],
+      "parameters": {
+        "text": "{{ `🎫 *New Support Ticket - ${$json.priority} Priority*\n\n*Ticket ID:* ${$json.ticket.id}\n*Subject:* ${$json.ticket.subject}\n*Customer:* ${$json.ticket.customer}\n*Team:* ${$json.assignedTeam}\n*Urgency:* ${$json.analysis.urgency}\n*Sentiment:* ${$json.analysis.sentiment}\n\n*Description:*\n${$json.ticket.description}\n\n*AI Analysis:* ${$json.analysis.reasoning}` }}",
+        "channel": "={{ $json.slackChannel }}",
+        "username": "Support Bot",
+        "iconEmoji": ":ticket:",
+        "attachments": [],
+        "blocks": [],
+        "otherOptions": {}
+      },
+      "name": "Slack Notification",
+      "typeVersion": 2.3,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1450,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
+        "authentication": "none",
+        "requestFormat": "json",
+        "jsonParameters": true,
+        "parametersJson": "{{ `{\n  \"text\": \"🚨 *BACKUP NOTIFICATION* - Support Ticket ${$json.ticket.id}\",\n  \"channel\": \"${$json.slackChannel}\",\n  \"username\": \"Support Bot Backup\",\n  \"icon_emoji\": \":warning:\",\n  \"attachments\": [\n    {\n      \"color\": \"${$json.priority === 'HIGH' ? 'danger' : ($json.priority === 'MEDIUM' ? 'warning' : 'good')}\",\n      \"fields\": [\n        {\n          \"title\": \"Subject\",\n          \"value\": \"${$json.ticket.subject}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Priority\",\n          \"value\": \"${$json.priority}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Team\",\n          \"value\": \"${$json.assignedTeam}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Urgency\",\n          \"value\": \"${$json.analysis.urgency}\",\n          \"short\": true\n        }\n      ]\n    }\n  ]\n}` }}",
+        "options": {
+          "timeout": 10000,
+          "retry": {
+            "enabled": true,
+            "maxAttempts": 3,
+            "waitBetween": 1000
+          }
+        }
+      },
+      "name": "Backup Notification",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "sticky_triggers_1754907822010",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook endpoint receives incoming customer support tickets via HTTP POST requests. Configured with error handling to gracefully process tickets and stop workflow execution if critical errors occur.",
+        "height": 480,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_transforms_1754907822010",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nAI agent analyzes ticket content to categorize urgency levels and sentiment, providing structured output for automated routing decisions. Continues workflow execution even if AI analysis fails.\n\nJavaScript code transforms ticket data, applies team assignment logic based on keywords and AI categorization, and prepares structured data for routing and notifications.",
+        "height": 480,
+        "width": 530,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754907822010",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1110,
+        60
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSwitch node routes processed tickets to appropriate team channels based on assigned team values from the data processor, enabling targeted notifications.\n\nPrimary Slack notification sends formatted ticket details to team-specific channels with priority-based formatting. Backup HTTP request provides redundant notification delivery with retry logic and error handling.",
+        "height": 480,
+        "width": 530,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Support Ticket Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Ticket Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Ticket Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Ticket Data Processor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ticket Data Processor": {
+      "main": [
+        [
+          {
+            "node": "Team Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Team Router": {
+      "main": [
+        [
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Notification": {
+      "main": [
+        [
+          {
+            "node": "Backup Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-11T10:23:42.653Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Create an n8n workflow that receives customer support tickets via webhook, uses an AI agent to categorize the urgency and sentiment, automatically assigns tickets to the right team based on keywords, and sends Slack notifications with different priority levels. Include retry logic and error handling",
+    "testName": "User Test",
+    "generatedAt": "2025-08-11T10:23:42.653Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 2,
+    "stickyNotesAdded": 3
+  }
+}

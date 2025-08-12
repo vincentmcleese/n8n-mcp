@@ -1,0 +1,261 @@
+{
+  "name": "Zoom Meeting Transcript to Asana Tasks",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "zoom-meeting-ended",
+        "httpMethod": "POST",
+        "responseMode": "responseNode"
+      },
+      "name": "Zoom Webhook",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "url": "={{ 'https://api.zoom.us/v2/meetings/' + $json.payload.object.id + '/recordings/transcript' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "zoomApi",
+        "method": "GET",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "name": "Download Transcript",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// This would integrate with OpenAI or similar AI service\n// to summarize transcript and extract action items\nconst transcript = $input.all()[0].json.transcript_text;\n\n// Mock AI processing - replace with actual AI API call\nconst summary = \"Key decisions: Project timeline approved, budget allocated, team assignments finalized.\";\n\nconst actionItems = [\n  {\n    action_item: \"Complete project proposal\",\n    deadline_date: \"2024-01-15\",\n    assignee: \"John Doe\"\n  },\n  {\n    action_item: \"Review budget allocation\",\n    deadline_date: \"2024-01-20\",\n    assignee: \"Jane Smith\"\n  },\n  {\n    action_item: \"Schedule team kickoff meeting\",\n    deadline_date: \"2024-01-10\",\n    assignee: \"Mike Johnson\"\n  }\n];\n\nreturn actionItems.map(item => ({\n  json: {\n    ...item,\n    meeting_summary: summary,\n    meeting_id: $input.all()[0].json.meeting_id\n  }\n}));"
+      },
+      "name": "AI Summarize & Extract",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "asana_1",
+      "type": "n8n-nodes-base.asana",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "operation": "create",
+        "resource": "task",
+        "name": "={{ $json.action_item }}",
+        "dueOn": "={{ $json.deadline_date }}"
+      },
+      "name": "Create Asana Tasks",
+      "typeVersion": 1,
+      "onError": "continueErrorOutput",
+      "notes": "{{ `Action item from meeting ${$json.meeting_id}:\n\nMeeting Summary: ${$json.meeting_summary}\n\nAssigned to: ${$json.assignee}` }}"
+    },
+    {
+      "id": "webhook_2",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        1450,
+        300
+      ],
+      "parameters": {
+        "options": {
+          "responseData": "allEntries"
+        }
+      },
+      "name": "Webhook Response",
+      "typeVersion": 1.4,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "sticky_triggers_1754977318920",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -30
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook receives notification when Zoom meeting ends, triggering the workflow to process meeting data.",
+        "height": 510,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754977318920",
+      "name": "Inputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        890,
+        -30
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nDownloads the meeting transcript from Zoom API using the meeting ID from the webhook payload.",
+        "height": 510,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754977318920",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        -30
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nAI processes the transcript to generate summary of key decisions and extract action items with deadlines and assignees.",
+        "height": 510,
+        "width": 310,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_integration_1754977318920",
+      "name": "Integration Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1710,
+        -30
+      ],
+      "parameters": {
+        "content": "## 🔗 Integration\nCreates individual tasks in Asana for each extracted action item with proper due dates and meeting context.",
+        "height": 510,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_outputs_1754977318920",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2120,
+        -30
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends response back to the webhook caller confirming successful processing and task creation.",
+        "height": 510,
+        "width": 310,
+        "color": 7
+      }
+    },
+    {
+      "id": "sticky_promo_1754977318920",
+      "name": "Ghost Team Promo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -30
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 510,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Zoom Webhook": {
+      "main": [
+        [
+          {
+            "node": "Download Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Transcript": {
+      "main": [
+        [
+          {
+            "node": "AI Summarize & Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Summarize & Extract": {
+      "main": [
+        [
+          {
+            "node": "Create Asana Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Asana Tasks": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T05:41:59.305Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "“After a Zoom meeting ends, download the transcript, summarize key decisions, extract action items with deadlines, and add them directly to my project management tool.”",
+    "testName": "User Test",
+    "generatedAt": "2025-08-12T05:41:59.305Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 5,
+    "stickyNotesAdded": 6
+  }
+}

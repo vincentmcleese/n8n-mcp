@@ -9,6 +9,7 @@ import {
 import { WorkflowOperation } from "@/types/workflow";
 import { ConfiguredNode } from "@/lib/orchestrator/contracts/configuration.types";
 import { BuildingPromptBuilder } from "@/services/claude/config/building-prompt-builder";
+import { OperationLogger } from "@/lib/orchestrator/utils/OperationLogger";
 
 /**
  * Runner for the building phase
@@ -26,6 +27,17 @@ export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput
    */
   async run(input: BuildingInput): Promise<BuildingOutput> {
     const { sessionId } = input;
+    
+    // ====================================================================
+    // Set up token tracking for this phase
+    // ====================================================================
+    const operationLogger = new OperationLogger(sessionId, 'building');
+    const { logger: _logger, onTokenUsage } = operationLogger.withTokenTracking();
+    
+    // Connect token callback to Claude service
+    if (this.deps.claudeService.setOnUsageCallback) {
+      this.deps.claudeService.setOnUsageCallback(onTokenUsage);
+    }
     
     try {
       // Get session to retrieve validated configurations
@@ -93,7 +105,10 @@ export class BuildingRunner implements PhaseRunner<BuildingInput, BuildingOutput
       );
       
       if (!claudeResult.success || !claudeResult.data) {
-        throw new Error('Failed to build workflow');
+        // Include raw response in error for debugging
+        const error = new Error('Failed to build workflow') as any;
+        error.raw = (claudeResult as any).raw;
+        throw error;
       }
       const claudeResponse = claudeResult.data;
       

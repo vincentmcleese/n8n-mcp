@@ -1,0 +1,2326 @@
+{
+  "testName": "User Test",
+  "userPrompt": "Create an n8n workflow that receives customer support tickets via webhook, uses an AI agent to categorize the urgency and sentiment, automatically assigns tickets to the right team based on keywords, and sends Slack notifications with different priority levels. Include retry logic and error handling.",
+  "sessionId": "complete_e2e_user_test_1754898841665",
+  "timestamp": "2025-08-11T07:54:01.666Z",
+  "duration": 51259,
+  "success": false,
+  "phases": {
+    "discovery": {
+      "name": "Discovery",
+      "success": true,
+      "metrics": {
+        "startTime": 1754898842034,
+        "endTime": 1754898860822,
+        "duration": 18788,
+        "memoryUsage": {
+          "heapUsed": 2603304,
+          "heapTotal": 31653888,
+          "external": 6353115
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-11T07:54:02.035Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting discovery phase"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:02.035Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for discovery phase"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.350Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.350Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"webhook_with_error_handling\"}"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.351Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.352Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"ai_agent_workflow\"}"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.352Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.352Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"transform_data\"}"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.352Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.352Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"send_slack_message\"}"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.352Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.352Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"modern_error_handling_patterns\"}"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.506Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.523Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.526Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.530Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.546Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.547Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: search_nodes"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.547Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"query\":\"switch\",\"limit\":20}"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:14.664Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool search_nodes completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:20.729Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-langchain.agent (Create an AI agent that can use tools)"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:20.729Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.code (Transform data structure using JavaScript)"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:20.729Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.slack (Send a message to Slack channel)"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:20.729Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.httpRequest (Examples of modern error handling using onError property)"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:20.729Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.webhook (Webhook that gracefully handles processing errors)"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:20.729Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.switch (Route support tickets to different teams based on keywords and categorization results)"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:20.822Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:20.822Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "task_node_2",
+          "type": "nodes-langchain.agent",
+          "purpose": "Create an AI agent that can use tools"
+        },
+        {
+          "id": "task_node_3",
+          "type": "nodes-base.code",
+          "purpose": "Transform data structure using JavaScript"
+        },
+        {
+          "id": "task_node_4",
+          "type": "nodes-base.slack",
+          "purpose": "Send a message to Slack channel"
+        },
+        {
+          "id": "task_node_5",
+          "type": "nodes-base.httpRequest",
+          "purpose": "Examples of modern error handling using onError property"
+        },
+        {
+          "id": "task_node_1",
+          "type": "nodes-base.webhook",
+          "purpose": "Webhook that gracefully handles processing errors"
+        },
+        {
+          "id": "search_node_1",
+          "type": "nodes-base.switch",
+          "purpose": "Route support tickets to different teams based on keywords and categorization results"
+        }
+      ],
+      "sessionState": {
+        "sessionId": "complete_e2e_user_test_1754898841665",
+        "createdAt": "2025-08-11T07:54:02.015Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "Create an n8n workflow that receives customer support tickets via webhook, uses an AI agent to categorize the urgency and sentiment, automatically assigns tickets to the right team based on keywords, and sends Slack notifications with different priority levels. Include retry logic and error handling.",
+          "discovered": [
+            {
+              "id": "task_node_2",
+              "type": "nodes-langchain.agent",
+              "config": {
+                "text": "",
+                "outputType": "output",
+                "systemMessage": "You are a helpful assistant."
+              },
+              "purpose": "Create an AI agent that can use tools",
+              "displayName": "ai agent workflow",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_3",
+              "type": "nodes-base.code",
+              "config": {
+                "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                "language": "javaScript"
+              },
+              "purpose": "Transform data structure using JavaScript",
+              "displayName": "transform data",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_4",
+              "type": "nodes-base.slack",
+              "config": {
+                "text": "",
+                "channel": "",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "resource": "message",
+                "operation": "post",
+                "retryOnFail": true,
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Send a message to Slack channel",
+              "displayName": "send slack message",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_5",
+              "type": "nodes-base.httpRequest",
+              "config": {
+                "url": "",
+                "method": "GET",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Examples of modern error handling using onError property",
+              "displayName": "modern error handling patterns",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.webhook",
+              "config": {
+                "path": "resilient-webhook",
+                "onError": "continueRegularOutput",
+                "httpMethod": "POST",
+                "responseData": "firstEntryJson",
+                "responseMode": "responseNode",
+                "alwaysOutputData": true
+              },
+              "purpose": "Webhook that gracefully handles processing errors",
+              "displayName": "webhook with error handling",
+              "isPreConfigured": true
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.switch",
+              "purpose": "Route support tickets to different teams based on keywords and categorization results"
+            }
+          ],
+          "selected": [
+            "task_node_2",
+            "task_node_3",
+            "task_node_4",
+            "task_node_5",
+            "task_node_1",
+            "search_node_1"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "task_node_2",
+                "type": "nodes-langchain.agent",
+                "config": {
+                  "text": "",
+                  "outputType": "output",
+                  "systemMessage": "You are a helpful assistant."
+                },
+                "purpose": "Create an AI agent that can use tools",
+                "displayName": "ai agent workflow",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_2",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "node": {
+                "id": "task_node_3",
+                "type": "nodes-base.code",
+                "config": {
+                  "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                  "language": "javaScript"
+                },
+                "purpose": "Transform data structure using JavaScript",
+                "displayName": "transform data",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_3",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "node": {
+                "id": "task_node_4",
+                "type": "nodes-base.slack",
+                "config": {
+                  "text": "",
+                  "channel": "",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 2,
+                  "resource": "message",
+                  "operation": "post",
+                  "retryOnFail": true,
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Send a message to Slack channel",
+                "displayName": "send slack message",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_4",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "node": {
+                "id": "task_node_5",
+                "type": "nodes-base.httpRequest",
+                "config": {
+                  "url": "",
+                  "method": "GET",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 3,
+                  "retryOnFail": true,
+                  "alwaysOutputData": true,
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Examples of modern error handling using onError property",
+                "displayName": "modern error handling patterns",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_5",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "node": {
+                "id": "task_node_1",
+                "type": "nodes-base.webhook",
+                "config": {
+                  "path": "resilient-webhook",
+                  "onError": "continueRegularOutput",
+                  "httpMethod": "POST",
+                  "responseData": "firstEntryJson",
+                  "responseMode": "responseNode",
+                  "alwaysOutputData": true
+                },
+                "purpose": "Webhook that gracefully handles processing errors",
+                "displayName": "webhook with error handling",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_1",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "node": {
+                "id": "search_node_1",
+                "type": "nodes-base.switch",
+                "purpose": "Route support tickets to different teams based on keywords and categorization results"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T07:54:20.251Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_1",
+              "timestamp": "2025-08-11T07:54:20.251Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-11T07:54:20.252Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "prompt": "Create an n8n workflow that receives customer support tickets via webhook, uses an AI agent to categorize the urgency and sentiment, automatically assigns tickets to the right team based on keywords, and sends Slack notifications with different priority levels. Include retry logic and error handling."
+        },
+        "output": {
+          "nodes": [
+            {
+              "id": "task_node_2",
+              "type": "nodes-langchain.agent",
+              "displayName": "ai agent workflow",
+              "purpose": "Create an AI agent that can use tools",
+              "isPreConfigured": true,
+              "config": {
+                "text": "",
+                "outputType": "output",
+                "systemMessage": "You are a helpful assistant."
+              }
+            },
+            {
+              "id": "task_node_3",
+              "type": "nodes-base.code",
+              "displayName": "transform data",
+              "purpose": "Transform data structure using JavaScript",
+              "isPreConfigured": true,
+              "config": {
+                "language": "javaScript",
+                "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;"
+              }
+            },
+            {
+              "id": "task_node_4",
+              "type": "nodes-base.slack",
+              "displayName": "send slack message",
+              "purpose": "Send a message to Slack channel",
+              "isPreConfigured": true,
+              "config": {
+                "resource": "message",
+                "operation": "post",
+                "channel": "",
+                "text": "",
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 2,
+                "waitBetweenTries": 2000
+              }
+            },
+            {
+              "id": "task_node_5",
+              "type": "nodes-base.httpRequest",
+              "displayName": "modern error handling patterns",
+              "purpose": "Examples of modern error handling using onError property",
+              "isPreConfigured": true,
+              "config": {
+                "method": "GET",
+                "url": "",
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 3,
+                "waitBetweenTries": 2000,
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.webhook",
+              "displayName": "webhook with error handling",
+              "purpose": "Webhook that gracefully handles processing errors",
+              "isPreConfigured": true,
+              "config": {
+                "httpMethod": "POST",
+                "path": "resilient-webhook",
+                "responseMode": "responseNode",
+                "responseData": "firstEntryJson",
+                "onError": "continueRegularOutput",
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.switch",
+              "displayName": "nodes-base.switch",
+              "purpose": "Route support tickets to different teams based on keywords and categorization results",
+              "needsConfiguration": true
+            }
+          ]
+        },
+        "transformations": [
+          "Intent Analysis",
+          "Node Discovery",
+          "Selection"
+        ]
+      }
+    },
+    "configuration": {
+      "name": "Configuration",
+      "success": false,
+      "metrics": {
+        "startTime": 1754898860822,
+        "endTime": 1754898892924,
+        "duration": 32102,
+        "memoryUsage": {
+          "heapUsed": 3110760,
+          "heapTotal": 34799616,
+          "external": 7103687
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-11T07:54:20.822Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting configuration phase"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:20.823Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for configuration phase"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:30.547Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:30.547Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.slack\",\"config\":{\"text\":\"🎫 *New Support Ticket* {{$json.urgency === 'high' ? '🚨 HIGH PRIORITY' : $json.urgency === 'medium' ? '⚠️ MEDIUM' : '📝 LOW'}}\\n\\n*Ticket ID:* {{$json.ticketId}}\\n*Customer:* {{$json.customerName}}\\n*Urgency:* {{$json.urgency}}\\n*Sentiment:* {{$json.sentiment}}\\n*Assigned Team:* {{$json.assignedTeam}}\\n*Subject:* {{$json.subject}}\\n\\n*Description:*\\n{{$json.description}}\\n\\n{{$json.urgency === 'high' ? '<!channel> Immediate attention required!' : $json.urgency === 'medium' ? '<!here> Please review when available' : ''}}\",\"channel\":\"{{$json.assignedTeam === 'technical' ? '#tech-support' : $json.assignedTeam === 'billing' ? '#billing-support' : '#general-support'}}\",\"resource\":\"message\",\"operation\":\"post\"}}"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:30.748Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:30.749Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:30.749Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.slack\",\"config\":{\"text\":\"🎫 *New Support Ticket* {{$json.urgency === 'high' ? '🚨 HIGH PRIORITY' : $json.urgency === 'medium' ? '⚠️ MEDIUM' : '📝 LOW'}}\\n\\n*Ticket ID:* {{$json.ticketId}}\\n*Customer:* {{$json.customerName}}\\n*Urgency:* {{$json.urgency}}\\n*Sentiment:* {{$json.sentiment}}\\n*Assigned Team:* {{$json.assignedTeam}}\\n*Subject:* {{$json.subject}}\\n\\n*Description:*\\n{{$json.description}}\\n\\n{{$json.urgency === 'high' ? '<!channel> Immediate attention required!' : $json.urgency === 'medium' ? '<!here> Please review when available' : ''}}\",\"channel\":\"{{$json.assignedTeam === 'technical' ? '#tech-support' : $json.assignedTeam === 'billing' ? '#billing-support' : '#general-support'}}\",\"resource\":\"message\",\"operation\":\"post\"}}"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:30.913Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:32.630Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:32.630Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-langchain.agent\",\"config\":{\"text\":\"{{$json.ticket_content || $json.description || $json.message}}\",\"outputType\":\"output\",\"systemMessage\":\"You are a customer support ticket analysis assistant. Analyze the provided ticket content and return a JSON response with the following structure:\\n\\n{\\n  \\\"urgency\\\": \\\"low|medium|high|critical\\\",\\n  \\\"sentiment\\\": \\\"positive|neutral|negative\\\",\\n  \\\"keywords\\\": [\\\"keyword1\\\", \\\"keyword2\\\"],\\n  \\\"team_assignment\\\": \\\"technical|billing|general|escalation\\\",\\n  \\\"priority_score\\\": 1-10\\n}\\n\\nUrgency levels:\\n- critical: System down, security breach, data loss\\n- high: Major functionality broken, angry customer\\n- medium: Feature request, minor bug, general inquiry\\n- low: Documentation question, feedback\\n\\nTeam assignment based on keywords:\\n- technical: bug, error, crash, API, integration, performance\\n- billing: payment, invoice, refund, subscription, pricing\\n- escalation: complaint, angry, frustrated, cancel, lawsuit\\n- general: question, help, how-to, feature request\\n\\nBe consistent and accurate in your analysis.\"}}"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:32.738Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:39.139Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:39.139Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.webhook\",\"config\":{\"path\":\"support-tickets\",\"httpMethod\":\"POST\",\"responseData\":\"firstEntryJson\",\"responseMode\":\"responseNode\"}}"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:39.757Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:39.758Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_essentials"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:39.759Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.switch\"}"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:39.970Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_essentials completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:41.359Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:41.359Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.code\",\"config\":{\"jsCode\":\"// Transform customer support tickets and prepare for AI categorization\\nconst results = [];\\n\\nfor (const item of items) {\\n  try {\\n    const ticket = item.json;\\n    \\n    // Extract and clean ticket data\\n    const ticketData = {\\n      id: ticket.id || `ticket_${Date.now()}`,\\n      subject: ticket.subject || '',\\n      description: ticket.description || ticket.body || '',\\n      customer: {\\n        name: ticket.customer_name || ticket.name || 'Unknown',\\n        email: ticket.customer_email || ticket.email || '',\\n        priority: ticket.customer_priority || 'standard'\\n      },\\n      source: ticket.source || 'webhook',\\n      receivedAt: new Date().toISOString(),\\n      processedAt: new Date().toISOString()\\n    };\\n    \\n    // Prepare text for AI analysis (combine subject and description)\\n    const textForAnalysis = `${ticketData.subject} ${ticketData.description}`.toLowerCase();\\n    \\n    // Basic keyword-based team assignment (will be enhanced by AI)\\n    let suggestedTeam = 'general';\\n    const keywords = {\\n      technical: ['bug', 'error', 'crash', 'api', 'integration', 'technical', 'code'],\\n      billing: ['payment', 'invoice', 'billing', 'charge', 'refund', 'subscription'],\\n      sales: ['upgrade', 'pricing', 'demo', 'trial', 'purchase', 'quote'],\\n      support: ['help', 'how to', 'tutorial', 'guide', 'question']\\n    };\\n    \\n    for (const [team, teamKeywords] of Object.entries(keywords)) {\\n      if (teamKeywords.some(keyword => textForAnalysis.includes(keyword))) {\\n        suggestedTeam = team;\\n        break;\\n      }\\n    }\\n    \\n    // Basic urgency detection (will be enhanced by AI)\\n    let suggestedUrgency = 'medium';\\n    const urgentKeywords = ['urgent', 'critical', 'emergency', 'asap', 'immediately', 'down', 'outage'];\\n    const lowKeywords = ['question', 'how to', 'when you have time', 'not urgent'];\\n    \\n    if (urgentKeywords.some(keyword => textForAnalysis.includes(keyword))) {\\n      suggestedUrgency = 'high';\\n    } else if (lowKeywords.some(keyword => textForAnalysis.includes(keyword))) {\\n      suggestedUrgency = 'low';\\n    }\\n    \\n    results.push({\\n      json: {\\n        ...ticketData,\\n        analysis: {\\n          textForAI: `${ticketData.subject} ${ticketData.description}`,\\n          suggestedTeam,\\n          suggestedUrgency,\\n          keywordsFound: Object.entries(keywords)\\n            .filter(([team, teamKeywords]) => \\n              teamKeywords.some(keyword => textForAnalysis.includes(keyword))\\n            )\\n            .map(([team]) => team)\\n        },\\n        workflow: {\\n          step: 'data_transformation',\\n          nextStep: 'ai_categorization',\\n          retryCount: 0\\n        }\\n      }\\n    });\\n    \\n  } catch (error) {\\n    // Error handling - create error ticket for manual review\\n    results.push({\\n      json: {\\n        id: `error_${Date.now()}`,\\n        subject: 'Ticket Processing Error',\\n        description: `Failed to process incoming ticket: ${error.message}`,\\n        customer: {\\n          name: 'System',\\n          email: 'system@company.com',\\n          priority: 'standard'\\n        },\\n        source: 'error_handler',\\n        receivedAt: new Date().toISOString(),\\n        processedAt: new Date().toISOString(),\\n        analysis: {\\n          textForAI: `Processing error: ${error.message}`,\\n          suggestedTeam: 'technical',\\n          suggestedUrgency: 'high',\\n          keywordsFound: ['error']\\n        },\\n        workflow: {\\n          step: 'error_handling',\\n          nextStep: 'manual_review',\\n          retryCount: 0,\\n          originalError: error.message,\\n          originalData: item.json\\n        }\\n      }\\n    });\\n  }\\n}\\n\\nreturn results;\",\"language\":\"javaScript\"}}"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:41.480Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:51.311Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:51.311Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.httpRequest\",\"config\":{\"url\":\"https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK\",\"method\":\"POST\",\"sendHeaders\":true,\"headerParameters\":{\"parameters\":[{\"name\":\"Content-Type\",\"value\":\"application/json\"}]},\"sendBody\":true,\"bodyParameters\":{\"parameters\":[]},\"jsonBody\":\"{\\n  \\\"channel\\\": \\\"{{$json.priority === 'high' ? '#support-urgent' : '#support-general'}}\\\",\\n  \\\"username\\\": \\\"Support Bot\\\",\\n  \\\"icon_emoji\\\": \\\"{{$json.priority === 'high' ? ':rotating_light:' : ':ticket:'}}\\\",\\n  \\\"text\\\": \\\"{{$json.priority === 'high' ? '🚨 HIGH PRIORITY TICKET' : '📋 New Support Ticket'}}\\\",\\n  \\\"attachments\\\": [\\n    {\\n      \\\"color\\\": \\\"{{$json.priority === 'high' ? 'danger' : ($json.sentiment === 'negative' ? 'warning' : 'good')}}\\\",\\n      \\\"fields\\\": [\\n        {\\n          \\\"title\\\": \\\"Ticket ID\\\",\\n          \\\"value\\\": \\\"{{$json.ticketId}}\\\",\\n          \\\"short\\\": true\\n        },\\n        {\\n          \\\"title\\\": \\\"Priority\\\",\\n          \\\"value\\\": \\\"{{$json.priority.toUpperCase()}}\\\",\\n          \\\"short\\\": true\\n        },\\n        {\\n          \\\"title\\\": \\\"Category\\\",\\n          \\\"value\\\": \\\"{{$json.category}}\\\",\\n          \\\"short\\\": true\\n        },\\n        {\\n          \\\"title\\\": \\\"Assigned Team\\\",\\n          \\\"value\\\": \\\"{{$json.assignedTeam}}\\\",\\n          \\\"short\\\": true\\n        },\\n        {\\n          \\\"title\\\": \\\"Sentiment\\\",\\n          \\\"value\\\": \\\"{{$json.sentiment}}\\\",\\n          \\\"short\\\": true\\n        },\\n        {\\n          \\\"title\\\": \\\"Customer\\\",\\n          \\\"value\\\": \\\"{{$json.customerEmail}}\\\",\\n          \\\"short\\\": true\\n        },\\n        {\\n          \\\"title\\\": \\\"Subject\\\",\\n          \\\"value\\\": \\\"{{$json.subject}}\\\",\\n          \\\"short\\\": false\\n        },\\n        {\\n          \\\"title\\\": \\\"Description\\\",\\n          \\\"value\\\": \\\"{{$json.description.length > 200 ? $json.description.substring(0, 200) + '...' : $json.description}}\\\",\\n          \\\"short\\\": false\\n        }\\n      ],\\n      \\\"footer\\\": \\\"Support Ticket System\\\",\\n      \\\"ts\\\": \\\"{{Math.floor(Date.now() / 1000)}}\\\"\\n    }\\n  ]\\n}\",\"options\":{\"timeout\":10000,\"response\":{\"response\":{\"fullResponse\":false,\"responseFormat\":\"json\"}}}}}"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:51.463Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:52.816Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-langchain.agent (Create an AI agent that can use tools)"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:52.817Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.code (Transform data structure using JavaScript)"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:52.817Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.slack (Send a message to Slack channel)"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:52.817Z",
+          "level": "WARN",
+          "source": "Orchestrator",
+          "message": "Node task_node_4: Missing required field: Send Message To"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:52.817Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.httpRequest (Examples of modern error handling using onError property)"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:52.817Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.webhook (Webhook that gracefully handles processing errors)"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:52.817Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.switch (Route support tickets to different teams based on keywords and categorization results)"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:52.817Z",
+          "level": "WARN",
+          "source": "Orchestrator",
+          "message": "Node search_node_1: Failed to generate configuration for nodes-base.switch"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:52.923Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-11T07:54:52.924Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "task_node_2",
+          "type": "nodes-langchain.agent",
+          "purpose": "Create an AI agent that can use tools",
+          "configuration": {
+            "typeVersion": 1,
+            "notes": "AI agent that analyzes customer support tickets to categorize urgency (low/medium/high/critical) and sentiment (positive/neutral/negative) for automated ticket routing and priority handling",
+            "parameters": {
+              "text": "{{$json.ticket_content || $json.description || $json.message}}",
+              "outputType": "output",
+              "systemMessage": "You are a customer support ticket analysis assistant. Analyze the provided ticket content and return a JSON response with the following structure:\n\n{\n  \"urgency\": \"low|medium|high|critical\",\n  \"sentiment\": \"positive|neutral|negative\",\n  \"keywords\": [\"keyword1\", \"keyword2\"],\n  \"team_assignment\": \"technical|billing|general|escalation\",\n  \"priority_score\": 1-10\n}\n\nUrgency levels:\n- critical: System down, security breach, data loss\n- high: Major functionality broken, angry customer\n- medium: Feature request, minor bug, general inquiry\n- low: Documentation question, feedback\n\nTeam assignment based on keywords:\n- technical: bug, error, crash, API, integration, performance\n- billing: payment, invoice, refund, subscription, pricing\n- escalation: complaint, angry, frustrated, cancel, lawsuit\n- general: question, help, how-to, feature request\n\nBe consistent and accurate in your analysis."
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "task_node_3",
+          "type": "nodes-base.code",
+          "purpose": "Transform data structure using JavaScript",
+          "configuration": {
+            "typeVersion": 1,
+            "notes": "Transform webhook ticket data and categorize for team assignment and Slack notifications",
+            "parameters": {
+              "jsCode": "// Transform customer support tickets and prepare for AI categorization\nconst results = [];\n\nfor (const item of items) {\n  try {\n    const ticket = item.json;\n    \n    // Extract and clean ticket data\n    const ticketData = {\n      id: ticket.id || `ticket_${Date.now()}`,\n      subject: ticket.subject || '',\n      description: ticket.description || ticket.body || '',\n      customer: {\n        name: ticket.customer_name || ticket.name || 'Unknown',\n        email: ticket.customer_email || ticket.email || '',\n        priority: ticket.customer_priority || 'standard'\n      },\n      source: ticket.source || 'webhook',\n      receivedAt: new Date().toISOString(),\n      processedAt: new Date().toISOString()\n    };\n    \n    // Prepare text for AI analysis (combine subject and description)\n    const textForAnalysis = `${ticketData.subject} ${ticketData.description}`.toLowerCase();\n    \n    // Basic keyword-based team assignment (will be enhanced by AI)\n    let suggestedTeam = 'general';\n    const keywords = {\n      technical: ['bug', 'error', 'crash', 'api', 'integration', 'technical', 'code'],\n      billing: ['payment', 'invoice', 'billing', 'charge', 'refund', 'subscription'],\n      sales: ['upgrade', 'pricing', 'demo', 'trial', 'purchase', 'quote'],\n      support: ['help', 'how to', 'tutorial', 'guide', 'question']\n    };\n    \n    for (const [team, teamKeywords] of Object.entries(keywords)) {\n      if (teamKeywords.some(keyword => textForAnalysis.includes(keyword))) {\n        suggestedTeam = team;\n        break;\n      }\n    }\n    \n    // Basic urgency detection (will be enhanced by AI)\n    let suggestedUrgency = 'medium';\n    const urgentKeywords = ['urgent', 'critical', 'emergency', 'asap', 'immediately', 'down', 'outage'];\n    const lowKeywords = ['question', 'how to', 'when you have time', 'not urgent'];\n    \n    if (urgentKeywords.some(keyword => textForAnalysis.includes(keyword))) {\n      suggestedUrgency = 'high';\n    } else if (lowKeywords.some(keyword => textForAnalysis.includes(keyword))) {\n      suggestedUrgency = 'low';\n    }\n    \n    results.push({\n      json: {\n        ...ticketData,\n        analysis: {\n          textForAI: `${ticketData.subject} ${ticketData.description}`,\n          suggestedTeam,\n          suggestedUrgency,\n          keywordsFound: Object.entries(keywords)\n            .filter(([team, teamKeywords]) => \n              teamKeywords.some(keyword => textForAnalysis.includes(keyword))\n            )\n            .map(([team]) => team)\n        },\n        workflow: {\n          step: 'data_transformation',\n          nextStep: 'ai_categorization',\n          retryCount: 0\n        }\n      }\n    });\n    \n  } catch (error) {\n    // Error handling - create error ticket for manual review\n    results.push({\n      json: {\n        id: `error_${Date.now()}`,\n        subject: 'Ticket Processing Error',\n        description: `Failed to process incoming ticket: ${error.message}`,\n        customer: {\n          name: 'System',\n          email: 'system@company.com',\n          priority: 'standard'\n        },\n        source: 'error_handler',\n        receivedAt: new Date().toISOString(),\n        processedAt: new Date().toISOString(),\n        analysis: {\n          textForAI: `Processing error: ${error.message}`,\n          suggestedTeam: 'technical',\n          suggestedUrgency: 'high',\n          keywordsFound: ['error']\n        },\n        workflow: {\n          step: 'error_handling',\n          nextStep: 'manual_review',\n          retryCount: 0,\n          originalError: error.message,\n          originalData: item.json\n        }\n      }\n    });\n  }\n}\n\nreturn results;",
+              "language": "javaScript"
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "task_node_4",
+          "type": "nodes-base.slack",
+          "purpose": "Send a message to Slack channel",
+          "configuration": {
+            "onError": "continueRegularOutput",
+            "maxTries": 2,
+            "retryOnFail": true,
+            "waitBetweenTries": 2000,
+            "typeVersion": 1,
+            "notes": "Send Slack notifications for customer support tickets with priority-based formatting and team mentions",
+            "parameters": {
+              "text": "🎫 *New Support Ticket* {{$json.urgency === 'high' ? '🚨 HIGH PRIORITY' : $json.urgency === 'medium' ? '⚠️ MEDIUM' : '📝 LOW'}}\n\n*Ticket ID:* {{$json.ticketId}}\n*Customer:* {{$json.customerName}}\n*Urgency:* {{$json.urgency}}\n*Sentiment:* {{$json.sentiment}}\n*Assigned Team:* {{$json.assignedTeam}}\n*Subject:* {{$json.subject}}\n\n*Description:*\n{{$json.description}}\n\n{{$json.urgency === 'high' ? '<!channel> Immediate attention required!' : $json.urgency === 'medium' ? '<!here> Please review when available' : ''}}",
+              "channel": "{{$json.assignedTeam === 'technical' ? '#tech-support' : $json.assignedTeam === 'billing' ? '#billing-support' : '#general-support'}}",
+              "resource": "message",
+              "operation": "post"
+            }
+          },
+          "validationStatus": "invalid",
+          "validationErrors": [
+            "Missing required field: Send Message To"
+          ]
+        },
+        {
+          "id": "task_node_5",
+          "type": "nodes-base.httpRequest",
+          "purpose": "Examples of modern error handling using onError property",
+          "configuration": {
+            "onError": "continueRegularOutput",
+            "maxTries": 3,
+            "retryOnFail": true,
+            "alwaysOutputData": true,
+            "waitBetweenTries": 2000,
+            "typeVersion": 1,
+            "notes": "HTTP Request node for sending Slack notifications with priority-based formatting and retry logic for customer support ticket workflow",
+            "parameters": {
+              "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+              "method": "POST",
+              "sendHeaders": true,
+              "headerParameters": {
+                "parameters": [
+                  {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                  }
+                ]
+              },
+              "sendBody": true,
+              "bodyParameters": {
+                "parameters": []
+              },
+              "jsonBody": "{\n  \"channel\": \"{{$json.priority === 'high' ? '#support-urgent' : '#support-general'}}\",\n  \"username\": \"Support Bot\",\n  \"icon_emoji\": \"{{$json.priority === 'high' ? ':rotating_light:' : ':ticket:'}}\",\n  \"text\": \"{{$json.priority === 'high' ? '🚨 HIGH PRIORITY TICKET' : '📋 New Support Ticket'}}\",\n  \"attachments\": [\n    {\n      \"color\": \"{{$json.priority === 'high' ? 'danger' : ($json.sentiment === 'negative' ? 'warning' : 'good')}}\",\n      \"fields\": [\n        {\n          \"title\": \"Ticket ID\",\n          \"value\": \"{{$json.ticketId}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Priority\",\n          \"value\": \"{{$json.priority.toUpperCase()}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Category\",\n          \"value\": \"{{$json.category}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Assigned Team\",\n          \"value\": \"{{$json.assignedTeam}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Sentiment\",\n          \"value\": \"{{$json.sentiment}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Customer\",\n          \"value\": \"{{$json.customerEmail}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Subject\",\n          \"value\": \"{{$json.subject}}\",\n          \"short\": false\n        },\n        {\n          \"title\": \"Description\",\n          \"value\": \"{{$json.description.length > 200 ? $json.description.substring(0, 200) + '...' : $json.description}}\",\n          \"short\": false\n        }\n      ],\n      \"footer\": \"Support Ticket System\",\n      \"ts\": \"{{Math.floor(Date.now() / 1000)}}\"\n    }\n  ]\n}",
+              "options": {
+                "timeout": 10000,
+                "response": {
+                  "response": {
+                    "fullResponse": false,
+                    "responseFormat": "json"
+                  }
+                }
+              }
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "task_node_1",
+          "type": "nodes-base.webhook",
+          "purpose": "Webhook that gracefully handles processing errors",
+          "configuration": {
+            "onError": "continueRegularOutput",
+            "alwaysOutputData": true,
+            "typeVersion": 1,
+            "notes": "Webhook endpoint for receiving customer support tickets. Configured with error handling to gracefully process incoming tickets and continue workflow execution even if downstream processing fails.",
+            "parameters": {
+              "path": "support-tickets",
+              "httpMethod": "POST",
+              "responseData": "firstEntryJson",
+              "responseMode": "responseNode"
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "search_node_1",
+          "type": "nodes-base.switch",
+          "purpose": "Route support tickets to different teams based on keywords and categorization results",
+          "configuration": {},
+          "validationStatus": "invalid",
+          "validationErrors": [
+            "Failed to generate configuration for nodes-base.switch"
+          ]
+        }
+      ],
+      "sessionState": {
+        "sessionId": "complete_e2e_user_test_1754898841665",
+        "createdAt": "2025-08-11T07:54:02.015Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "Create an n8n workflow that receives customer support tickets via webhook, uses an AI agent to categorize the urgency and sentiment, automatically assigns tickets to the right team based on keywords, and sends Slack notifications with different priority levels. Include retry logic and error handling.",
+          "discovered": [
+            {
+              "id": "task_node_2",
+              "type": "nodes-langchain.agent",
+              "config": {
+                "text": "",
+                "outputType": "output",
+                "systemMessage": "You are a helpful assistant."
+              },
+              "purpose": "Create an AI agent that can use tools",
+              "displayName": "ai agent workflow",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_3",
+              "type": "nodes-base.code",
+              "config": {
+                "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                "language": "javaScript"
+              },
+              "purpose": "Transform data structure using JavaScript",
+              "displayName": "transform data",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_4",
+              "type": "nodes-base.slack",
+              "config": {
+                "text": "",
+                "channel": "",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "resource": "message",
+                "operation": "post",
+                "retryOnFail": true,
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Send a message to Slack channel",
+              "displayName": "send slack message",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_5",
+              "type": "nodes-base.httpRequest",
+              "config": {
+                "url": "",
+                "method": "GET",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Examples of modern error handling using onError property",
+              "displayName": "modern error handling patterns",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.webhook",
+              "config": {
+                "path": "resilient-webhook",
+                "onError": "continueRegularOutput",
+                "httpMethod": "POST",
+                "responseData": "firstEntryJson",
+                "responseMode": "responseNode",
+                "alwaysOutputData": true
+              },
+              "purpose": "Webhook that gracefully handles processing errors",
+              "displayName": "webhook with error handling",
+              "isPreConfigured": true
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.switch",
+              "purpose": "Route support tickets to different teams based on keywords and categorization results"
+            }
+          ],
+          "selected": [
+            "task_node_2",
+            "task_node_3",
+            "task_node_4",
+            "task_node_5",
+            "task_node_1",
+            "search_node_1"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "task_node_2",
+                "type": "nodes-langchain.agent",
+                "config": {
+                  "text": "",
+                  "outputType": "output",
+                  "systemMessage": "You are a helpful assistant."
+                },
+                "purpose": "Create an AI agent that can use tools",
+                "displayName": "ai agent workflow",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_2",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "node": {
+                "id": "task_node_3",
+                "type": "nodes-base.code",
+                "config": {
+                  "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                  "language": "javaScript"
+                },
+                "purpose": "Transform data structure using JavaScript",
+                "displayName": "transform data",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_3",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "node": {
+                "id": "task_node_4",
+                "type": "nodes-base.slack",
+                "config": {
+                  "text": "",
+                  "channel": "",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 2,
+                  "resource": "message",
+                  "operation": "post",
+                  "retryOnFail": true,
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Send a message to Slack channel",
+                "displayName": "send slack message",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_4",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "node": {
+                "id": "task_node_5",
+                "type": "nodes-base.httpRequest",
+                "config": {
+                  "url": "",
+                  "method": "GET",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 3,
+                  "retryOnFail": true,
+                  "alwaysOutputData": true,
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Examples of modern error handling using onError property",
+                "displayName": "modern error handling patterns",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_5",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "node": {
+                "id": "task_node_1",
+                "type": "nodes-base.webhook",
+                "config": {
+                  "path": "resilient-webhook",
+                  "onError": "continueRegularOutput",
+                  "httpMethod": "POST",
+                  "responseData": "firstEntryJson",
+                  "responseMode": "responseNode",
+                  "alwaysOutputData": true
+                },
+                "purpose": "Webhook that gracefully handles processing errors",
+                "displayName": "webhook with error handling",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_1",
+              "timestamp": "2025-08-11T07:54:20.010Z"
+            },
+            {
+              "node": {
+                "id": "search_node_1",
+                "type": "nodes-base.switch",
+                "purpose": "Route support tickets to different teams based on keywords and categorization results"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T07:54:20.251Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_1",
+              "timestamp": "2025-08-11T07:54:20.251Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-11T07:54:20.252Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "configuration",
+              "timestamp": "2025-08-11T07:54:51.465Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "AI agent that analyzes customer support tickets to categorize urgency (low/medium/high/critical) and sentiment (positive/neutral/negative) for automated ticket routing and priority handling",
+                "parameters": {
+                  "text": "{{$json.ticket_content || $json.description || $json.message}}",
+                  "outputType": "output",
+                  "systemMessage": "You are a customer support ticket analysis assistant. Analyze the provided ticket content and return a JSON response with the following structure:\n\n{\n  \"urgency\": \"low|medium|high|critical\",\n  \"sentiment\": \"positive|neutral|negative\",\n  \"keywords\": [\"keyword1\", \"keyword2\"],\n  \"team_assignment\": \"technical|billing|general|escalation\",\n  \"priority_score\": 1-10\n}\n\nUrgency levels:\n- critical: System down, security breach, data loss\n- high: Major functionality broken, angry customer\n- medium: Feature request, minor bug, general inquiry\n- low: Documentation question, feedback\n\nTeam assignment based on keywords:\n- technical: bug, error, crash, API, integration, performance\n- billing: payment, invoice, refund, subscription, pricing\n- escalation: complaint, angry, frustrated, cancel, lawsuit\n- general: question, help, how-to, feature request\n\nBe consistent and accurate in your analysis."
+                },
+                "typeVersion": 1
+              },
+              "nodeId": "task_node_2",
+              "purpose": "Create an AI agent that can use tools",
+              "nodeType": "nodes-langchain.agent",
+              "reasoning": "Customized the template for customer support ticket analysis by updating the system message to provide specific instructions for urgency and sentiment categorization",
+              "timestamp": "2025-08-11T07:54:51.722Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "task_node_2",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T07:54:51.950Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Transform webhook ticket data and categorize for team assignment and Slack notifications",
+                "parameters": {
+                  "jsCode": "// Transform customer support tickets and prepare for AI categorization\nconst results = [];\n\nfor (const item of items) {\n  try {\n    const ticket = item.json;\n    \n    // Extract and clean ticket data\n    const ticketData = {\n      id: ticket.id || `ticket_${Date.now()}`,\n      subject: ticket.subject || '',\n      description: ticket.description || ticket.body || '',\n      customer: {\n        name: ticket.customer_name || ticket.name || 'Unknown',\n        email: ticket.customer_email || ticket.email || '',\n        priority: ticket.customer_priority || 'standard'\n      },\n      source: ticket.source || 'webhook',\n      receivedAt: new Date().toISOString(),\n      processedAt: new Date().toISOString()\n    };\n    \n    // Prepare text for AI analysis (combine subject and description)\n    const textForAnalysis = `${ticketData.subject} ${ticketData.description}`.toLowerCase();\n    \n    // Basic keyword-based team assignment (will be enhanced by AI)\n    let suggestedTeam = 'general';\n    const keywords = {\n      technical: ['bug', 'error', 'crash', 'api', 'integration', 'technical', 'code'],\n      billing: ['payment', 'invoice', 'billing', 'charge', 'refund', 'subscription'],\n      sales: ['upgrade', 'pricing', 'demo', 'trial', 'purchase', 'quote'],\n      support: ['help', 'how to', 'tutorial', 'guide', 'question']\n    };\n    \n    for (const [team, teamKeywords] of Object.entries(keywords)) {\n      if (teamKeywords.some(keyword => textForAnalysis.includes(keyword))) {\n        suggestedTeam = team;\n        break;\n      }\n    }\n    \n    // Basic urgency detection (will be enhanced by AI)\n    let suggestedUrgency = 'medium';\n    const urgentKeywords = ['urgent', 'critical', 'emergency', 'asap', 'immediately', 'down', 'outage'];\n    const lowKeywords = ['question', 'how to', 'when you have time', 'not urgent'];\n    \n    if (urgentKeywords.some(keyword => textForAnalysis.includes(keyword))) {\n      suggestedUrgency = 'high';\n    } else if (lowKeywords.some(keyword => textForAnalysis.includes(keyword))) {\n      suggestedUrgency = 'low';\n    }\n    \n    results.push({\n      json: {\n        ...ticketData,\n        analysis: {\n          textForAI: `${ticketData.subject} ${ticketData.description}`,\n          suggestedTeam,\n          suggestedUrgency,\n          keywordsFound: Object.entries(keywords)\n            .filter(([team, teamKeywords]) => \n              teamKeywords.some(keyword => textForAnalysis.includes(keyword))\n            )\n            .map(([team]) => team)\n        },\n        workflow: {\n          step: 'data_transformation',\n          nextStep: 'ai_categorization',\n          retryCount: 0\n        }\n      }\n    });\n    \n  } catch (error) {\n    // Error handling - create error ticket for manual review\n    results.push({\n      json: {\n        id: `error_${Date.now()}`,\n        subject: 'Ticket Processing Error',\n        description: `Failed to process incoming ticket: ${error.message}`,\n        customer: {\n          name: 'System',\n          email: 'system@company.com',\n          priority: 'standard'\n        },\n        source: 'error_handler',\n        receivedAt: new Date().toISOString(),\n        processedAt: new Date().toISOString(),\n        analysis: {\n          textForAI: `Processing error: ${error.message}`,\n          suggestedTeam: 'technical',\n          suggestedUrgency: 'high',\n          keywordsFound: ['error']\n        },\n        workflow: {\n          step: 'error_handling',\n          nextStep: 'manual_review',\n          retryCount: 0,\n          originalError: error.message,\n          originalData: item.json\n        }\n      }\n    });\n  }\n}\n\nreturn results;",
+                  "language": "javaScript"
+                },
+                "typeVersion": 1
+              },
+              "nodeId": "task_node_3",
+              "purpose": "Transform data structure using JavaScript",
+              "nodeType": "nodes-base.code",
+              "reasoning": "Customized the template's generic data transformation to specifically handle customer support ticket data from webhooks",
+              "timestamp": "2025-08-11T07:54:51.952Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "task_node_3",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T07:54:52.119Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Send Slack notifications for customer support tickets with priority-based formatting and team mentions",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "parameters": {
+                  "text": "🎫 *New Support Ticket* {{$json.urgency === 'high' ? '🚨 HIGH PRIORITY' : $json.urgency === 'medium' ? '⚠️ MEDIUM' : '📝 LOW'}}\n\n*Ticket ID:* {{$json.ticketId}}\n*Customer:* {{$json.customerName}}\n*Urgency:* {{$json.urgency}}\n*Sentiment:* {{$json.sentiment}}\n*Assigned Team:* {{$json.assignedTeam}}\n*Subject:* {{$json.subject}}\n\n*Description:*\n{{$json.description}}\n\n{{$json.urgency === 'high' ? '<!channel> Immediate attention required!' : $json.urgency === 'medium' ? '<!here> Please review when available' : ''}}",
+                  "channel": "{{$json.assignedTeam === 'technical' ? '#tech-support' : $json.assignedTeam === 'billing' ? '#billing-support' : '#general-support'}}",
+                  "resource": "message",
+                  "operation": "post"
+                },
+                "retryOnFail": true,
+                "typeVersion": 1,
+                "waitBetweenTries": 2000
+              },
+              "nodeId": "task_node_4",
+              "purpose": "Send a message to Slack channel",
+              "nodeType": "nodes-base.slack",
+              "reasoning": "Customized the template for customer support ticket notifications by adding dynamic channel routing based on assigned team",
+              "timestamp": "2025-08-11T07:54:52.119Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "task_node_4",
+              "result": {
+                "valid": false,
+                "errors": [
+                  {
+                    "nodeId": "task_node_4",
+                    "message": "Missing required field: Send Message To",
+                    "severity": "error"
+                  }
+                ]
+              },
+              "timestamp": "2025-08-11T07:54:52.314Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "HTTP Request node for sending Slack notifications with priority-based formatting and retry logic for customer support ticket workflow",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "parameters": {
+                  "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+                  "method": "POST",
+                  "options": {
+                    "timeout": 10000,
+                    "response": {
+                      "response": {
+                        "fullResponse": false,
+                        "responseFormat": "json"
+                      }
+                    }
+                  },
+                  "jsonBody": "{\n  \"channel\": \"{{$json.priority === 'high' ? '#support-urgent' : '#support-general'}}\",\n  \"username\": \"Support Bot\",\n  \"icon_emoji\": \"{{$json.priority === 'high' ? ':rotating_light:' : ':ticket:'}}\",\n  \"text\": \"{{$json.priority === 'high' ? '🚨 HIGH PRIORITY TICKET' : '📋 New Support Ticket'}}\",\n  \"attachments\": [\n    {\n      \"color\": \"{{$json.priority === 'high' ? 'danger' : ($json.sentiment === 'negative' ? 'warning' : 'good')}}\",\n      \"fields\": [\n        {\n          \"title\": \"Ticket ID\",\n          \"value\": \"{{$json.ticketId}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Priority\",\n          \"value\": \"{{$json.priority.toUpperCase()}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Category\",\n          \"value\": \"{{$json.category}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Assigned Team\",\n          \"value\": \"{{$json.assignedTeam}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Sentiment\",\n          \"value\": \"{{$json.sentiment}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Customer\",\n          \"value\": \"{{$json.customerEmail}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Subject\",\n          \"value\": \"{{$json.subject}}\",\n          \"short\": false\n        },\n        {\n          \"title\": \"Description\",\n          \"value\": \"{{$json.description.length > 200 ? $json.description.substring(0, 200) + '...' : $json.description}}\",\n          \"short\": false\n        }\n      ],\n      \"footer\": \"Support Ticket System\",\n      \"ts\": \"{{Math.floor(Date.now() / 1000)}}\"\n    }\n  ]\n}",
+                  "sendBody": true,
+                  "sendHeaders": true,
+                  "bodyParameters": {
+                    "parameters": []
+                  },
+                  "headerParameters": {
+                    "parameters": [
+                      {
+                        "name": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ]
+                  }
+                },
+                "retryOnFail": true,
+                "typeVersion": 1,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 2000
+              },
+              "nodeId": "task_node_5",
+              "purpose": "Examples of modern error handling using onError property",
+              "nodeType": "nodes-base.httpRequest",
+              "reasoning": "Customized the template HTTP Request node for two specific purposes in the customer support workflow",
+              "timestamp": "2025-08-11T07:54:52.314Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "task_node_5",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T07:54:52.467Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Webhook endpoint for receiving customer support tickets. Configured with error handling to gracefully process incoming tickets and continue workflow execution even if downstream processing fails.",
+                "onError": "continueRegularOutput",
+                "parameters": {
+                  "path": "support-tickets",
+                  "httpMethod": "POST",
+                  "responseData": "firstEntryJson",
+                  "responseMode": "responseNode"
+                },
+                "typeVersion": 1,
+                "alwaysOutputData": true
+              },
+              "nodeId": "task_node_1",
+              "purpose": "Webhook that gracefully handles processing errors",
+              "nodeType": "nodes-base.webhook",
+              "reasoning": "Customized the webhook path from 'resilient-webhook' to 'support-tickets' to clearly indicate this endpoint receives customer support tickets",
+              "timestamp": "2025-08-11T07:54:52.467Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "task_node_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T07:54:52.689Z"
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "search_node_1",
+              "result": {
+                "valid": false,
+                "errors": [
+                  {
+                    "nodeId": "search_node_1",
+                    "message": "Failed to generate configuration for nodes-base.switch",
+                    "severity": "error"
+                  }
+                ]
+              },
+              "timestamp": "2025-08-11T07:54:52.689Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "discoveredNodes": [
+            {
+              "id": "task_node_2",
+              "type": "nodes-langchain.agent",
+              "displayName": "ai agent workflow",
+              "purpose": "Create an AI agent that can use tools",
+              "isPreConfigured": true,
+              "config": {
+                "text": "",
+                "outputType": "output",
+                "systemMessage": "You are a helpful assistant."
+              }
+            },
+            {
+              "id": "task_node_3",
+              "type": "nodes-base.code",
+              "displayName": "transform data",
+              "purpose": "Transform data structure using JavaScript",
+              "isPreConfigured": true,
+              "config": {
+                "language": "javaScript",
+                "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;"
+              }
+            },
+            {
+              "id": "task_node_4",
+              "type": "nodes-base.slack",
+              "displayName": "send slack message",
+              "purpose": "Send a message to Slack channel",
+              "isPreConfigured": true,
+              "config": {
+                "resource": "message",
+                "operation": "post",
+                "channel": "",
+                "text": "",
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 2,
+                "waitBetweenTries": 2000
+              }
+            },
+            {
+              "id": "task_node_5",
+              "type": "nodes-base.httpRequest",
+              "displayName": "modern error handling patterns",
+              "purpose": "Examples of modern error handling using onError property",
+              "isPreConfigured": true,
+              "config": {
+                "method": "GET",
+                "url": "",
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 3,
+                "waitBetweenTries": 2000,
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.webhook",
+              "displayName": "webhook with error handling",
+              "purpose": "Webhook that gracefully handles processing errors",
+              "isPreConfigured": true,
+              "config": {
+                "httpMethod": "POST",
+                "path": "resilient-webhook",
+                "responseMode": "responseNode",
+                "responseData": "firstEntryJson",
+                "onError": "continueRegularOutput",
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.switch",
+              "displayName": "nodes-base.switch",
+              "purpose": "Route support tickets to different teams based on keywords and categorization results",
+              "needsConfiguration": true
+            }
+          ]
+        },
+        "output": {
+          "configuredNodes": [
+            {
+              "id": "task_node_2",
+              "type": "nodes-langchain.agent",
+              "purpose": "Create an AI agent that can use tools",
+              "config": {
+                "typeVersion": 1,
+                "notes": "AI agent that analyzes customer support tickets to categorize urgency (low/medium/high/critical) and sentiment (positive/neutral/negative) for automated ticket routing and priority handling",
+                "parameters": {
+                  "text": "{{$json.ticket_content || $json.description || $json.message}}",
+                  "outputType": "output",
+                  "systemMessage": "You are a customer support ticket analysis assistant. Analyze the provided ticket content and return a JSON response with the following structure:\n\n{\n  \"urgency\": \"low|medium|high|critical\",\n  \"sentiment\": \"positive|neutral|negative\",\n  \"keywords\": [\"keyword1\", \"keyword2\"],\n  \"team_assignment\": \"technical|billing|general|escalation\",\n  \"priority_score\": 1-10\n}\n\nUrgency levels:\n- critical: System down, security breach, data loss\n- high: Major functionality broken, angry customer\n- medium: Feature request, minor bug, general inquiry\n- low: Documentation question, feedback\n\nTeam assignment based on keywords:\n- technical: bug, error, crash, API, integration, performance\n- billing: payment, invoice, refund, subscription, pricing\n- escalation: complaint, angry, frustrated, cancel, lawsuit\n- general: question, help, how-to, feature request\n\nBe consistent and accurate in your analysis."
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "task_node_3",
+              "type": "nodes-base.code",
+              "purpose": "Transform data structure using JavaScript",
+              "config": {
+                "typeVersion": 1,
+                "notes": "Transform webhook ticket data and categorize for team assignment and Slack notifications",
+                "parameters": {
+                  "jsCode": "// Transform customer support tickets and prepare for AI categorization\nconst results = [];\n\nfor (const item of items) {\n  try {\n    const ticket = item.json;\n    \n    // Extract and clean ticket data\n    const ticketData = {\n      id: ticket.id || `ticket_${Date.now()}`,\n      subject: ticket.subject || '',\n      description: ticket.description || ticket.body || '',\n      customer: {\n        name: ticket.customer_name || ticket.name || 'Unknown',\n        email: ticket.customer_email || ticket.email || '',\n        priority: ticket.customer_priority || 'standard'\n      },\n      source: ticket.source || 'webhook',\n      receivedAt: new Date().toISOString(),\n      processedAt: new Date().toISOString()\n    };\n    \n    // Prepare text for AI analysis (combine subject and description)\n    const textForAnalysis = `${ticketData.subject} ${ticketData.description}`.toLowerCase();\n    \n    // Basic keyword-based team assignment (will be enhanced by AI)\n    let suggestedTeam = 'general';\n    const keywords = {\n      technical: ['bug', 'error', 'crash', 'api', 'integration', 'technical', 'code'],\n      billing: ['payment', 'invoice', 'billing', 'charge', 'refund', 'subscription'],\n      sales: ['upgrade', 'pricing', 'demo', 'trial', 'purchase', 'quote'],\n      support: ['help', 'how to', 'tutorial', 'guide', 'question']\n    };\n    \n    for (const [team, teamKeywords] of Object.entries(keywords)) {\n      if (teamKeywords.some(keyword => textForAnalysis.includes(keyword))) {\n        suggestedTeam = team;\n        break;\n      }\n    }\n    \n    // Basic urgency detection (will be enhanced by AI)\n    let suggestedUrgency = 'medium';\n    const urgentKeywords = ['urgent', 'critical', 'emergency', 'asap', 'immediately', 'down', 'outage'];\n    const lowKeywords = ['question', 'how to', 'when you have time', 'not urgent'];\n    \n    if (urgentKeywords.some(keyword => textForAnalysis.includes(keyword))) {\n      suggestedUrgency = 'high';\n    } else if (lowKeywords.some(keyword => textForAnalysis.includes(keyword))) {\n      suggestedUrgency = 'low';\n    }\n    \n    results.push({\n      json: {\n        ...ticketData,\n        analysis: {\n          textForAI: `${ticketData.subject} ${ticketData.description}`,\n          suggestedTeam,\n          suggestedUrgency,\n          keywordsFound: Object.entries(keywords)\n            .filter(([team, teamKeywords]) => \n              teamKeywords.some(keyword => textForAnalysis.includes(keyword))\n            )\n            .map(([team]) => team)\n        },\n        workflow: {\n          step: 'data_transformation',\n          nextStep: 'ai_categorization',\n          retryCount: 0\n        }\n      }\n    });\n    \n  } catch (error) {\n    // Error handling - create error ticket for manual review\n    results.push({\n      json: {\n        id: `error_${Date.now()}`,\n        subject: 'Ticket Processing Error',\n        description: `Failed to process incoming ticket: ${error.message}`,\n        customer: {\n          name: 'System',\n          email: 'system@company.com',\n          priority: 'standard'\n        },\n        source: 'error_handler',\n        receivedAt: new Date().toISOString(),\n        processedAt: new Date().toISOString(),\n        analysis: {\n          textForAI: `Processing error: ${error.message}`,\n          suggestedTeam: 'technical',\n          suggestedUrgency: 'high',\n          keywordsFound: ['error']\n        },\n        workflow: {\n          step: 'error_handling',\n          nextStep: 'manual_review',\n          retryCount: 0,\n          originalError: error.message,\n          originalData: item.json\n        }\n      }\n    });\n  }\n}\n\nreturn results;",
+                  "language": "javaScript"
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "task_node_4",
+              "type": "nodes-base.slack",
+              "purpose": "Send a message to Slack channel",
+              "config": {
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "retryOnFail": true,
+                "waitBetweenTries": 2000,
+                "typeVersion": 1,
+                "notes": "Send Slack notifications for customer support tickets with priority-based formatting and team mentions",
+                "parameters": {
+                  "text": "🎫 *New Support Ticket* {{$json.urgency === 'high' ? '🚨 HIGH PRIORITY' : $json.urgency === 'medium' ? '⚠️ MEDIUM' : '📝 LOW'}}\n\n*Ticket ID:* {{$json.ticketId}}\n*Customer:* {{$json.customerName}}\n*Urgency:* {{$json.urgency}}\n*Sentiment:* {{$json.sentiment}}\n*Assigned Team:* {{$json.assignedTeam}}\n*Subject:* {{$json.subject}}\n\n*Description:*\n{{$json.description}}\n\n{{$json.urgency === 'high' ? '<!channel> Immediate attention required!' : $json.urgency === 'medium' ? '<!here> Please review when available' : ''}}",
+                  "channel": "{{$json.assignedTeam === 'technical' ? '#tech-support' : $json.assignedTeam === 'billing' ? '#billing-support' : '#general-support'}}",
+                  "resource": "message",
+                  "operation": "post"
+                }
+              },
+              "validated": false,
+              "validationErrors": [
+                "Missing required field: Send Message To"
+              ]
+            },
+            {
+              "id": "task_node_5",
+              "type": "nodes-base.httpRequest",
+              "purpose": "Examples of modern error handling using onError property",
+              "config": {
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 2000,
+                "typeVersion": 1,
+                "notes": "HTTP Request node for sending Slack notifications with priority-based formatting and retry logic for customer support ticket workflow",
+                "parameters": {
+                  "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+                  "method": "POST",
+                  "sendHeaders": true,
+                  "headerParameters": {
+                    "parameters": [
+                      {
+                        "name": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ]
+                  },
+                  "sendBody": true,
+                  "bodyParameters": {
+                    "parameters": []
+                  },
+                  "jsonBody": "{\n  \"channel\": \"{{$json.priority === 'high' ? '#support-urgent' : '#support-general'}}\",\n  \"username\": \"Support Bot\",\n  \"icon_emoji\": \"{{$json.priority === 'high' ? ':rotating_light:' : ':ticket:'}}\",\n  \"text\": \"{{$json.priority === 'high' ? '🚨 HIGH PRIORITY TICKET' : '📋 New Support Ticket'}}\",\n  \"attachments\": [\n    {\n      \"color\": \"{{$json.priority === 'high' ? 'danger' : ($json.sentiment === 'negative' ? 'warning' : 'good')}}\",\n      \"fields\": [\n        {\n          \"title\": \"Ticket ID\",\n          \"value\": \"{{$json.ticketId}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Priority\",\n          \"value\": \"{{$json.priority.toUpperCase()}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Category\",\n          \"value\": \"{{$json.category}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Assigned Team\",\n          \"value\": \"{{$json.assignedTeam}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Sentiment\",\n          \"value\": \"{{$json.sentiment}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Customer\",\n          \"value\": \"{{$json.customerEmail}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Subject\",\n          \"value\": \"{{$json.subject}}\",\n          \"short\": false\n        },\n        {\n          \"title\": \"Description\",\n          \"value\": \"{{$json.description.length > 200 ? $json.description.substring(0, 200) + '...' : $json.description}}\",\n          \"short\": false\n        }\n      ],\n      \"footer\": \"Support Ticket System\",\n      \"ts\": \"{{Math.floor(Date.now() / 1000)}}\"\n    }\n  ]\n}",
+                  "options": {
+                    "timeout": 10000,
+                    "response": {
+                      "response": {
+                        "fullResponse": false,
+                        "responseFormat": "json"
+                      }
+                    }
+                  }
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.webhook",
+              "purpose": "Webhook that gracefully handles processing errors",
+              "config": {
+                "onError": "continueRegularOutput",
+                "alwaysOutputData": true,
+                "typeVersion": 1,
+                "notes": "Webhook endpoint for receiving customer support tickets. Configured with error handling to gracefully process incoming tickets and continue workflow execution even if downstream processing fails.",
+                "parameters": {
+                  "path": "support-tickets",
+                  "httpMethod": "POST",
+                  "responseData": "firstEntryJson",
+                  "responseMode": "responseNode"
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.switch",
+              "purpose": "Route support tickets to different teams based on keywords and categorization results",
+              "config": {},
+              "validated": false,
+              "validationErrors": [
+                "Failed to generate configuration for nodes-base.switch"
+              ]
+            }
+          ]
+        },
+        "transformations": [
+          "Parameter Configuration",
+          "Validation",
+          "Type Checking"
+        ]
+      },
+      "warnings": [
+        "Node task_node_4: Missing required field: Send Message To",
+        "Node search_node_1: Failed to generate configuration for nodes-base.switch"
+      ],
+      "stateDelta": {
+        "added": {},
+        "modified": {
+          "state": {
+            "old": {
+              "phase": "configuration",
+              "userPrompt": "Create an n8n workflow that receives customer support tickets via webhook, uses an AI agent to categorize the urgency and sentiment, automatically assigns tickets to the right team based on keywords, and sends Slack notifications with different priority levels. Include retry logic and error handling.",
+              "discovered": [
+                {
+                  "id": "task_node_2",
+                  "type": "nodes-langchain.agent",
+                  "config": {
+                    "text": "",
+                    "outputType": "output",
+                    "systemMessage": "You are a helpful assistant."
+                  },
+                  "purpose": "Create an AI agent that can use tools",
+                  "displayName": "ai agent workflow",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_3",
+                  "type": "nodes-base.code",
+                  "config": {
+                    "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                    "language": "javaScript"
+                  },
+                  "purpose": "Transform data structure using JavaScript",
+                  "displayName": "transform data",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_4",
+                  "type": "nodes-base.slack",
+                  "config": {
+                    "text": "",
+                    "channel": "",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "resource": "message",
+                    "operation": "post",
+                    "retryOnFail": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Send a message to Slack channel",
+                  "displayName": "send slack message",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_5",
+                  "type": "nodes-base.httpRequest",
+                  "config": {
+                    "url": "",
+                    "method": "GET",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 3,
+                    "retryOnFail": true,
+                    "alwaysOutputData": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Examples of modern error handling using onError property",
+                  "displayName": "modern error handling patterns",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_1",
+                  "type": "nodes-base.webhook",
+                  "config": {
+                    "path": "resilient-webhook",
+                    "onError": "continueRegularOutput",
+                    "httpMethod": "POST",
+                    "responseData": "firstEntryJson",
+                    "responseMode": "responseNode",
+                    "alwaysOutputData": true
+                  },
+                  "purpose": "Webhook that gracefully handles processing errors",
+                  "displayName": "webhook with error handling",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "search_node_1",
+                  "type": "nodes-base.switch",
+                  "purpose": "Route support tickets to different teams based on keywords and categorization results"
+                }
+              ],
+              "selected": [
+                "task_node_2",
+                "task_node_3",
+                "task_node_4",
+                "task_node_5",
+                "task_node_1",
+                "search_node_1"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "nodes": [],
+                "settings": {},
+                "connections": {}
+              },
+              "buildPhases": [],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "task_node_2",
+                    "type": "nodes-langchain.agent",
+                    "config": {
+                      "text": "",
+                      "outputType": "output",
+                      "systemMessage": "You are a helpful assistant."
+                    },
+                    "purpose": "Create an AI agent that can use tools",
+                    "displayName": "ai agent workflow",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_2",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_3",
+                    "type": "nodes-base.code",
+                    "config": {
+                      "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                      "language": "javaScript"
+                    },
+                    "purpose": "Transform data structure using JavaScript",
+                    "displayName": "transform data",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_3",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_4",
+                    "type": "nodes-base.slack",
+                    "config": {
+                      "text": "",
+                      "channel": "",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 2,
+                      "resource": "message",
+                      "operation": "post",
+                      "retryOnFail": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Send a message to Slack channel",
+                    "displayName": "send slack message",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_4",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_5",
+                    "type": "nodes-base.httpRequest",
+                    "config": {
+                      "url": "",
+                      "method": "GET",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 3,
+                      "retryOnFail": true,
+                      "alwaysOutputData": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Examples of modern error handling using onError property",
+                    "displayName": "modern error handling patterns",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_5",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_1",
+                    "type": "nodes-base.webhook",
+                    "config": {
+                      "path": "resilient-webhook",
+                      "onError": "continueRegularOutput",
+                      "httpMethod": "POST",
+                      "responseData": "firstEntryJson",
+                      "responseMode": "responseNode",
+                      "alwaysOutputData": true
+                    },
+                    "purpose": "Webhook that gracefully handles processing errors",
+                    "displayName": "webhook with error handling",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_1",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_1",
+                    "type": "nodes-base.switch",
+                    "purpose": "Route support tickets to different teams based on keywords and categorization results"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T07:54:20.251Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_1",
+                  "timestamp": "2025-08-11T07:54:20.251Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-11T07:54:20.252Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            },
+            "new": {
+              "phase": "configuration",
+              "userPrompt": "Create an n8n workflow that receives customer support tickets via webhook, uses an AI agent to categorize the urgency and sentiment, automatically assigns tickets to the right team based on keywords, and sends Slack notifications with different priority levels. Include retry logic and error handling.",
+              "discovered": [
+                {
+                  "id": "task_node_2",
+                  "type": "nodes-langchain.agent",
+                  "config": {
+                    "text": "",
+                    "outputType": "output",
+                    "systemMessage": "You are a helpful assistant."
+                  },
+                  "purpose": "Create an AI agent that can use tools",
+                  "displayName": "ai agent workflow",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_3",
+                  "type": "nodes-base.code",
+                  "config": {
+                    "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                    "language": "javaScript"
+                  },
+                  "purpose": "Transform data structure using JavaScript",
+                  "displayName": "transform data",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_4",
+                  "type": "nodes-base.slack",
+                  "config": {
+                    "text": "",
+                    "channel": "",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "resource": "message",
+                    "operation": "post",
+                    "retryOnFail": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Send a message to Slack channel",
+                  "displayName": "send slack message",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_5",
+                  "type": "nodes-base.httpRequest",
+                  "config": {
+                    "url": "",
+                    "method": "GET",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 3,
+                    "retryOnFail": true,
+                    "alwaysOutputData": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Examples of modern error handling using onError property",
+                  "displayName": "modern error handling patterns",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_1",
+                  "type": "nodes-base.webhook",
+                  "config": {
+                    "path": "resilient-webhook",
+                    "onError": "continueRegularOutput",
+                    "httpMethod": "POST",
+                    "responseData": "firstEntryJson",
+                    "responseMode": "responseNode",
+                    "alwaysOutputData": true
+                  },
+                  "purpose": "Webhook that gracefully handles processing errors",
+                  "displayName": "webhook with error handling",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "search_node_1",
+                  "type": "nodes-base.switch",
+                  "purpose": "Route support tickets to different teams based on keywords and categorization results"
+                }
+              ],
+              "selected": [
+                "task_node_2",
+                "task_node_3",
+                "task_node_4",
+                "task_node_5",
+                "task_node_1",
+                "search_node_1"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "nodes": [],
+                "settings": {},
+                "connections": {}
+              },
+              "buildPhases": [],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "task_node_2",
+                    "type": "nodes-langchain.agent",
+                    "config": {
+                      "text": "",
+                      "outputType": "output",
+                      "systemMessage": "You are a helpful assistant."
+                    },
+                    "purpose": "Create an AI agent that can use tools",
+                    "displayName": "ai agent workflow",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_2",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_3",
+                    "type": "nodes-base.code",
+                    "config": {
+                      "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                      "language": "javaScript"
+                    },
+                    "purpose": "Transform data structure using JavaScript",
+                    "displayName": "transform data",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_3",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_4",
+                    "type": "nodes-base.slack",
+                    "config": {
+                      "text": "",
+                      "channel": "",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 2,
+                      "resource": "message",
+                      "operation": "post",
+                      "retryOnFail": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Send a message to Slack channel",
+                    "displayName": "send slack message",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_4",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_5",
+                    "type": "nodes-base.httpRequest",
+                    "config": {
+                      "url": "",
+                      "method": "GET",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 3,
+                      "retryOnFail": true,
+                      "alwaysOutputData": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Examples of modern error handling using onError property",
+                    "displayName": "modern error handling patterns",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_5",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_1",
+                    "type": "nodes-base.webhook",
+                    "config": {
+                      "path": "resilient-webhook",
+                      "onError": "continueRegularOutput",
+                      "httpMethod": "POST",
+                      "responseData": "firstEntryJson",
+                      "responseMode": "responseNode",
+                      "alwaysOutputData": true
+                    },
+                    "purpose": "Webhook that gracefully handles processing errors",
+                    "displayName": "webhook with error handling",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_1",
+                  "timestamp": "2025-08-11T07:54:20.010Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_1",
+                    "type": "nodes-base.switch",
+                    "purpose": "Route support tickets to different teams based on keywords and categorization results"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T07:54:20.251Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_1",
+                  "timestamp": "2025-08-11T07:54:20.251Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-11T07:54:20.252Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-11T07:54:51.465Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "AI agent that analyzes customer support tickets to categorize urgency (low/medium/high/critical) and sentiment (positive/neutral/negative) for automated ticket routing and priority handling",
+                    "parameters": {
+                      "text": "{{$json.ticket_content || $json.description || $json.message}}",
+                      "outputType": "output",
+                      "systemMessage": "You are a customer support ticket analysis assistant. Analyze the provided ticket content and return a JSON response with the following structure:\n\n{\n  \"urgency\": \"low|medium|high|critical\",\n  \"sentiment\": \"positive|neutral|negative\",\n  \"keywords\": [\"keyword1\", \"keyword2\"],\n  \"team_assignment\": \"technical|billing|general|escalation\",\n  \"priority_score\": 1-10\n}\n\nUrgency levels:\n- critical: System down, security breach, data loss\n- high: Major functionality broken, angry customer\n- medium: Feature request, minor bug, general inquiry\n- low: Documentation question, feedback\n\nTeam assignment based on keywords:\n- technical: bug, error, crash, API, integration, performance\n- billing: payment, invoice, refund, subscription, pricing\n- escalation: complaint, angry, frustrated, cancel, lawsuit\n- general: question, help, how-to, feature request\n\nBe consistent and accurate in your analysis."
+                    },
+                    "typeVersion": 1
+                  },
+                  "nodeId": "task_node_2",
+                  "purpose": "Create an AI agent that can use tools",
+                  "nodeType": "nodes-langchain.agent",
+                  "reasoning": "Customized the template for customer support ticket analysis by updating the system message to provide specific instructions for urgency and sentiment categorization",
+                  "timestamp": "2025-08-11T07:54:51.722Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "task_node_2",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T07:54:51.950Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Transform webhook ticket data and categorize for team assignment and Slack notifications",
+                    "parameters": {
+                      "jsCode": "// Transform customer support tickets and prepare for AI categorization\nconst results = [];\n\nfor (const item of items) {\n  try {\n    const ticket = item.json;\n    \n    // Extract and clean ticket data\n    const ticketData = {\n      id: ticket.id || `ticket_${Date.now()}`,\n      subject: ticket.subject || '',\n      description: ticket.description || ticket.body || '',\n      customer: {\n        name: ticket.customer_name || ticket.name || 'Unknown',\n        email: ticket.customer_email || ticket.email || '',\n        priority: ticket.customer_priority || 'standard'\n      },\n      source: ticket.source || 'webhook',\n      receivedAt: new Date().toISOString(),\n      processedAt: new Date().toISOString()\n    };\n    \n    // Prepare text for AI analysis (combine subject and description)\n    const textForAnalysis = `${ticketData.subject} ${ticketData.description}`.toLowerCase();\n    \n    // Basic keyword-based team assignment (will be enhanced by AI)\n    let suggestedTeam = 'general';\n    const keywords = {\n      technical: ['bug', 'error', 'crash', 'api', 'integration', 'technical', 'code'],\n      billing: ['payment', 'invoice', 'billing', 'charge', 'refund', 'subscription'],\n      sales: ['upgrade', 'pricing', 'demo', 'trial', 'purchase', 'quote'],\n      support: ['help', 'how to', 'tutorial', 'guide', 'question']\n    };\n    \n    for (const [team, teamKeywords] of Object.entries(keywords)) {\n      if (teamKeywords.some(keyword => textForAnalysis.includes(keyword))) {\n        suggestedTeam = team;\n        break;\n      }\n    }\n    \n    // Basic urgency detection (will be enhanced by AI)\n    let suggestedUrgency = 'medium';\n    const urgentKeywords = ['urgent', 'critical', 'emergency', 'asap', 'immediately', 'down', 'outage'];\n    const lowKeywords = ['question', 'how to', 'when you have time', 'not urgent'];\n    \n    if (urgentKeywords.some(keyword => textForAnalysis.includes(keyword))) {\n      suggestedUrgency = 'high';\n    } else if (lowKeywords.some(keyword => textForAnalysis.includes(keyword))) {\n      suggestedUrgency = 'low';\n    }\n    \n    results.push({\n      json: {\n        ...ticketData,\n        analysis: {\n          textForAI: `${ticketData.subject} ${ticketData.description}`,\n          suggestedTeam,\n          suggestedUrgency,\n          keywordsFound: Object.entries(keywords)\n            .filter(([team, teamKeywords]) => \n              teamKeywords.some(keyword => textForAnalysis.includes(keyword))\n            )\n            .map(([team]) => team)\n        },\n        workflow: {\n          step: 'data_transformation',\n          nextStep: 'ai_categorization',\n          retryCount: 0\n        }\n      }\n    });\n    \n  } catch (error) {\n    // Error handling - create error ticket for manual review\n    results.push({\n      json: {\n        id: `error_${Date.now()}`,\n        subject: 'Ticket Processing Error',\n        description: `Failed to process incoming ticket: ${error.message}`,\n        customer: {\n          name: 'System',\n          email: 'system@company.com',\n          priority: 'standard'\n        },\n        source: 'error_handler',\n        receivedAt: new Date().toISOString(),\n        processedAt: new Date().toISOString(),\n        analysis: {\n          textForAI: `Processing error: ${error.message}`,\n          suggestedTeam: 'technical',\n          suggestedUrgency: 'high',\n          keywordsFound: ['error']\n        },\n        workflow: {\n          step: 'error_handling',\n          nextStep: 'manual_review',\n          retryCount: 0,\n          originalError: error.message,\n          originalData: item.json\n        }\n      }\n    });\n  }\n}\n\nreturn results;",
+                      "language": "javaScript"
+                    },
+                    "typeVersion": 1
+                  },
+                  "nodeId": "task_node_3",
+                  "purpose": "Transform data structure using JavaScript",
+                  "nodeType": "nodes-base.code",
+                  "reasoning": "Customized the template's generic data transformation to specifically handle customer support ticket data from webhooks",
+                  "timestamp": "2025-08-11T07:54:51.952Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "task_node_3",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T07:54:52.119Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Send Slack notifications for customer support tickets with priority-based formatting and team mentions",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "parameters": {
+                      "text": "🎫 *New Support Ticket* {{$json.urgency === 'high' ? '🚨 HIGH PRIORITY' : $json.urgency === 'medium' ? '⚠️ MEDIUM' : '📝 LOW'}}\n\n*Ticket ID:* {{$json.ticketId}}\n*Customer:* {{$json.customerName}}\n*Urgency:* {{$json.urgency}}\n*Sentiment:* {{$json.sentiment}}\n*Assigned Team:* {{$json.assignedTeam}}\n*Subject:* {{$json.subject}}\n\n*Description:*\n{{$json.description}}\n\n{{$json.urgency === 'high' ? '<!channel> Immediate attention required!' : $json.urgency === 'medium' ? '<!here> Please review when available' : ''}}",
+                      "channel": "{{$json.assignedTeam === 'technical' ? '#tech-support' : $json.assignedTeam === 'billing' ? '#billing-support' : '#general-support'}}",
+                      "resource": "message",
+                      "operation": "post"
+                    },
+                    "retryOnFail": true,
+                    "typeVersion": 1,
+                    "waitBetweenTries": 2000
+                  },
+                  "nodeId": "task_node_4",
+                  "purpose": "Send a message to Slack channel",
+                  "nodeType": "nodes-base.slack",
+                  "reasoning": "Customized the template for customer support ticket notifications by adding dynamic channel routing based on assigned team",
+                  "timestamp": "2025-08-11T07:54:52.119Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "task_node_4",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      {
+                        "nodeId": "task_node_4",
+                        "message": "Missing required field: Send Message To",
+                        "severity": "error"
+                      }
+                    ]
+                  },
+                  "timestamp": "2025-08-11T07:54:52.314Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "HTTP Request node for sending Slack notifications with priority-based formatting and retry logic for customer support ticket workflow",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 3,
+                    "parameters": {
+                      "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+                      "method": "POST",
+                      "options": {
+                        "timeout": 10000,
+                        "response": {
+                          "response": {
+                            "fullResponse": false,
+                            "responseFormat": "json"
+                          }
+                        }
+                      },
+                      "jsonBody": "{\n  \"channel\": \"{{$json.priority === 'high' ? '#support-urgent' : '#support-general'}}\",\n  \"username\": \"Support Bot\",\n  \"icon_emoji\": \"{{$json.priority === 'high' ? ':rotating_light:' : ':ticket:'}}\",\n  \"text\": \"{{$json.priority === 'high' ? '🚨 HIGH PRIORITY TICKET' : '📋 New Support Ticket'}}\",\n  \"attachments\": [\n    {\n      \"color\": \"{{$json.priority === 'high' ? 'danger' : ($json.sentiment === 'negative' ? 'warning' : 'good')}}\",\n      \"fields\": [\n        {\n          \"title\": \"Ticket ID\",\n          \"value\": \"{{$json.ticketId}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Priority\",\n          \"value\": \"{{$json.priority.toUpperCase()}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Category\",\n          \"value\": \"{{$json.category}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Assigned Team\",\n          \"value\": \"{{$json.assignedTeam}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Sentiment\",\n          \"value\": \"{{$json.sentiment}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Customer\",\n          \"value\": \"{{$json.customerEmail}}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Subject\",\n          \"value\": \"{{$json.subject}}\",\n          \"short\": false\n        },\n        {\n          \"title\": \"Description\",\n          \"value\": \"{{$json.description.length > 200 ? $json.description.substring(0, 200) + '...' : $json.description}}\",\n          \"short\": false\n        }\n      ],\n      \"footer\": \"Support Ticket System\",\n      \"ts\": \"{{Math.floor(Date.now() / 1000)}}\"\n    }\n  ]\n}",
+                      "sendBody": true,
+                      "sendHeaders": true,
+                      "bodyParameters": {
+                        "parameters": []
+                      },
+                      "headerParameters": {
+                        "parameters": [
+                          {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                          }
+                        ]
+                      }
+                    },
+                    "retryOnFail": true,
+                    "typeVersion": 1,
+                    "alwaysOutputData": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "nodeId": "task_node_5",
+                  "purpose": "Examples of modern error handling using onError property",
+                  "nodeType": "nodes-base.httpRequest",
+                  "reasoning": "Customized the template HTTP Request node for two specific purposes in the customer support workflow",
+                  "timestamp": "2025-08-11T07:54:52.314Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "task_node_5",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T07:54:52.467Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Webhook endpoint for receiving customer support tickets. Configured with error handling to gracefully process incoming tickets and continue workflow execution even if downstream processing fails.",
+                    "onError": "continueRegularOutput",
+                    "parameters": {
+                      "path": "support-tickets",
+                      "httpMethod": "POST",
+                      "responseData": "firstEntryJson",
+                      "responseMode": "responseNode"
+                    },
+                    "typeVersion": 1,
+                    "alwaysOutputData": true
+                  },
+                  "nodeId": "task_node_1",
+                  "purpose": "Webhook that gracefully handles processing errors",
+                  "nodeType": "nodes-base.webhook",
+                  "reasoning": "Customized the webhook path from 'resilient-webhook' to 'support-tickets' to clearly indicate this endpoint receives customer support tickets",
+                  "timestamp": "2025-08-11T07:54:52.467Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "task_node_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T07:54:52.689Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "search_node_1",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      {
+                        "nodeId": "search_node_1",
+                        "message": "Failed to generate configuration for nodes-base.switch",
+                        "severity": "error"
+                      }
+                    ]
+                  },
+                  "timestamp": "2025-08-11T07:54:52.689Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            }
+          }
+        },
+        "removed": [],
+        "unchanged": [
+          "sessionId",
+          "createdAt"
+        ]
+      },
+      "errors": [
+        {
+          "type": "validation",
+          "message": "2 nodes failed validation"
+        }
+      ]
+    },
+    "building": {
+      "name": "Building",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "validation": {
+      "name": "Validation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "documentation": {
+      "name": "Documentation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    }
+  },
+  "summary": {
+    "totalNodes": 0,
+    "totalConnections": 0,
+    "validationAttempts": 0,
+    "errorsFixed": 0,
+    "stickyNotesAdded": 0,
+    "performanceScore": 20,
+    "qualityScore": 95,
+    "completenessScore": 20
+  },
+  "optimizationSuggestions": [
+    "Consider optimizing discovery phase (took 18788ms)",
+    "Consider optimizing configuration phase (took 32102ms)"
+  ],
+  "errorPatterns": [
+    {
+      "pattern": "validation",
+      "frequency": 1,
+      "suggestedFix": "Review error details and adjust workflow accordingly"
+    }
+  ]
+}

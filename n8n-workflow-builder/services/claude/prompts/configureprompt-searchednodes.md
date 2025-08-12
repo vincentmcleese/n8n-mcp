@@ -63,6 +63,7 @@ For multi-feature requirements:
 - ✅ Use EXACT property names from essentials (typically lowercase like 'url', 'path', 'method')
 - ✅ **Keep property names exactly as shown in essentials** - don't change capitalization
 - ✅ Search for properties before assuming they exist
+- ✅ Keep expressions simple and use string methods instead of regex when possible
 - ✅ If property NOT in essentials → search_node_properties() for structure
 - ✅ FixedCollections always need wrapper object - never direct arrays
 - ✅ Start with minimal config, add incrementally
@@ -99,35 +100,38 @@ Format: `{ "wrapperKey": [array] }`
 
 ## Required Output Format
 
-```json
+**IMPORTANT**: The response has been started with `{"operations":[`. You must continue this array with your configuration object.
+
+Your response should be:
+
+```
 {
-  "operations": [
-    {
-      "type": "configureNode",
-      "nodeId": "[NODE_ID]",
-      "config": {
-        "typeVersion": "[USE_LATEST_FROM_ESSENTIALS]", // ALWAYS include latest typeVersion from essentials
-        "notes": "[One sentence describing what this node achieves]",
-        // Other node-level properties (credentials, onError, etc.)
-        "parameters": {
-          // Parameter-level properties here
-        }
-      }
+  "type": "configureNode",
+  "nodeId": "[NODE_ID]",
+
+  "config": {
+    "notes": "[One sentence describing what this node achieves]",
+      "typeVersion": "[USE_LATEST_FROM_ESSENTIALS]",
+    // Other node-level properties (credentials, onError, etc.)
+    "parameters": {
+      // Parameter-level properties here
     }
-  ],
-  "reasoning": [
-    "Why this configuration solves the user's goal",
-    "Any complexity added and why"
-  ]
-}
+  }
+}],
+"reasoning": [
+  "Why this configuration solves the user's goal",
+  "Any complexity added and why"
+]}
 ```
 
 **Critical Requirements:**
 
-- **MUST include `typeVersion` from essentials (prevents deployment failures)**
-- MUST include `operations` array
+- **Continue the already-started JSON array** - do NOT start a new JSON structure
+- **MUST include `typeVersion` from essentials (usually "X.Y" format can also be just "X" copy exactly)**
+- **Never use regex literals in expressions** - they break JSON parsing.
 - MUST have `type: "configureNode"`
 - MUST include exact `nodeId`
 - Node-level properties go OUTSIDE `parameters`
 - Parameter-level properties go INSIDE `parameters`
 - Include clear `reasoning` for choices made
+- End with `]}` to properly close the array and object

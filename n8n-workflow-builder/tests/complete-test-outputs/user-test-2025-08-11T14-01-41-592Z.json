@@ -1,0 +1,470 @@
+{
+  "name": "Social Media Content Moderation Workflow",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "social-media-posts",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Social Media Post Webhook",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "// Transform social media post data for AI content analysis\nconst items = $input.all();\n\nreturn items.map(item => {\n  const postData = item.json;\n  \n  return {\n    json: {\n      postId: postData.id || postData.post_id,\n      content: postData.content || postData.text || postData.message,\n      platform: postData.platform || 'unknown',\n      author: postData.author || postData.username || postData.user,\n      timestamp: postData.timestamp || postData.created_at || new Date().toISOString(),\n      url: postData.url || postData.permalink,\n      metadata: {\n        likes: postData.likes || 0,\n        shares: postData.shares || 0,\n        comments: postData.comments || 0,\n        hashtags: postData.hashtags || [],\n        mentions: postData.mentions || []\n      }\n    }\n  };\n});"
+      },
+      "name": "Transform Post Data",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "model": "gpt-3.5-turbo",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a content moderation AI. Analyze social media posts for inappropriate content including hate speech, harassment, spam, violence, adult content, and misinformation. Return a JSON response with: {\"flagged\": boolean, \"confidence\": number (0-1), \"categories\": [array of violation types], \"severity\": \"low|medium|high\", \"explanation\": \"brief reason\"}"
+            },
+            {
+              "role": "user",
+              "content": "=Analyze this social media post:\n\nContent: {{ $json.content }}\nPlatform: {{ $json.platform }}\nAuthor: {{ $json.author }}\nHashtags: {{ $json.metadata.hashtags }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.1,
+          "maxTokens": 200
+        }
+      },
+      "name": "AI Content Analysis",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "if_1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ JSON.parse($json.choices[0].message.content).flagged }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "name": "Check If Content Flagged",
+      "typeVersion": 2.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "postgres_1",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        1450,
+        200
+      ],
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "content_moderation",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "post_id": "={{ $('Transform Post Data').item.json.postId }}",
+            "content": "={{ $('Transform Post Data').item.json.content }}",
+            "platform": "={{ $('Transform Post Data').item.json.platform }}",
+            "author": "={{ $('Transform Post Data').item.json.author }}",
+            "flagged": "={{ JSON.parse($json.choices[0].message.content).flagged }}",
+            "confidence": "={{ JSON.parse($json.choices[0].message.content).confidence }}",
+            "categories": "={{ JSON.stringify(JSON.parse($json.choices[0].message.content).categories) }}",
+            "severity": "={{ JSON.parse($json.choices[0].message.content).severity }}",
+            "explanation": "={{ JSON.parse($json.choices[0].message.content).explanation }}",
+            "analyzed_at": "={{ new Date().toISOString() }}"
+          }
+        },
+        "options": {}
+      },
+      "name": "Store Analysis Results",
+      "typeVersion": 2.6,
+      "onError": "stopWorkflow",
+      "maxTries": 2
+    },
+    {
+      "id": "postgres_2",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        1450,
+        400
+      ],
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "content_moderation",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "post_id": "={{ $('Transform Post Data').item.json.postId }}",
+            "content": "={{ $('Transform Post Data').item.json.content }}",
+            "platform": "={{ $('Transform Post Data').item.json.platform }}",
+            "author": "={{ $('Transform Post Data').item.json.author }}",
+            "flagged": "={{ JSON.parse($('AI Content Analysis').item.json.choices[0].message.content).flagged }}",
+            "confidence": "={{ JSON.parse($('AI Content Analysis').item.json.choices[0].message.content).confidence }}",
+            "categories": "={{ JSON.stringify(JSON.parse($('AI Content Analysis').item.json.choices[0].message.content).categories) }}",
+            "severity": "={{ JSON.parse($('AI Content Analysis').item.json.choices[0].message.content).severity }}",
+            "explanation": "={{ JSON.parse($('AI Content Analysis').item.json.choices[0].message.content).explanation }}",
+            "analyzed_at": "={{ new Date().toISOString() }}"
+          }
+        },
+        "options": {}
+      },
+      "name": "Store Clean Content",
+      "typeVersion": 2.6,
+      "onError": "stopWorkflow",
+      "maxTries": 2
+    },
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        600
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        },
+        "triggerAtHour": 9
+      },
+      "name": "Daily Digest Schedule",
+      "typeVersion": 1.2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "postgres_3",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        550,
+        600
+      ],
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "content_moderation",
+        "where": {
+          "values": [
+            {
+              "column": "analyzed_at",
+              "condition": ">=",
+              "value": "={{ new Date(Date.now() - 24*60*60*1000).toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Get Daily Statistics",
+      "typeVersion": 2.6,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "code_2",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        850,
+        600
+      ],
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "// Generate daily moderation report summary\nconst items = $input.all();\nconst data = items.map(item => item.json);\n\nconst totalPosts = data.length;\nconst flaggedPosts = data.filter(post => post.flagged).length;\nconst cleanPosts = totalPosts - flaggedPosts;\n\nconst severityBreakdown = {\n  high: data.filter(post => post.severity === 'high').length,\n  medium: data.filter(post => post.severity === 'medium').length,\n  low: data.filter(post => post.severity === 'low').length\n};\n\nconst platformBreakdown = {};\ndata.forEach(post => {\n  platformBreakdown[post.platform] = (platformBreakdown[post.platform] || 0) + 1;\n});\n\nconst flaggedItems = data.filter(post => post.flagged).slice(0, 10); // Top 10 flagged items\n\nreturn [{\n  json: {\n    reportDate: new Date().toISOString().split('T')[0],\n    summary: {\n      totalPosts,\n      flaggedPosts,\n      cleanPosts,\n      flaggedPercentage: ((flaggedPosts / totalPosts) * 100).toFixed(2)\n    },\n    severityBreakdown,\n    platformBreakdown,\n    flaggedItems: flaggedItems.map(item => ({\n      postId: item.post_id,\n      platform: item.platform,\n      author: item.author,\n      severity: item.severity,\n      categories: JSON.parse(item.categories || '[]'),\n      explanation: item.explanation,\n      content: item.content.substring(0, 100) + '...'\n    }))\n  }\n}];"
+      },
+      "name": "Generate Report Summary",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1150,
+        600
+      ],
+      "parameters": {
+        "fromEmail": "moderation@company.com",
+        "toEmail": "moderators@company.com",
+        "subject": "={{ 'Daily Content Moderation Report - ' + $json.reportDate }}",
+        "text": "={{ 'Daily Content Moderation Summary\\n\\nDate: ' + $json.reportDate + '\\n\\n📊 STATISTICS:\\n• Total Posts Analyzed: ' + $json.summary.totalPosts + '\\n• Flagged Posts: ' + $json.summary.flaggedPosts + ' (' + $json.summary.flaggedPercentage + '%)\\n• Clean Posts: ' + $json.summary.cleanPosts + '\\n\\n🚨 SEVERITY BREAKDOWN:\\n• High Risk: ' + $json.severityBreakdown.high + '\\n• Medium Risk: ' + $json.severityBreakdown.medium + '\\n• Low Risk: ' + $json.severityBreakdown.low + '\\n\\n📱 PLATFORM BREAKDOWN:\\n' + Object.entries($json.platformBreakdown).map(([platform, count]) => '• ' + platform + ': ' + count).join('\\n') + '\\n\\n🔍 TOP FLAGGED ITEMS:\\n' + $json.flaggedItems.map((item, index) => (index + 1) + '. [' + item.severity.toUpperCase() + '] ' + item.platform + ' - ' + item.author + '\\n   Categories: ' + item.categories.join(', ') + '\\n   Reason: ' + item.explanation + '\\n   Content: ' + item.content + '\\n').join('\\n') + '\\n\\nPlease review flagged content in the moderation dashboard.\\n\\nBest regards,\\nContent Moderation System' }}",
+        "options": {
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "name": "Send Daily Digest",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "sticky_promo_1754920900964",
+      "name": "Ghost Team Promo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 910,
+        "width": 280,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_triggers_1754920900964",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        170,
+        -130
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook receives new social media posts from external platforms to initiate the content moderation workflow. Posts are received via HTTP POST requests.\n\nDaily scheduled trigger that initiates the digest email workflow to generate and send moderation reports to administrators at 9 AM each day.",
+        "height": 910,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754920900964",
+      "name": "Inputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        470,
+        -130
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nRetrieve daily content moderation statistics from the database, including all posts analyzed in the last 24 hours for report generation.",
+        "height": 910,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754920900964",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        470,
+        -130
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nTransform and normalize incoming social media post data, extracting key fields like content, author, platform, and metadata to prepare for AI analysis.\n\nAI-powered content analysis using OpenAI to detect inappropriate material, hate speech, harassment, and other policy violations with confidence scoring.",
+        "height": 910,
+        "width": 610,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_decision_1754920900964",
+      "name": "Decision Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1070,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🔀 Decision\nRoute posts based on AI analysis results, separating flagged inappropriate content from clean content for different storage and handling paths.",
+        "height": 910,
+        "width": 310,
+        "color": 3
+      }
+    },
+    {
+      "id": "sticky_aggregation_1754920900964",
+      "name": "Aggregation Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        770,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🔄 Aggregation\nGenerate comprehensive daily report summary with statistics, severity breakdowns, platform analysis, and details of top flagged items for moderator review.",
+        "height": 910,
+        "width": 310,
+        "color": 2
+      }
+    },
+    {
+      "id": "sticky_outputs_1754920900964",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1070,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nStore both flagged and clean content analysis results in PostgreSQL database with detailed metadata, confidence scores, and violation categories for audit trail.\n\nSend formatted daily digest email to moderators containing moderation statistics, flagged content summaries, and actionable insights for content review.",
+        "height": 910,
+        "width": 610,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Social Media Post Webhook": {
+      "main": [
+        [
+          {
+            "node": "Transform Post Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Post Data": {
+      "main": [
+        [
+          {
+            "node": "AI Content Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Content Analysis": {
+      "main": [
+        [
+          {
+            "node": "Check If Content Flagged",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If Content Flagged": {
+      "main": [
+        [
+          {
+            "node": "Store Analysis Results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Store Clean Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Digest Schedule": {
+      "main": [
+        [
+          {
+            "node": "Get Daily Statistics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Daily Statistics": {
+      "main": [
+        [
+          {
+            "node": "Generate Report Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Report Summary": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-11T14:01:41.593Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Design a workflow triggered by new social media posts that uses AI to analyze content for inappropriate material, automatically flags suspicious content, generates summary reports, stores results in a database, and sends daily digest emails to moderators with statistics and flagged items",
+    "testName": "User Test",
+    "generatedAt": "2025-08-11T14:01:41.593Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 7
+  }
+}

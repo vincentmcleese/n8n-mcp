@@ -8,6 +8,7 @@
 
 import { MCPClient } from '@/lib/mcp-client';
 import { loggers } from '@/lib/utils/logger';
+import { patchRegistry } from '@/lib/orchestrator/patches';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 /**
@@ -180,7 +181,7 @@ export class TaskService {
           successful.push({
             taskName,
             nodeType: cached.nodeType,
-            nodeId: `node_${index + 1}`,
+            nodeId: `task_node_${index + 1}`,
             config: cached.config,
             purpose: `Pre-configured task: ${taskName}`,
             category: cached.category,
@@ -193,14 +194,22 @@ export class TaskService {
         const result = await this.fetchSingleTask(taskName);
         
         if (result) {
-          // Cache the result
-          this.cacheTask(taskName, result.nodeType, result.config, result.category);
+          // Apply preconfiguration patches to fix known issues
+          const { config: patchedConfig, patchesApplied } = 
+            patchRegistry.applyPatches(result.nodeType, result.config);
+          
+          if (patchesApplied.length > 0) {
+            this.logger.debug(`Applied patches to ${taskName}: ${patchesApplied.join(', ')}`);
+          }
+          
+          // Cache the patched result
+          this.cacheTask(taskName, result.nodeType, patchedConfig, result.category);
           
           successful.push({
             taskName,
             nodeType: result.nodeType,
-            nodeId: `node_${index + 1}`,
-            config: result.config,
+            nodeId: `task_node_${index + 1}`,
+            config: patchedConfig,
             category: result.category,
             purpose: result.purpose || `Pre-configured task: ${taskName}`,
             isPreConfigured: true

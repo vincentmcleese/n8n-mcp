@@ -1,0 +1,4819 @@
+{
+  "testName": "Custom Test",
+  "userPrompt": "send a slack message saying hello",
+  "sessionId": "complete_e2e_custom_test_1754850299234",
+  "timestamp": "2025-08-10T18:24:59.234Z",
+  "duration": 43668,
+  "success": true,
+  "phases": {
+    "discovery": {
+      "name": "Discovery",
+      "success": true,
+      "metrics": {
+        "startTime": 1754850299763,
+        "endTime": 1754850306413,
+        "duration": 6650,
+        "memoryUsage": {
+          "heapUsed": 5577752,
+          "heapTotal": 63569920,
+          "external": 6402634
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-10T18:24:59.763Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting discovery phase"
+        },
+        {
+          "timestamp": "2025-08-10T18:24:59.763Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for discovery phase"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:05.571Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:05.571Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"send_slack_message\"}"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:05.746Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:06.315Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.slack (Send a message to Slack channel)"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:06.412Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:06.413Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "node_1",
+          "type": "nodes-base.slack",
+          "purpose": "Send a message to Slack channel"
+        }
+      ],
+      "sessionState": {
+        "sessionId": "complete_e2e_custom_test_1754850299234",
+        "createdAt": "2025-08-10T18:24:59.736Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "send a slack message saying hello",
+          "discovered": [
+            {
+              "id": "node_1",
+              "type": "nodes-base.slack",
+              "config": {
+                "text": "",
+                "channel": "",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "resource": "message",
+                "operation": "post",
+                "retryOnFail": true,
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Send a message to Slack channel",
+              "displayName": "send slack message",
+              "isPreConfigured": true
+            }
+          ],
+          "selected": [
+            "node_1"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "node_1",
+                "type": "nodes-base.slack",
+                "config": {
+                  "text": "",
+                  "channel": "",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 2,
+                  "resource": "message",
+                  "operation": "post",
+                  "retryOnFail": true,
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Send a message to Slack channel",
+                "displayName": "send slack message",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T18:25:05.748Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "node_1",
+              "timestamp": "2025-08-10T18:25:05.748Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-10T18:25:05.748Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "prompt": "send a slack message saying hello"
+        },
+        "output": {
+          "nodes": [
+            {
+              "id": "node_1",
+              "type": "nodes-base.slack",
+              "displayName": "send slack message",
+              "purpose": "Send a message to Slack channel",
+              "isPreConfigured": true,
+              "config": {
+                "resource": "message",
+                "operation": "post",
+                "channel": "",
+                "text": "",
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 2,
+                "waitBetweenTries": 2000
+              }
+            }
+          ]
+        },
+        "transformations": [
+          "Intent Analysis",
+          "Node Discovery",
+          "Selection"
+        ]
+      }
+    },
+    "configuration": {
+      "name": "Configuration",
+      "success": true,
+      "metrics": {
+        "startTime": 1754850306413,
+        "endTime": 1754850319040,
+        "duration": 12627,
+        "memoryUsage": {
+          "heapUsed": -2125504,
+          "heapTotal": 31129600,
+          "external": 6331925
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-10T18:25:06.413Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting configuration phase"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:06.413Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for configuration phase"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:11.054Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:11.054Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.slack\",\"config\":{\"text\":\"Hello!\",\"channel\":\"\",\"resource\":\"message\",\"operation\":\"post\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:11.245Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:14.698Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:14.698Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.slack\",\"config\":{\"text\":\"Hello!\",\"channel\":\"#general\",\"resource\":\"message\",\"operation\":\"post\",\"select\":\"channel\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:14.822Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:18.156Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:18.156Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.slack\",\"config\":{\"resource\":\"message\",\"operation\":\"post\",\"select\":\"channel\",\"channelId\":\"#general\",\"text\":\"Hello!\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:18.295Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:18.978Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.slack (Send a message to Slack channel)"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:19.040Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:19.040Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "node_1",
+          "type": "nodes-base.slack",
+          "purpose": "Send a message to Slack channel",
+          "configuration": {
+            "onError": "continueRegularOutput",
+            "maxTries": 2,
+            "retryOnFail": true,
+            "waitBetweenTries": 3000,
+            "typeVersion": 3,
+            "notes": "Send a hello message to Slack channel",
+            "parameters": {
+              "resource": "message",
+              "operation": "post",
+              "select": "channel",
+              "channelId": "#general",
+              "text": "Hello!"
+            }
+          },
+          "validationStatus": "valid"
+        }
+      ],
+      "sessionState": {
+        "sessionId": "complete_e2e_custom_test_1754850299234",
+        "createdAt": "2025-08-10T18:24:59.736Z",
+        "state": {
+          "phase": "building",
+          "userPrompt": "send a slack message saying hello",
+          "discovered": [
+            {
+              "id": "node_1",
+              "type": "nodes-base.slack",
+              "config": {
+                "text": "",
+                "channel": "",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "resource": "message",
+                "operation": "post",
+                "retryOnFail": true,
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Send a message to Slack channel",
+              "displayName": "send slack message",
+              "isPreConfigured": true
+            }
+          ],
+          "selected": [
+            "node_1"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "node_1",
+                "type": "nodes-base.slack",
+                "config": {
+                  "text": "",
+                  "channel": "",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 2,
+                  "resource": "message",
+                  "operation": "post",
+                  "retryOnFail": true,
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Send a message to Slack channel",
+                "displayName": "send slack message",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T18:25:05.748Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "node_1",
+              "timestamp": "2025-08-10T18:25:05.748Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-10T18:25:05.748Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "configuration",
+              "timestamp": "2025-08-10T18:25:18.297Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Send a hello message to Slack channel",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "parameters": {
+                  "text": "Hello!",
+                  "channel": "",
+                  "resource": "message",
+                  "operation": "post"
+                },
+                "retryOnFail": true,
+                "typeVersion": 3,
+                "waitBetweenTries": 2000
+              },
+              "nodeId": "node_1",
+              "purpose": "Send a message to Slack channel",
+              "nodeType": "nodes-base.slack",
+              "reasoning": "Customized the template by setting the 'text' parameter to 'Hello!' to match the user's goal of sending a hello message",
+              "timestamp": "2025-08-10T18:25:18.546Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "node_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-10T18:25:18.785Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "configuration",
+              "timestamp": "2025-08-10T18:25:18.785Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "discoveredNodes": [
+            {
+              "id": "node_1",
+              "type": "nodes-base.slack",
+              "displayName": "send slack message",
+              "purpose": "Send a message to Slack channel",
+              "isPreConfigured": true,
+              "config": {
+                "resource": "message",
+                "operation": "post",
+                "channel": "",
+                "text": "",
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 2,
+                "waitBetweenTries": 2000
+              }
+            }
+          ]
+        },
+        "output": {
+          "configuredNodes": [
+            {
+              "id": "node_1",
+              "type": "nodes-base.slack",
+              "purpose": "Send a message to Slack channel",
+              "config": {
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "retryOnFail": true,
+                "waitBetweenTries": 3000,
+                "typeVersion": 3,
+                "notes": "Send a hello message to Slack channel",
+                "parameters": {
+                  "resource": "message",
+                  "operation": "post",
+                  "select": "channel",
+                  "channelId": "#general",
+                  "text": "Hello!"
+                }
+              },
+              "validated": true
+            }
+          ]
+        },
+        "transformations": [
+          "Parameter Configuration",
+          "Validation",
+          "Type Checking"
+        ]
+      },
+      "stateDelta": {
+        "added": {},
+        "modified": {
+          "state": {
+            "old": {
+              "phase": "configuration",
+              "userPrompt": "send a slack message saying hello",
+              "discovered": [
+                {
+                  "id": "node_1",
+                  "type": "nodes-base.slack",
+                  "config": {
+                    "text": "",
+                    "channel": "",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "resource": "message",
+                    "operation": "post",
+                    "retryOnFail": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Send a message to Slack channel",
+                  "displayName": "send slack message",
+                  "isPreConfigured": true
+                }
+              ],
+              "selected": [
+                "node_1"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "nodes": [],
+                "settings": {},
+                "connections": {}
+              },
+              "buildPhases": [],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "node_1",
+                    "type": "nodes-base.slack",
+                    "config": {
+                      "text": "",
+                      "channel": "",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 2,
+                      "resource": "message",
+                      "operation": "post",
+                      "retryOnFail": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Send a message to Slack channel",
+                    "displayName": "send slack message",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "node_1",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            },
+            "new": {
+              "phase": "building",
+              "userPrompt": "send a slack message saying hello",
+              "discovered": [
+                {
+                  "id": "node_1",
+                  "type": "nodes-base.slack",
+                  "config": {
+                    "text": "",
+                    "channel": "",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "resource": "message",
+                    "operation": "post",
+                    "retryOnFail": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Send a message to Slack channel",
+                  "displayName": "send slack message",
+                  "isPreConfigured": true
+                }
+              ],
+              "selected": [
+                "node_1"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "nodes": [],
+                "settings": {},
+                "connections": {}
+              },
+              "buildPhases": [],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "node_1",
+                    "type": "nodes-base.slack",
+                    "config": {
+                      "text": "",
+                      "channel": "",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 2,
+                      "resource": "message",
+                      "operation": "post",
+                      "retryOnFail": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Send a message to Slack channel",
+                    "displayName": "send slack message",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "node_1",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-10T18:25:18.297Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Send a hello message to Slack channel",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "parameters": {
+                      "text": "Hello!",
+                      "channel": "",
+                      "resource": "message",
+                      "operation": "post"
+                    },
+                    "retryOnFail": true,
+                    "typeVersion": 3,
+                    "waitBetweenTries": 2000
+                  },
+                  "nodeId": "node_1",
+                  "purpose": "Send a message to Slack channel",
+                  "nodeType": "nodes-base.slack",
+                  "reasoning": "Customized the template by setting the 'text' parameter to 'Hello!' to match the user's goal of sending a hello message",
+                  "timestamp": "2025-08-10T18:25:18.546Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "node_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-10T18:25:18.785Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-10T18:25:18.785Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            }
+          }
+        },
+        "removed": [],
+        "unchanged": [
+          "sessionId",
+          "createdAt"
+        ]
+      }
+    },
+    "building": {
+      "name": "Building",
+      "success": true,
+      "metrics": {
+        "startTime": 1754850319040,
+        "endTime": 1754850327142,
+        "duration": 8102,
+        "memoryUsage": {
+          "heapUsed": 823552,
+          "heapTotal": 33488896,
+          "external": 6447733
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-10T18:25:19.040Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting building phase"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:19.041Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for building phase"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:27.049Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: n8n-nodes-base.manualTrigger (Manual Trigger)"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:27.050Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: n8n-nodes-base.slack (Send Hello Message)"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:27.050Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Created 2 nodes"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:27.050Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Created 1 connection groups"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:27.142Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:27.142Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "manualTrigger_1",
+          "type": "n8n-nodes-base.manualTrigger",
+          "purpose": "Manual Trigger"
+        },
+        {
+          "id": "slack_1",
+          "type": "n8n-nodes-base.slack",
+          "purpose": "Send Hello Message"
+        }
+      ],
+      "sessionState": {
+        "sessionId": "complete_e2e_custom_test_1754850299234",
+        "createdAt": "2025-08-10T18:24:59.736Z",
+        "state": {
+          "phase": "validation",
+          "userPrompt": "send a slack message saying hello",
+          "discovered": [
+            {
+              "id": "node_1",
+              "type": "nodes-base.slack",
+              "config": {
+                "text": "",
+                "channel": "",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "resource": "message",
+                "operation": "post",
+                "retryOnFail": true,
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Send a message to Slack channel",
+              "displayName": "send slack message",
+              "isPreConfigured": true
+            }
+          ],
+          "selected": [
+            "node_1"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "name": "Send Hello Slack Message",
+            "nodes": [
+              {
+                "id": "manualTrigger_1",
+                "name": "Manual Trigger",
+                "type": "n8n-nodes-base.manualTrigger",
+                "onError": "stopWorkflow",
+                "position": [
+                  250,
+                  300
+                ],
+                "parameters": {},
+                "typeVersion": 1
+              },
+              {
+                "id": "slack_1",
+                "name": "Send Hello Message",
+                "type": "n8n-nodes-base.slack",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "position": [
+                  550,
+                  300
+                ],
+                "parameters": {
+                  "text": "Hello!",
+                  "channel": "",
+                  "resource": "message",
+                  "operation": "post"
+                },
+                "typeVersion": 2
+              }
+            ],
+            "settings": {
+              "executionOrder": "v1",
+              "saveManualExecutions": true,
+              "saveDataErrorExecution": "all",
+              "saveDataSuccessExecution": "all"
+            },
+            "connections": {
+              "Manual Trigger": {
+                "main": [
+                  [
+                    {
+                      "node": "Send Hello Message",
+                      "type": "main",
+                      "index": 0
+                    }
+                  ]
+                ]
+              }
+            }
+          },
+          "buildPhases": [
+            {
+              "type": "trigger",
+              "nodeIds": [
+                "manualTrigger_1"
+              ],
+              "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+            },
+            {
+              "type": "notification",
+              "nodeIds": [
+                "slack_1"
+              ],
+              "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+            }
+          ],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "node_1",
+                "type": "nodes-base.slack",
+                "config": {
+                  "text": "",
+                  "channel": "",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 2,
+                  "resource": "message",
+                  "operation": "post",
+                  "retryOnFail": true,
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Send a message to Slack channel",
+                "displayName": "send slack message",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T18:25:05.748Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "node_1",
+              "timestamp": "2025-08-10T18:25:05.748Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-10T18:25:05.748Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "configuration",
+              "timestamp": "2025-08-10T18:25:18.297Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Send a hello message to Slack channel",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "parameters": {
+                  "text": "Hello!",
+                  "channel": "",
+                  "resource": "message",
+                  "operation": "post"
+                },
+                "retryOnFail": true,
+                "typeVersion": 3,
+                "waitBetweenTries": 2000
+              },
+              "nodeId": "node_1",
+              "purpose": "Send a message to Slack channel",
+              "nodeType": "nodes-base.slack",
+              "reasoning": "Customized the template by setting the 'text' parameter to 'Hello!' to match the user's goal of sending a hello message",
+              "timestamp": "2025-08-10T18:25:18.546Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "node_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-10T18:25:18.785Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "configuration",
+              "timestamp": "2025-08-10T18:25:18.785Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "building",
+              "timestamp": "2025-08-10T18:25:26.570Z"
+            },
+            {
+              "type": "setWorkflow",
+              "workflow": {
+                "name": "Send Hello Slack Message",
+                "nodes": [
+                  {
+                    "id": "manualTrigger_1",
+                    "name": "Manual Trigger",
+                    "type": "n8n-nodes-base.manualTrigger",
+                    "onError": "stopWorkflow",
+                    "position": [
+                      250,
+                      300
+                    ],
+                    "parameters": {},
+                    "typeVersion": 1
+                  },
+                  {
+                    "id": "slack_1",
+                    "name": "Send Hello Message",
+                    "type": "n8n-nodes-base.slack",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "position": [
+                      550,
+                      300
+                    ],
+                    "parameters": {
+                      "text": "Hello!",
+                      "channel": "",
+                      "resource": "message",
+                      "operation": "post"
+                    },
+                    "typeVersion": 2
+                  }
+                ],
+                "settings": {
+                  "executionOrder": "v1",
+                  "saveManualExecutions": true,
+                  "saveDataErrorExecution": "all",
+                  "saveDataSuccessExecution": "all"
+                },
+                "connections": {
+                  "Manual Trigger": {
+                    "main": [
+                      [
+                        {
+                          "node": "Send Hello Message",
+                          "type": "main",
+                          "index": 0
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "timestamp": "2025-08-10T18:25:26.792Z"
+            },
+            {
+              "type": "setBuildPhases",
+              "phases": [
+                {
+                  "type": "trigger",
+                  "nodeIds": [
+                    "manualTrigger_1"
+                  ],
+                  "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                },
+                {
+                  "type": "notification",
+                  "nodeIds": [
+                    "slack_1"
+                  ],
+                  "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                }
+              ],
+              "timestamp": "2025-08-10T18:25:26.792Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "building",
+              "timestamp": "2025-08-10T18:25:26.792Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "configuredNodes": [
+            {
+              "id": "node_1",
+              "type": "nodes-base.slack",
+              "purpose": "Send a message to Slack channel",
+              "config": {
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "retryOnFail": true,
+                "waitBetweenTries": 3000,
+                "typeVersion": 3,
+                "notes": "Send a hello message to Slack channel",
+                "parameters": {
+                  "resource": "message",
+                  "operation": "post",
+                  "select": "channel",
+                  "channelId": "#general",
+                  "text": "Hello!"
+                }
+              },
+              "validated": true
+            }
+          ]
+        },
+        "output": {
+          "workflow": {
+            "name": "Send Hello Slack Message",
+            "nodes": [
+              {
+                "id": "manualTrigger_1",
+                "type": "n8n-nodes-base.manualTrigger",
+                "position": [
+                  250,
+                  300
+                ],
+                "parameters": {},
+                "name": "Manual Trigger",
+                "typeVersion": 1,
+                "onError": "stopWorkflow"
+              },
+              {
+                "id": "slack_1",
+                "type": "n8n-nodes-base.slack",
+                "position": [
+                  550,
+                  300
+                ],
+                "parameters": {
+                  "text": "Hello!",
+                  "channel": "",
+                  "resource": "message",
+                  "operation": "post"
+                },
+                "name": "Send Hello Message",
+                "typeVersion": 2,
+                "onError": "continueRegularOutput",
+                "maxTries": 2
+              }
+            ],
+            "connections": {
+              "Manual Trigger": {
+                "main": [
+                  [
+                    {
+                      "node": "Send Hello Message",
+                      "type": "main",
+                      "index": 0
+                    }
+                  ]
+                ]
+              }
+            },
+            "settings": {
+              "executionOrder": "v1",
+              "saveDataSuccessExecution": "all",
+              "saveDataErrorExecution": "all",
+              "saveManualExecutions": true
+            }
+          }
+        },
+        "transformations": [
+          "Workflow Generation",
+          "Connection Building",
+          "Settings Configuration"
+        ]
+      },
+      "stateDelta": {
+        "added": {
+          "state": {
+            "workflow": {
+              "name": "Send Hello Slack Message",
+              "settings": {
+                "executionOrder": "v1",
+                "saveManualExecutions": true,
+                "saveDataErrorExecution": "all",
+                "saveDataSuccessExecution": "all"
+              },
+              "connections": {
+                "Manual Trigger": {
+                  "main": [
+                    [
+                      {
+                        "node": "Send Hello Message",
+                        "type": "main",
+                        "index": 0
+                      }
+                    ]
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "modified": {
+          "state": {
+            "old": {
+              "phase": "building",
+              "userPrompt": "send a slack message saying hello",
+              "discovered": [
+                {
+                  "id": "node_1",
+                  "type": "nodes-base.slack",
+                  "config": {
+                    "text": "",
+                    "channel": "",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "resource": "message",
+                    "operation": "post",
+                    "retryOnFail": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Send a message to Slack channel",
+                  "displayName": "send slack message",
+                  "isPreConfigured": true
+                }
+              ],
+              "selected": [
+                "node_1"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "nodes": [],
+                "settings": {},
+                "connections": {}
+              },
+              "buildPhases": [],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "node_1",
+                    "type": "nodes-base.slack",
+                    "config": {
+                      "text": "",
+                      "channel": "",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 2,
+                      "resource": "message",
+                      "operation": "post",
+                      "retryOnFail": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Send a message to Slack channel",
+                    "displayName": "send slack message",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "node_1",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-10T18:25:18.297Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Send a hello message to Slack channel",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "parameters": {
+                      "text": "Hello!",
+                      "channel": "",
+                      "resource": "message",
+                      "operation": "post"
+                    },
+                    "retryOnFail": true,
+                    "typeVersion": 3,
+                    "waitBetweenTries": 2000
+                  },
+                  "nodeId": "node_1",
+                  "purpose": "Send a message to Slack channel",
+                  "nodeType": "nodes-base.slack",
+                  "reasoning": "Customized the template by setting the 'text' parameter to 'Hello!' to match the user's goal of sending a hello message",
+                  "timestamp": "2025-08-10T18:25:18.546Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "node_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-10T18:25:18.785Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-10T18:25:18.785Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            },
+            "new": {
+              "phase": "validation",
+              "userPrompt": "send a slack message saying hello",
+              "discovered": [
+                {
+                  "id": "node_1",
+                  "type": "nodes-base.slack",
+                  "config": {
+                    "text": "",
+                    "channel": "",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "resource": "message",
+                    "operation": "post",
+                    "retryOnFail": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Send a message to Slack channel",
+                  "displayName": "send slack message",
+                  "isPreConfigured": true
+                }
+              ],
+              "selected": [
+                "node_1"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "name": "Send Hello Slack Message",
+                "nodes": [
+                  {
+                    "id": "manualTrigger_1",
+                    "name": "Manual Trigger",
+                    "type": "n8n-nodes-base.manualTrigger",
+                    "onError": "stopWorkflow",
+                    "position": [
+                      250,
+                      300
+                    ],
+                    "parameters": {},
+                    "typeVersion": 1
+                  },
+                  {
+                    "id": "slack_1",
+                    "name": "Send Hello Message",
+                    "type": "n8n-nodes-base.slack",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "position": [
+                      550,
+                      300
+                    ],
+                    "parameters": {
+                      "text": "Hello!",
+                      "channel": "",
+                      "resource": "message",
+                      "operation": "post"
+                    },
+                    "typeVersion": 2
+                  }
+                ],
+                "settings": {
+                  "executionOrder": "v1",
+                  "saveManualExecutions": true,
+                  "saveDataErrorExecution": "all",
+                  "saveDataSuccessExecution": "all"
+                },
+                "connections": {
+                  "Manual Trigger": {
+                    "main": [
+                      [
+                        {
+                          "node": "Send Hello Message",
+                          "type": "main",
+                          "index": 0
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "buildPhases": [
+                {
+                  "type": "trigger",
+                  "nodeIds": [
+                    "manualTrigger_1"
+                  ],
+                  "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                },
+                {
+                  "type": "notification",
+                  "nodeIds": [
+                    "slack_1"
+                  ],
+                  "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                }
+              ],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "node_1",
+                    "type": "nodes-base.slack",
+                    "config": {
+                      "text": "",
+                      "channel": "",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 2,
+                      "resource": "message",
+                      "operation": "post",
+                      "retryOnFail": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Send a message to Slack channel",
+                    "displayName": "send slack message",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "node_1",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-10T18:25:18.297Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Send a hello message to Slack channel",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "parameters": {
+                      "text": "Hello!",
+                      "channel": "",
+                      "resource": "message",
+                      "operation": "post"
+                    },
+                    "retryOnFail": true,
+                    "typeVersion": 3,
+                    "waitBetweenTries": 2000
+                  },
+                  "nodeId": "node_1",
+                  "purpose": "Send a message to Slack channel",
+                  "nodeType": "nodes-base.slack",
+                  "reasoning": "Customized the template by setting the 'text' parameter to 'Hello!' to match the user's goal of sending a hello message",
+                  "timestamp": "2025-08-10T18:25:18.546Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "node_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-10T18:25:18.785Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-10T18:25:18.785Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "building",
+                  "timestamp": "2025-08-10T18:25:26.570Z"
+                },
+                {
+                  "type": "setWorkflow",
+                  "workflow": {
+                    "name": "Send Hello Slack Message",
+                    "nodes": [
+                      {
+                        "id": "manualTrigger_1",
+                        "name": "Manual Trigger",
+                        "type": "n8n-nodes-base.manualTrigger",
+                        "onError": "stopWorkflow",
+                        "position": [
+                          250,
+                          300
+                        ],
+                        "parameters": {},
+                        "typeVersion": 1
+                      },
+                      {
+                        "id": "slack_1",
+                        "name": "Send Hello Message",
+                        "type": "n8n-nodes-base.slack",
+                        "onError": "continueRegularOutput",
+                        "maxTries": 2,
+                        "position": [
+                          550,
+                          300
+                        ],
+                        "parameters": {
+                          "text": "Hello!",
+                          "channel": "",
+                          "resource": "message",
+                          "operation": "post"
+                        },
+                        "typeVersion": 2
+                      }
+                    ],
+                    "settings": {
+                      "executionOrder": "v1",
+                      "saveManualExecutions": true,
+                      "saveDataErrorExecution": "all",
+                      "saveDataSuccessExecution": "all"
+                    },
+                    "connections": {
+                      "Manual Trigger": {
+                        "main": [
+                          [
+                            {
+                              "node": "Send Hello Message",
+                              "type": "main",
+                              "index": 0
+                            }
+                          ]
+                        ]
+                      }
+                    }
+                  },
+                  "timestamp": "2025-08-10T18:25:26.792Z"
+                },
+                {
+                  "type": "setBuildPhases",
+                  "phases": [
+                    {
+                      "type": "trigger",
+                      "nodeIds": [
+                        "manualTrigger_1"
+                      ],
+                      "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                    },
+                    {
+                      "type": "notification",
+                      "nodeIds": [
+                        "slack_1"
+                      ],
+                      "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                    }
+                  ],
+                  "timestamp": "2025-08-10T18:25:26.792Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "building",
+                  "timestamp": "2025-08-10T18:25:26.792Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            }
+          }
+        },
+        "removed": [],
+        "unchanged": [
+          "sessionId",
+          "createdAt"
+        ]
+      }
+    },
+    "validation": {
+      "name": "Validation",
+      "success": true,
+      "metrics": {
+        "startTime": 1754850327143,
+        "endTime": 1754850342253,
+        "duration": 15110,
+        "memoryUsage": {
+          "heapUsed": 895264,
+          "heapTotal": 32440320,
+          "external": 6554992
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-10T18:25:27.143Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting validation phase"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:27.143Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for validation phase"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:27.144Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_workflow"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:27.144Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"workflow\":{\"name\":\"Send Hello Slack Message\",\"nodes\":[{\"id\":\"manualTrigger_1\",\"type\":\"n8n-nodes-base.manualTrigger\",\"position\":[250,300],\"parameters\":{},\"name\":\"Manual Trigger\",\"typeVersion\":1,\"onError\":\"stopWorkflow\"},{\"id\":\"slack_1\",\"type\":\"n8n-nodes-base.slack\",\"position\":[550,300],\"parameters\":{\"text\":\"Hello!\",\"channel\":\"\",\"resource\":\"message\",\"operation\":\"post\"},\"name\":\"Send Hello Message\",\"typeVersion\":2,\"onError\":\"continueRegularOutput\",\"maxTries\":2}],\"connections\":{\"Manual Trigger\":{\"main\":[[{\"node\":\"Send Hello Message\",\"type\":\"main\",\"index\":0}]]}},\"settings\":{\"executionOrder\":\"v1\",\"saveDataSuccessExecution\":\"all\",\"saveDataErrorExecution\":\"all\",\"saveManualExecutions\":true}},\"options\":{\"validateNodes\":true,\"validateConnections\":true,\"validateExpressions\":true,\"profile\":\"runtime\"}}"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:27.329Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_workflow completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:30.942Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_workflow"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:30.942Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"workflow\":{\"name\":\"Send Hello Slack Message\",\"nodes\":[{\"id\":\"manualTrigger_1\",\"type\":\"n8n-nodes-base.manualTrigger\",\"position\":[250,300],\"parameters\":{},\"name\":\"Manual Trigger\",\"typeVersion\":1,\"onError\":\"stopWorkflow\"},{\"id\":\"slack_1\",\"type\":\"n8n-nodes-base.slack\",\"position\":[550,300],\"parameters\":{\"text\":\"Hello!\",\"channel\":\"\",\"resource\":\"message\",\"operation\":\"post\",\"select\":\"channel\"},\"name\":\"Send Hello Message\",\"typeVersion\":2.3,\"onError\":\"continueRegularOutput\",\"maxTries\":2}],\"connections\":{\"Manual Trigger\":{\"main\":[[{\"node\":\"Send Hello Message\",\"type\":\"main\",\"index\":0}]]}},\"settings\":{\"executionOrder\":\"v1\",\"saveDataSuccessExecution\":\"all\",\"saveDataErrorExecution\":\"all\",\"saveManualExecutions\":true}},\"options\":{\"validateNodes\":true,\"validateConnections\":true,\"validateExpressions\":true,\"profile\":\"runtime\"}}"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:31.071Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_workflow completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:34.618Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_workflow"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:34.618Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"workflow\":{\"name\":\"Send Hello Slack Message\",\"nodes\":[{\"id\":\"manualTrigger_1\",\"type\":\"n8n-nodes-base.manualTrigger\",\"position\":[250,300],\"parameters\":{},\"name\":\"Manual Trigger\",\"typeVersion\":1,\"onError\":\"stopWorkflow\"},{\"id\":\"slack_1\",\"type\":\"n8n-nodes-base.slack\",\"position\":[550,300],\"parameters\":{\"text\":\"Hello!\",\"channel\":\"#general\",\"resource\":\"message\",\"operation\":\"post\",\"select\":\"channel\"},\"name\":\"Send Hello Message\",\"typeVersion\":2.3,\"onError\":\"continueRegularOutput\",\"maxTries\":2}],\"connections\":{\"Manual Trigger\":{\"main\":[[{\"node\":\"Send Hello Message\",\"type\":\"main\",\"index\":0}]]}},\"settings\":{\"executionOrder\":\"v1\",\"saveDataSuccessExecution\":\"all\",\"saveDataErrorExecution\":\"all\",\"saveManualExecutions\":true}},\"options\":{\"validateNodes\":true,\"validateConnections\":true,\"validateExpressions\":true,\"profile\":\"runtime\"}}"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:34.754Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_workflow completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:38.364Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_workflow"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:38.364Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"workflow\":{\"name\":\"Send Hello Slack Message\",\"nodes\":[{\"id\":\"manualTrigger_1\",\"type\":\"n8n-nodes-base.manualTrigger\",\"position\":[250,300],\"parameters\":{},\"name\":\"Manual Trigger\",\"typeVersion\":1,\"onError\":\"stopWorkflow\"},{\"id\":\"slack_1\",\"type\":\"n8n-nodes-base.slack\",\"position\":[550,300],\"parameters\":{\"text\":\"Hello!\",\"channelId\":\"#general\",\"resource\":\"message\",\"operation\":\"post\"},\"name\":\"Send Hello Message\",\"typeVersion\":2.3,\"onError\":\"continueRegularOutput\",\"maxTries\":2}],\"connections\":{\"Manual Trigger\":{\"main\":[[{\"node\":\"Send Hello Message\",\"type\":\"main\",\"index\":0}]]}},\"settings\":{\"executionOrder\":\"v1\",\"saveDataSuccessExecution\":\"all\",\"saveDataErrorExecution\":\"all\",\"saveManualExecutions\":true}},\"options\":{\"validateNodes\":true,\"validateConnections\":true,\"validateExpressions\":true,\"profile\":\"runtime\"}}"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:38.512Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_workflow completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:41.458Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_workflow"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:41.458Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"workflow\":{\"name\":\"Send Hello Slack Message\",\"nodes\":[{\"id\":\"manualTrigger_1\",\"type\":\"n8n-nodes-base.manualTrigger\",\"position\":[250,300],\"parameters\":{},\"name\":\"Manual Trigger\",\"typeVersion\":1,\"onError\":\"stopWorkflow\"},{\"id\":\"slack_1\",\"type\":\"n8n-nodes-base.slack\",\"position\":[550,300],\"parameters\":{\"text\":\"Hello!\",\"channelId\":\"#general\",\"resource\":\"message\",\"operation\":\"post\",\"select\":\"channel\"},\"name\":\"Send Hello Message\",\"typeVersion\":2.3,\"onError\":\"continueRegularOutput\",\"maxTries\":2}],\"connections\":{\"Manual Trigger\":{\"main\":[[{\"node\":\"Send Hello Message\",\"type\":\"main\",\"index\":0}]]}},\"settings\":{\"executionOrder\":\"v1\",\"saveDataSuccessExecution\":\"all\",\"saveDataErrorExecution\":\"all\",\"saveManualExecutions\":true}},\"options\":{\"validateNodes\":true,\"validateConnections\":true,\"validateExpressions\":true,\"profile\":\"runtime\"}}"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:41.653Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_workflow completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:42.148Z",
+          "level": "ERROR",
+          "source": "Orchestrator",
+          "message": "Error in validation: Error 1"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:42.148Z",
+          "level": "ERROR",
+          "source": "Orchestrator",
+          "message": "Error in validation: Error 2"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:42.148Z",
+          "level": "ERROR",
+          "source": "Orchestrator",
+          "message": "Error in validation: Error 3"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:42.148Z",
+          "level": "ERROR",
+          "source": "Orchestrator",
+          "message": "Error in validation: Error 4"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:42.148Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Validation completed in 5 attempts"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:42.148Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Applied 4 fixes"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:42.253Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:42.253Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [],
+      "sessionState": {
+        "sessionId": "complete_e2e_custom_test_1754850299234",
+        "createdAt": "2025-08-10T18:24:59.736Z",
+        "state": {
+          "phase": "documentation",
+          "userPrompt": "send a slack message saying hello",
+          "discovered": [
+            {
+              "id": "node_1",
+              "type": "nodes-base.slack",
+              "config": {
+                "text": "",
+                "channel": "",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "resource": "message",
+                "operation": "post",
+                "retryOnFail": true,
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Send a message to Slack channel",
+              "displayName": "send slack message",
+              "isPreConfigured": true
+            }
+          ],
+          "selected": [
+            "node_1"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "name": "Send Hello Slack Message",
+            "nodes": [
+              {
+                "id": "manualTrigger_1",
+                "name": "Manual Trigger",
+                "type": "n8n-nodes-base.manualTrigger",
+                "onError": "stopWorkflow",
+                "position": [
+                  250,
+                  300
+                ],
+                "parameters": {},
+                "typeVersion": 1
+              },
+              {
+                "id": "slack_1",
+                "name": "Send Hello Message",
+                "type": "n8n-nodes-base.slack",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "position": [
+                  550,
+                  300
+                ],
+                "parameters": {
+                  "text": "Hello!",
+                  "select": "channel",
+                  "resource": "message",
+                  "channelId": "#general",
+                  "operation": "post"
+                },
+                "typeVersion": 2.3
+              }
+            ],
+            "valid": true,
+            "settings": {
+              "executionOrder": "v1",
+              "saveManualExecutions": true,
+              "saveDataErrorExecution": "all",
+              "saveDataSuccessExecution": "all"
+            },
+            "connections": {
+              "Manual Trigger": {
+                "main": [
+                  [
+                    {
+                      "node": "Send Hello Message",
+                      "type": "main",
+                      "index": 0
+                    }
+                  ]
+                ]
+              }
+            }
+          },
+          "buildPhases": [
+            {
+              "type": "trigger",
+              "nodeIds": [
+                "manualTrigger_1"
+              ],
+              "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+            },
+            {
+              "type": "notification",
+              "nodeIds": [
+                "slack_1"
+              ],
+              "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+            }
+          ],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "node_1",
+                "type": "nodes-base.slack",
+                "config": {
+                  "text": "",
+                  "channel": "",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 2,
+                  "resource": "message",
+                  "operation": "post",
+                  "retryOnFail": true,
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Send a message to Slack channel",
+                "displayName": "send slack message",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T18:25:05.748Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "node_1",
+              "timestamp": "2025-08-10T18:25:05.748Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-10T18:25:05.748Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "configuration",
+              "timestamp": "2025-08-10T18:25:18.297Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Send a hello message to Slack channel",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "parameters": {
+                  "text": "Hello!",
+                  "channel": "",
+                  "resource": "message",
+                  "operation": "post"
+                },
+                "retryOnFail": true,
+                "typeVersion": 3,
+                "waitBetweenTries": 2000
+              },
+              "nodeId": "node_1",
+              "purpose": "Send a message to Slack channel",
+              "nodeType": "nodes-base.slack",
+              "reasoning": "Customized the template by setting the 'text' parameter to 'Hello!' to match the user's goal of sending a hello message",
+              "timestamp": "2025-08-10T18:25:18.546Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "node_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-10T18:25:18.785Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "configuration",
+              "timestamp": "2025-08-10T18:25:18.785Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "building",
+              "timestamp": "2025-08-10T18:25:26.570Z"
+            },
+            {
+              "type": "setWorkflow",
+              "workflow": {
+                "name": "Send Hello Slack Message",
+                "nodes": [
+                  {
+                    "id": "manualTrigger_1",
+                    "name": "Manual Trigger",
+                    "type": "n8n-nodes-base.manualTrigger",
+                    "onError": "stopWorkflow",
+                    "position": [
+                      250,
+                      300
+                    ],
+                    "parameters": {},
+                    "typeVersion": 1
+                  },
+                  {
+                    "id": "slack_1",
+                    "name": "Send Hello Message",
+                    "type": "n8n-nodes-base.slack",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "position": [
+                      550,
+                      300
+                    ],
+                    "parameters": {
+                      "text": "Hello!",
+                      "channel": "",
+                      "resource": "message",
+                      "operation": "post"
+                    },
+                    "typeVersion": 2
+                  }
+                ],
+                "settings": {
+                  "executionOrder": "v1",
+                  "saveManualExecutions": true,
+                  "saveDataErrorExecution": "all",
+                  "saveDataSuccessExecution": "all"
+                },
+                "connections": {
+                  "Manual Trigger": {
+                    "main": [
+                      [
+                        {
+                          "node": "Send Hello Message",
+                          "type": "main",
+                          "index": 0
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "timestamp": "2025-08-10T18:25:26.792Z"
+            },
+            {
+              "type": "setBuildPhases",
+              "phases": [
+                {
+                  "type": "trigger",
+                  "nodeIds": [
+                    "manualTrigger_1"
+                  ],
+                  "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                },
+                {
+                  "type": "notification",
+                  "nodeIds": [
+                    "slack_1"
+                  ],
+                  "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                }
+              ],
+              "timestamp": "2025-08-10T18:25:26.792Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "building",
+              "timestamp": "2025-08-10T18:25:26.792Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "validation",
+              "timestamp": "2025-08-10T18:25:41.654Z"
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "slack_1",
+              "result": {
+                "valid": false,
+                "errors": [
+                  "Node replaced entirely"
+                ]
+              },
+              "attempt": 1,
+              "reasoning": "Node replaced to fix validation errors",
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "slack_1",
+              "result": {
+                "valid": false,
+                "errors": [
+                  "Node replaced entirely"
+                ]
+              },
+              "attempt": 2,
+              "reasoning": "Node replaced to fix validation errors",
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "slack_1",
+              "result": {
+                "valid": false,
+                "errors": [
+                  "Node replaced entirely"
+                ]
+              },
+              "attempt": 3,
+              "reasoning": "Node replaced to fix validation errors",
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "slack_1",
+              "result": {
+                "valid": false,
+                "errors": [
+                  "Node replaced entirely"
+                ]
+              },
+              "attempt": 4,
+              "reasoning": "Node replaced to fix validation errors",
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "manualTrigger_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "attempt": 5,
+              "reasoning": "Node passed all validation checks",
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "slack_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "attempt": 5,
+              "reasoning": "Node passed all validation checks",
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            },
+            {
+              "type": "setWorkflow",
+              "workflow": {
+                "name": "Send Hello Slack Message",
+                "nodes": [
+                  {
+                    "id": "manualTrigger_1",
+                    "name": "Manual Trigger",
+                    "type": "n8n-nodes-base.manualTrigger",
+                    "onError": "stopWorkflow",
+                    "position": [
+                      250,
+                      300
+                    ],
+                    "parameters": {},
+                    "typeVersion": 1
+                  },
+                  {
+                    "id": "slack_1",
+                    "name": "Send Hello Message",
+                    "type": "n8n-nodes-base.slack",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "position": [
+                      550,
+                      300
+                    ],
+                    "parameters": {
+                      "text": "Hello!",
+                      "select": "channel",
+                      "resource": "message",
+                      "channelId": "#general",
+                      "operation": "post"
+                    },
+                    "typeVersion": 2.3
+                  }
+                ],
+                "valid": true,
+                "settings": {
+                  "executionOrder": "v1",
+                  "saveManualExecutions": true,
+                  "saveDataErrorExecution": "all",
+                  "saveDataSuccessExecution": "all"
+                },
+                "connections": {
+                  "Manual Trigger": {
+                    "main": [
+                      [
+                        {
+                          "node": "Send Hello Message",
+                          "type": "main",
+                          "index": 0
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "validation",
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "workflow": {
+            "name": "Send Hello Slack Message",
+            "nodes": [
+              {
+                "id": "manualTrigger_1",
+                "type": "n8n-nodes-base.manualTrigger",
+                "position": [
+                  250,
+                  300
+                ],
+                "parameters": {},
+                "name": "Manual Trigger",
+                "typeVersion": 1,
+                "onError": "stopWorkflow"
+              },
+              {
+                "id": "slack_1",
+                "type": "n8n-nodes-base.slack",
+                "position": [
+                  550,
+                  300
+                ],
+                "parameters": {
+                  "text": "Hello!",
+                  "channel": "",
+                  "resource": "message",
+                  "operation": "post"
+                },
+                "name": "Send Hello Message",
+                "typeVersion": 2,
+                "onError": "continueRegularOutput",
+                "maxTries": 2
+              }
+            ],
+            "connections": {
+              "Manual Trigger": {
+                "main": [
+                  [
+                    {
+                      "node": "Send Hello Message",
+                      "type": "main",
+                      "index": 0
+                    }
+                  ]
+                ]
+              }
+            },
+            "settings": {
+              "executionOrder": "v1",
+              "saveDataSuccessExecution": "all",
+              "saveDataErrorExecution": "all",
+              "saveManualExecutions": true
+            }
+          }
+        },
+        "output": {
+          "validatedWorkflow": {
+            "name": "Send Hello Slack Message",
+            "nodes": [
+              {
+                "id": "manualTrigger_1",
+                "type": "n8n-nodes-base.manualTrigger",
+                "position": [
+                  250,
+                  300
+                ],
+                "parameters": {},
+                "name": "Manual Trigger",
+                "typeVersion": 1,
+                "onError": "stopWorkflow"
+              },
+              {
+                "id": "slack_1",
+                "type": "n8n-nodes-base.slack",
+                "position": [
+                  550,
+                  300
+                ],
+                "parameters": {
+                  "text": "Hello!",
+                  "channelId": "#general",
+                  "resource": "message",
+                  "operation": "post",
+                  "select": "channel"
+                },
+                "name": "Send Hello Message",
+                "typeVersion": 2.3,
+                "onError": "continueRegularOutput",
+                "maxTries": 2
+              }
+            ],
+            "connections": {
+              "Manual Trigger": {
+                "main": [
+                  [
+                    {
+                      "node": "Send Hello Message",
+                      "type": "main",
+                      "index": 0
+                    }
+                  ]
+                ]
+              }
+            },
+            "settings": {
+              "executionOrder": "v1",
+              "saveDataSuccessExecution": "all",
+              "saveDataErrorExecution": "all",
+              "saveManualExecutions": true
+            },
+            "valid": true
+          },
+          "report": {
+            "initial": {
+              "workflow": {
+                "errors": [
+                  {
+                    "node": "Send Hello Message",
+                    "message": {
+                      "type": "missing_required",
+                      "property": "select",
+                      "message": "Required property 'Send Message To' is missing",
+                      "fix": "Add select to your configuration"
+                    }
+                  },
+                  {
+                    "node": "workflow",
+                    "message": "Workflow validation failed: e.message.includes is not a function"
+                  },
+                  {
+                    "node": "Send Hello Message",
+                    "message": "Outdated typeVersion: 2. Latest is 2.3",
+                    "type": "typeVersion",
+                    "severity": "error"
+                  }
+                ],
+                "warnings": [],
+                "valid": false,
+                "statistics": {
+                  "totalNodes": 2,
+                  "enabledNodes": 2,
+                  "triggerNodes": 1,
+                  "validConnections": 1,
+                  "invalidConnections": 0,
+                  "expressionsValidated": 0,
+                  "errorCount": 2,
+                  "warningCount": 1
+                }
+              },
+              "connections": {
+                "errors": [],
+                "warnings": []
+              },
+              "expressions": {
+                "errors": [],
+                "warnings": []
+              }
+            },
+            "fixesApplied": [
+              {
+                "type": "entity-replacement",
+                "attempt": 1,
+                "timestamp": "2025-08-10T18:25:30.942Z",
+                "description": "Replaced 1 nodes",
+                "reasoning": [
+                  "Added required 'select' parameter with value 'channel' to specify where the message should be sent",
+                  "Updated typeVersion from 2 to 2.3 to use the latest version",
+                  "The workflow validation error appears to be a system-level issue that should resolve once the node configuration is properly fixed"
+                ],
+                "entitiesFixed": {
+                  "nodes": [
+                    "slack_1"
+                  ],
+                  "connections": false
+                }
+              },
+              {
+                "type": "entity-replacement",
+                "attempt": 2,
+                "timestamp": "2025-08-10T18:25:34.617Z",
+                "description": "Replaced 1 nodes",
+                "reasoning": [
+                  "Fixed the 'Send Hello Message' Slack node by adding a default channel '#general' to the empty 'channel' parameter, which resolves the missing required 'channelId' property error",
+                  "The workflow validation error appears to be a system-level issue that should resolve once the node configuration is properly fixed"
+                ],
+                "entitiesFixed": {
+                  "nodes": [
+                    "slack_1"
+                  ],
+                  "connections": false
+                }
+              },
+              {
+                "type": "entity-replacement",
+                "attempt": 3,
+                "timestamp": "2025-08-10T18:25:38.364Z",
+                "description": "Replaced 1 nodes",
+                "reasoning": [
+                  "Fixed Slack node by changing 'channel' parameter to 'channelId' as required by the node specification",
+                  "Removed 'select' parameter which is not needed when channelId is properly set",
+                  "The workflow validation error appears to be a system-level issue that should resolve once the node configuration is corrected"
+                ],
+                "entitiesFixed": {
+                  "nodes": [
+                    "slack_1"
+                  ],
+                  "connections": false
+                }
+              },
+              {
+                "type": "entity-replacement",
+                "attempt": 4,
+                "timestamp": "2025-08-10T18:25:41.458Z",
+                "description": "Replaced 1 nodes",
+                "reasoning": [
+                  "Added the required 'select' parameter with value 'channel' to the Slack node. This parameter specifies how the message destination is selected - in this case by channel name/ID."
+                ],
+                "entitiesFixed": {
+                  "nodes": [
+                    "slack_1"
+                  ],
+                  "connections": false
+                }
+              }
+            ],
+            "final": {
+              "workflow": {
+                "errors": [],
+                "warnings": [],
+                "valid": true,
+                "statistics": {
+                  "totalNodes": 2,
+                  "enabledNodes": 2,
+                  "triggerNodes": 1,
+                  "validConnections": 1,
+                  "invalidConnections": 0,
+                  "expressionsValidated": 0,
+                  "errorCount": 0,
+                  "warningCount": 0
+                }
+              },
+              "connections": {
+                "errors": [],
+                "warnings": []
+              },
+              "expressions": {
+                "errors": [],
+                "warnings": []
+              }
+            },
+            "attempts": 5
+          }
+        },
+        "transformations": [
+          "Validation Check",
+          "Error Detection",
+          "Automatic Fixes"
+        ]
+      },
+      "errors": [
+        {
+          "type": "ValidationError",
+          "message": "Error 1",
+          "resolution": "Applied automatic fix",
+          "attemptNumber": 1
+        },
+        {
+          "type": "ValidationError",
+          "message": "Error 2",
+          "resolution": "Applied automatic fix",
+          "attemptNumber": 2
+        },
+        {
+          "type": "ValidationError",
+          "message": "Error 3",
+          "resolution": "Applied automatic fix",
+          "attemptNumber": 3
+        },
+        {
+          "type": "ValidationError",
+          "message": "Error 4",
+          "resolution": "Applied automatic fix",
+          "attemptNumber": 4
+        }
+      ],
+      "stateDelta": {
+        "added": {
+          "state": {
+            "workflow": {
+              "valid": true
+            }
+          }
+        },
+        "modified": {
+          "state": {
+            "old": {
+              "phase": "validation",
+              "userPrompt": "send a slack message saying hello",
+              "discovered": [
+                {
+                  "id": "node_1",
+                  "type": "nodes-base.slack",
+                  "config": {
+                    "text": "",
+                    "channel": "",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "resource": "message",
+                    "operation": "post",
+                    "retryOnFail": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Send a message to Slack channel",
+                  "displayName": "send slack message",
+                  "isPreConfigured": true
+                }
+              ],
+              "selected": [
+                "node_1"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "name": "Send Hello Slack Message",
+                "nodes": [
+                  {
+                    "id": "manualTrigger_1",
+                    "name": "Manual Trigger",
+                    "type": "n8n-nodes-base.manualTrigger",
+                    "onError": "stopWorkflow",
+                    "position": [
+                      250,
+                      300
+                    ],
+                    "parameters": {},
+                    "typeVersion": 1
+                  },
+                  {
+                    "id": "slack_1",
+                    "name": "Send Hello Message",
+                    "type": "n8n-nodes-base.slack",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "position": [
+                      550,
+                      300
+                    ],
+                    "parameters": {
+                      "text": "Hello!",
+                      "channel": "",
+                      "resource": "message",
+                      "operation": "post"
+                    },
+                    "typeVersion": 2
+                  }
+                ],
+                "settings": {
+                  "executionOrder": "v1",
+                  "saveManualExecutions": true,
+                  "saveDataErrorExecution": "all",
+                  "saveDataSuccessExecution": "all"
+                },
+                "connections": {
+                  "Manual Trigger": {
+                    "main": [
+                      [
+                        {
+                          "node": "Send Hello Message",
+                          "type": "main",
+                          "index": 0
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "buildPhases": [
+                {
+                  "type": "trigger",
+                  "nodeIds": [
+                    "manualTrigger_1"
+                  ],
+                  "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                },
+                {
+                  "type": "notification",
+                  "nodeIds": [
+                    "slack_1"
+                  ],
+                  "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                }
+              ],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "node_1",
+                    "type": "nodes-base.slack",
+                    "config": {
+                      "text": "",
+                      "channel": "",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 2,
+                      "resource": "message",
+                      "operation": "post",
+                      "retryOnFail": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Send a message to Slack channel",
+                    "displayName": "send slack message",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "node_1",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-10T18:25:18.297Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Send a hello message to Slack channel",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "parameters": {
+                      "text": "Hello!",
+                      "channel": "",
+                      "resource": "message",
+                      "operation": "post"
+                    },
+                    "retryOnFail": true,
+                    "typeVersion": 3,
+                    "waitBetweenTries": 2000
+                  },
+                  "nodeId": "node_1",
+                  "purpose": "Send a message to Slack channel",
+                  "nodeType": "nodes-base.slack",
+                  "reasoning": "Customized the template by setting the 'text' parameter to 'Hello!' to match the user's goal of sending a hello message",
+                  "timestamp": "2025-08-10T18:25:18.546Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "node_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-10T18:25:18.785Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-10T18:25:18.785Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "building",
+                  "timestamp": "2025-08-10T18:25:26.570Z"
+                },
+                {
+                  "type": "setWorkflow",
+                  "workflow": {
+                    "name": "Send Hello Slack Message",
+                    "nodes": [
+                      {
+                        "id": "manualTrigger_1",
+                        "name": "Manual Trigger",
+                        "type": "n8n-nodes-base.manualTrigger",
+                        "onError": "stopWorkflow",
+                        "position": [
+                          250,
+                          300
+                        ],
+                        "parameters": {},
+                        "typeVersion": 1
+                      },
+                      {
+                        "id": "slack_1",
+                        "name": "Send Hello Message",
+                        "type": "n8n-nodes-base.slack",
+                        "onError": "continueRegularOutput",
+                        "maxTries": 2,
+                        "position": [
+                          550,
+                          300
+                        ],
+                        "parameters": {
+                          "text": "Hello!",
+                          "channel": "",
+                          "resource": "message",
+                          "operation": "post"
+                        },
+                        "typeVersion": 2
+                      }
+                    ],
+                    "settings": {
+                      "executionOrder": "v1",
+                      "saveManualExecutions": true,
+                      "saveDataErrorExecution": "all",
+                      "saveDataSuccessExecution": "all"
+                    },
+                    "connections": {
+                      "Manual Trigger": {
+                        "main": [
+                          [
+                            {
+                              "node": "Send Hello Message",
+                              "type": "main",
+                              "index": 0
+                            }
+                          ]
+                        ]
+                      }
+                    }
+                  },
+                  "timestamp": "2025-08-10T18:25:26.792Z"
+                },
+                {
+                  "type": "setBuildPhases",
+                  "phases": [
+                    {
+                      "type": "trigger",
+                      "nodeIds": [
+                        "manualTrigger_1"
+                      ],
+                      "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                    },
+                    {
+                      "type": "notification",
+                      "nodeIds": [
+                        "slack_1"
+                      ],
+                      "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                    }
+                  ],
+                  "timestamp": "2025-08-10T18:25:26.792Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "building",
+                  "timestamp": "2025-08-10T18:25:26.792Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            },
+            "new": {
+              "phase": "documentation",
+              "userPrompt": "send a slack message saying hello",
+              "discovered": [
+                {
+                  "id": "node_1",
+                  "type": "nodes-base.slack",
+                  "config": {
+                    "text": "",
+                    "channel": "",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "resource": "message",
+                    "operation": "post",
+                    "retryOnFail": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Send a message to Slack channel",
+                  "displayName": "send slack message",
+                  "isPreConfigured": true
+                }
+              ],
+              "selected": [
+                "node_1"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "name": "Send Hello Slack Message",
+                "nodes": [
+                  {
+                    "id": "manualTrigger_1",
+                    "name": "Manual Trigger",
+                    "type": "n8n-nodes-base.manualTrigger",
+                    "onError": "stopWorkflow",
+                    "position": [
+                      250,
+                      300
+                    ],
+                    "parameters": {},
+                    "typeVersion": 1
+                  },
+                  {
+                    "id": "slack_1",
+                    "name": "Send Hello Message",
+                    "type": "n8n-nodes-base.slack",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "position": [
+                      550,
+                      300
+                    ],
+                    "parameters": {
+                      "text": "Hello!",
+                      "select": "channel",
+                      "resource": "message",
+                      "channelId": "#general",
+                      "operation": "post"
+                    },
+                    "typeVersion": 2.3
+                  }
+                ],
+                "valid": true,
+                "settings": {
+                  "executionOrder": "v1",
+                  "saveManualExecutions": true,
+                  "saveDataErrorExecution": "all",
+                  "saveDataSuccessExecution": "all"
+                },
+                "connections": {
+                  "Manual Trigger": {
+                    "main": [
+                      [
+                        {
+                          "node": "Send Hello Message",
+                          "type": "main",
+                          "index": 0
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "buildPhases": [
+                {
+                  "type": "trigger",
+                  "nodeIds": [
+                    "manualTrigger_1"
+                  ],
+                  "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                },
+                {
+                  "type": "notification",
+                  "nodeIds": [
+                    "slack_1"
+                  ],
+                  "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                }
+              ],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "node_1",
+                    "type": "nodes-base.slack",
+                    "config": {
+                      "text": "",
+                      "channel": "",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 2,
+                      "resource": "message",
+                      "operation": "post",
+                      "retryOnFail": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Send a message to Slack channel",
+                    "displayName": "send slack message",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "node_1",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-10T18:25:18.297Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Send a hello message to Slack channel",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "parameters": {
+                      "text": "Hello!",
+                      "channel": "",
+                      "resource": "message",
+                      "operation": "post"
+                    },
+                    "retryOnFail": true,
+                    "typeVersion": 3,
+                    "waitBetweenTries": 2000
+                  },
+                  "nodeId": "node_1",
+                  "purpose": "Send a message to Slack channel",
+                  "nodeType": "nodes-base.slack",
+                  "reasoning": "Customized the template by setting the 'text' parameter to 'Hello!' to match the user's goal of sending a hello message",
+                  "timestamp": "2025-08-10T18:25:18.546Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "node_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-10T18:25:18.785Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-10T18:25:18.785Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "building",
+                  "timestamp": "2025-08-10T18:25:26.570Z"
+                },
+                {
+                  "type": "setWorkflow",
+                  "workflow": {
+                    "name": "Send Hello Slack Message",
+                    "nodes": [
+                      {
+                        "id": "manualTrigger_1",
+                        "name": "Manual Trigger",
+                        "type": "n8n-nodes-base.manualTrigger",
+                        "onError": "stopWorkflow",
+                        "position": [
+                          250,
+                          300
+                        ],
+                        "parameters": {},
+                        "typeVersion": 1
+                      },
+                      {
+                        "id": "slack_1",
+                        "name": "Send Hello Message",
+                        "type": "n8n-nodes-base.slack",
+                        "onError": "continueRegularOutput",
+                        "maxTries": 2,
+                        "position": [
+                          550,
+                          300
+                        ],
+                        "parameters": {
+                          "text": "Hello!",
+                          "channel": "",
+                          "resource": "message",
+                          "operation": "post"
+                        },
+                        "typeVersion": 2
+                      }
+                    ],
+                    "settings": {
+                      "executionOrder": "v1",
+                      "saveManualExecutions": true,
+                      "saveDataErrorExecution": "all",
+                      "saveDataSuccessExecution": "all"
+                    },
+                    "connections": {
+                      "Manual Trigger": {
+                        "main": [
+                          [
+                            {
+                              "node": "Send Hello Message",
+                              "type": "main",
+                              "index": 0
+                            }
+                          ]
+                        ]
+                      }
+                    }
+                  },
+                  "timestamp": "2025-08-10T18:25:26.792Z"
+                },
+                {
+                  "type": "setBuildPhases",
+                  "phases": [
+                    {
+                      "type": "trigger",
+                      "nodeIds": [
+                        "manualTrigger_1"
+                      ],
+                      "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                    },
+                    {
+                      "type": "notification",
+                      "nodeIds": [
+                        "slack_1"
+                      ],
+                      "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                    }
+                  ],
+                  "timestamp": "2025-08-10T18:25:26.792Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "building",
+                  "timestamp": "2025-08-10T18:25:26.792Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "validation",
+                  "timestamp": "2025-08-10T18:25:41.654Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "slack_1",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      "Node replaced entirely"
+                    ]
+                  },
+                  "attempt": 1,
+                  "reasoning": "Node replaced to fix validation errors",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "slack_1",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      "Node replaced entirely"
+                    ]
+                  },
+                  "attempt": 2,
+                  "reasoning": "Node replaced to fix validation errors",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "slack_1",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      "Node replaced entirely"
+                    ]
+                  },
+                  "attempt": 3,
+                  "reasoning": "Node replaced to fix validation errors",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "slack_1",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      "Node replaced entirely"
+                    ]
+                  },
+                  "attempt": 4,
+                  "reasoning": "Node replaced to fix validation errors",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "manualTrigger_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "attempt": 5,
+                  "reasoning": "Node passed all validation checks",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "slack_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "attempt": 5,
+                  "reasoning": "Node passed all validation checks",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "setWorkflow",
+                  "workflow": {
+                    "name": "Send Hello Slack Message",
+                    "nodes": [
+                      {
+                        "id": "manualTrigger_1",
+                        "name": "Manual Trigger",
+                        "type": "n8n-nodes-base.manualTrigger",
+                        "onError": "stopWorkflow",
+                        "position": [
+                          250,
+                          300
+                        ],
+                        "parameters": {},
+                        "typeVersion": 1
+                      },
+                      {
+                        "id": "slack_1",
+                        "name": "Send Hello Message",
+                        "type": "n8n-nodes-base.slack",
+                        "onError": "continueRegularOutput",
+                        "maxTries": 2,
+                        "position": [
+                          550,
+                          300
+                        ],
+                        "parameters": {
+                          "text": "Hello!",
+                          "select": "channel",
+                          "resource": "message",
+                          "channelId": "#general",
+                          "operation": "post"
+                        },
+                        "typeVersion": 2.3
+                      }
+                    ],
+                    "valid": true,
+                    "settings": {
+                      "executionOrder": "v1",
+                      "saveManualExecutions": true,
+                      "saveDataErrorExecution": "all",
+                      "saveDataSuccessExecution": "all"
+                    },
+                    "connections": {
+                      "Manual Trigger": {
+                        "main": [
+                          [
+                            {
+                              "node": "Send Hello Message",
+                              "type": "main",
+                              "index": 0
+                            }
+                          ]
+                        ]
+                      }
+                    }
+                  },
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "validation",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            }
+          }
+        },
+        "removed": [],
+        "unchanged": [
+          "sessionId",
+          "createdAt"
+        ]
+      }
+    },
+    "documentation": {
+      "name": "Documentation",
+      "success": true,
+      "metrics": {
+        "startTime": 1754850342253,
+        "endTime": 1754850342897,
+        "duration": 644,
+        "memoryUsage": {
+          "heapUsed": 888464,
+          "heapTotal": 34799616,
+          "external": 6723973
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-10T18:25:42.253Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting documentation phase"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:42.254Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for documentation phase"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:42.791Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Added 2 sticky notes for documentation"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:42.897Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-10T18:25:42.897Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [],
+      "sessionState": {
+        "sessionId": "complete_e2e_custom_test_1754850299234",
+        "createdAt": "2025-08-10T18:24:59.736Z",
+        "state": {
+          "phase": "complete",
+          "userPrompt": "send a slack message saying hello",
+          "discovered": [
+            {
+              "id": "node_1",
+              "type": "nodes-base.slack",
+              "config": {
+                "text": "",
+                "channel": "",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "resource": "message",
+                "operation": "post",
+                "retryOnFail": true,
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Send a message to Slack channel",
+              "displayName": "send slack message",
+              "isPreConfigured": true
+            }
+          ],
+          "selected": [
+            "node_1"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "name": "Send Hello Slack Message",
+            "nodes": [
+              {
+                "id": "manualTrigger_1",
+                "name": "Manual Trigger",
+                "type": "n8n-nodes-base.manualTrigger",
+                "onError": "stopWorkflow",
+                "position": [
+                  250,
+                  300
+                ],
+                "parameters": {},
+                "typeVersion": 1
+              },
+              {
+                "id": "slack_1",
+                "name": "Send Hello Message",
+                "type": "n8n-nodes-base.slack",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "position": [
+                  550,
+                  300
+                ],
+                "parameters": {
+                  "text": "Hello!",
+                  "select": "channel",
+                  "resource": "message",
+                  "channelId": "#general",
+                  "operation": "post"
+                },
+                "typeVersion": 2.3
+              },
+              {
+                "id": "sticky_triggers_1754850342361",
+                "name": "Triggers Notes",
+                "type": "n8n-nodes-base.stickyNote",
+                "position": [
+                  210,
+                  160
+                ],
+                "parameters": {
+                  "color": 6,
+                  "width": 230,
+                  "height": 300,
+                  "content": "## 📥 Triggers\nManual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                },
+                "typeVersion": 1
+              },
+              {
+                "id": "sticky_outputs_1754850342361",
+                "name": "Outputs Notes",
+                "type": "n8n-nodes-base.stickyNote",
+                "position": [
+                  510,
+                  160
+                ],
+                "parameters": {
+                  "color": 7,
+                  "width": 230,
+                  "height": 300,
+                  "content": "## 🚀 Outputs\nSends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                },
+                "typeVersion": 1
+              }
+            ],
+            "valid": true,
+            "settings": {
+              "executionOrder": "v1",
+              "saveManualExecutions": true,
+              "saveDataErrorExecution": "all",
+              "saveDataSuccessExecution": "all"
+            },
+            "connections": {
+              "Manual Trigger": {
+                "main": [
+                  [
+                    {
+                      "node": "Send Hello Message",
+                      "type": "main",
+                      "index": 0
+                    }
+                  ]
+                ]
+              }
+            }
+          },
+          "buildPhases": [
+            {
+              "type": "trigger",
+              "nodeIds": [
+                "manualTrigger_1"
+              ],
+              "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+            },
+            {
+              "type": "notification",
+              "nodeIds": [
+                "slack_1"
+              ],
+              "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+            }
+          ],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "node_1",
+                "type": "nodes-base.slack",
+                "config": {
+                  "text": "",
+                  "channel": "",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 2,
+                  "resource": "message",
+                  "operation": "post",
+                  "retryOnFail": true,
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Send a message to Slack channel",
+                "displayName": "send slack message",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T18:25:05.748Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "node_1",
+              "timestamp": "2025-08-10T18:25:05.748Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-10T18:25:05.748Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "configuration",
+              "timestamp": "2025-08-10T18:25:18.297Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Send a hello message to Slack channel",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "parameters": {
+                  "text": "Hello!",
+                  "channel": "",
+                  "resource": "message",
+                  "operation": "post"
+                },
+                "retryOnFail": true,
+                "typeVersion": 3,
+                "waitBetweenTries": 2000
+              },
+              "nodeId": "node_1",
+              "purpose": "Send a message to Slack channel",
+              "nodeType": "nodes-base.slack",
+              "reasoning": "Customized the template by setting the 'text' parameter to 'Hello!' to match the user's goal of sending a hello message",
+              "timestamp": "2025-08-10T18:25:18.546Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "node_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-10T18:25:18.785Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "configuration",
+              "timestamp": "2025-08-10T18:25:18.785Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "building",
+              "timestamp": "2025-08-10T18:25:26.570Z"
+            },
+            {
+              "type": "setWorkflow",
+              "workflow": {
+                "name": "Send Hello Slack Message",
+                "nodes": [
+                  {
+                    "id": "manualTrigger_1",
+                    "name": "Manual Trigger",
+                    "type": "n8n-nodes-base.manualTrigger",
+                    "onError": "stopWorkflow",
+                    "position": [
+                      250,
+                      300
+                    ],
+                    "parameters": {},
+                    "typeVersion": 1
+                  },
+                  {
+                    "id": "slack_1",
+                    "name": "Send Hello Message",
+                    "type": "n8n-nodes-base.slack",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "position": [
+                      550,
+                      300
+                    ],
+                    "parameters": {
+                      "text": "Hello!",
+                      "channel": "",
+                      "resource": "message",
+                      "operation": "post"
+                    },
+                    "typeVersion": 2
+                  }
+                ],
+                "settings": {
+                  "executionOrder": "v1",
+                  "saveManualExecutions": true,
+                  "saveDataErrorExecution": "all",
+                  "saveDataSuccessExecution": "all"
+                },
+                "connections": {
+                  "Manual Trigger": {
+                    "main": [
+                      [
+                        {
+                          "node": "Send Hello Message",
+                          "type": "main",
+                          "index": 0
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "timestamp": "2025-08-10T18:25:26.792Z"
+            },
+            {
+              "type": "setBuildPhases",
+              "phases": [
+                {
+                  "type": "trigger",
+                  "nodeIds": [
+                    "manualTrigger_1"
+                  ],
+                  "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                },
+                {
+                  "type": "notification",
+                  "nodeIds": [
+                    "slack_1"
+                  ],
+                  "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                }
+              ],
+              "timestamp": "2025-08-10T18:25:26.792Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "building",
+              "timestamp": "2025-08-10T18:25:26.792Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "validation",
+              "timestamp": "2025-08-10T18:25:41.654Z"
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "slack_1",
+              "result": {
+                "valid": false,
+                "errors": [
+                  "Node replaced entirely"
+                ]
+              },
+              "attempt": 1,
+              "reasoning": "Node replaced to fix validation errors",
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "slack_1",
+              "result": {
+                "valid": false,
+                "errors": [
+                  "Node replaced entirely"
+                ]
+              },
+              "attempt": 2,
+              "reasoning": "Node replaced to fix validation errors",
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "slack_1",
+              "result": {
+                "valid": false,
+                "errors": [
+                  "Node replaced entirely"
+                ]
+              },
+              "attempt": 3,
+              "reasoning": "Node replaced to fix validation errors",
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "slack_1",
+              "result": {
+                "valid": false,
+                "errors": [
+                  "Node replaced entirely"
+                ]
+              },
+              "attempt": 4,
+              "reasoning": "Node replaced to fix validation errors",
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "manualTrigger_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "attempt": 5,
+              "reasoning": "Node passed all validation checks",
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "slack_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "attempt": 5,
+              "reasoning": "Node passed all validation checks",
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            },
+            {
+              "type": "setWorkflow",
+              "workflow": {
+                "name": "Send Hello Slack Message",
+                "nodes": [
+                  {
+                    "id": "manualTrigger_1",
+                    "name": "Manual Trigger",
+                    "type": "n8n-nodes-base.manualTrigger",
+                    "onError": "stopWorkflow",
+                    "position": [
+                      250,
+                      300
+                    ],
+                    "parameters": {},
+                    "typeVersion": 1
+                  },
+                  {
+                    "id": "slack_1",
+                    "name": "Send Hello Message",
+                    "type": "n8n-nodes-base.slack",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "position": [
+                      550,
+                      300
+                    ],
+                    "parameters": {
+                      "text": "Hello!",
+                      "select": "channel",
+                      "resource": "message",
+                      "channelId": "#general",
+                      "operation": "post"
+                    },
+                    "typeVersion": 2.3
+                  }
+                ],
+                "valid": true,
+                "settings": {
+                  "executionOrder": "v1",
+                  "saveManualExecutions": true,
+                  "saveDataErrorExecution": "all",
+                  "saveDataSuccessExecution": "all"
+                },
+                "connections": {
+                  "Manual Trigger": {
+                    "main": [
+                      [
+                        {
+                          "node": "Send Hello Message",
+                          "type": "main",
+                          "index": 0
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "validation",
+              "timestamp": "2025-08-10T18:25:41.895Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "documentation",
+              "timestamp": "2025-08-10T18:25:42.362Z"
+            },
+            {
+              "type": "setWorkflow",
+              "workflow": {
+                "name": "Send Hello Slack Message",
+                "nodes": [
+                  {
+                    "id": "manualTrigger_1",
+                    "name": "Manual Trigger",
+                    "type": "n8n-nodes-base.manualTrigger",
+                    "onError": "stopWorkflow",
+                    "position": [
+                      250,
+                      300
+                    ],
+                    "parameters": {},
+                    "typeVersion": 1
+                  },
+                  {
+                    "id": "slack_1",
+                    "name": "Send Hello Message",
+                    "type": "n8n-nodes-base.slack",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "position": [
+                      550,
+                      300
+                    ],
+                    "parameters": {
+                      "text": "Hello!",
+                      "select": "channel",
+                      "resource": "message",
+                      "channelId": "#general",
+                      "operation": "post"
+                    },
+                    "typeVersion": 2.3
+                  },
+                  {
+                    "id": "sticky_triggers_1754850342361",
+                    "name": "Triggers Notes",
+                    "type": "n8n-nodes-base.stickyNote",
+                    "position": [
+                      210,
+                      160
+                    ],
+                    "parameters": {
+                      "color": 6,
+                      "width": 230,
+                      "height": 300,
+                      "content": "## 📥 Triggers\nManual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                    },
+                    "typeVersion": 1
+                  },
+                  {
+                    "id": "sticky_outputs_1754850342361",
+                    "name": "Outputs Notes",
+                    "type": "n8n-nodes-base.stickyNote",
+                    "position": [
+                      510,
+                      160
+                    ],
+                    "parameters": {
+                      "color": 7,
+                      "width": 230,
+                      "height": 300,
+                      "content": "## 🚀 Outputs\nSends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                    },
+                    "typeVersion": 1
+                  }
+                ],
+                "valid": true,
+                "settings": {
+                  "executionOrder": "v1",
+                  "saveManualExecutions": true,
+                  "saveDataErrorExecution": "all",
+                  "saveDataSuccessExecution": "all"
+                },
+                "connections": {
+                  "Manual Trigger": {
+                    "main": [
+                      [
+                        {
+                          "node": "Send Hello Message",
+                          "type": "main",
+                          "index": 0
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "timestamp": "2025-08-10T18:25:42.532Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "documentation",
+              "timestamp": "2025-08-10T18:25:42.533Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "validatedWorkflow": {
+            "name": "Send Hello Slack Message",
+            "nodes": [
+              {
+                "id": "manualTrigger_1",
+                "type": "n8n-nodes-base.manualTrigger",
+                "position": [
+                  250,
+                  300
+                ],
+                "parameters": {},
+                "name": "Manual Trigger",
+                "typeVersion": 1,
+                "onError": "stopWorkflow"
+              },
+              {
+                "id": "slack_1",
+                "type": "n8n-nodes-base.slack",
+                "position": [
+                  550,
+                  300
+                ],
+                "parameters": {
+                  "text": "Hello!",
+                  "channelId": "#general",
+                  "resource": "message",
+                  "operation": "post",
+                  "select": "channel"
+                },
+                "name": "Send Hello Message",
+                "typeVersion": 2.3,
+                "onError": "continueRegularOutput",
+                "maxTries": 2
+              }
+            ],
+            "connections": {
+              "Manual Trigger": {
+                "main": [
+                  [
+                    {
+                      "node": "Send Hello Message",
+                      "type": "main",
+                      "index": 0
+                    }
+                  ]
+                ]
+              }
+            },
+            "settings": {
+              "executionOrder": "v1",
+              "saveDataSuccessExecution": "all",
+              "saveDataErrorExecution": "all",
+              "saveManualExecutions": true
+            },
+            "valid": true
+          }
+        },
+        "output": {
+          "documentedWorkflow": {
+            "name": "Send Hello Slack Message",
+            "nodes": [
+              {
+                "id": "manualTrigger_1",
+                "type": "n8n-nodes-base.manualTrigger",
+                "position": [
+                  250,
+                  300
+                ],
+                "parameters": {},
+                "name": "Manual Trigger",
+                "typeVersion": 1,
+                "onError": "stopWorkflow"
+              },
+              {
+                "id": "slack_1",
+                "type": "n8n-nodes-base.slack",
+                "position": [
+                  550,
+                  300
+                ],
+                "parameters": {
+                  "text": "Hello!",
+                  "channelId": "#general",
+                  "resource": "message",
+                  "operation": "post",
+                  "select": "channel"
+                },
+                "name": "Send Hello Message",
+                "typeVersion": 2.3,
+                "onError": "continueRegularOutput",
+                "maxTries": 2
+              },
+              {
+                "id": "sticky_triggers_1754850342361",
+                "name": "Triggers Notes",
+                "type": "n8n-nodes-base.stickyNote",
+                "typeVersion": 1,
+                "position": [
+                  210,
+                  160
+                ],
+                "parameters": {
+                  "content": "## 📥 Triggers\nManual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack.",
+                  "height": 300,
+                  "width": 230,
+                  "color": 6
+                }
+              },
+              {
+                "id": "sticky_outputs_1754850342361",
+                "name": "Outputs Notes",
+                "type": "n8n-nodes-base.stickyNote",
+                "typeVersion": 1,
+                "position": [
+                  510,
+                  160
+                ],
+                "parameters": {
+                  "content": "## 🚀 Outputs\nSends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel.",
+                  "height": 300,
+                  "width": 230,
+                  "color": 7
+                }
+              }
+            ],
+            "connections": {
+              "Manual Trigger": {
+                "main": [
+                  [
+                    {
+                      "node": "Send Hello Message",
+                      "type": "main",
+                      "index": 0
+                    }
+                  ]
+                ]
+              }
+            },
+            "settings": {
+              "executionOrder": "v1",
+              "saveDataSuccessExecution": "all",
+              "saveDataErrorExecution": "all",
+              "saveManualExecutions": true
+            },
+            "valid": true
+          },
+          "stickyNotesAdded": 2
+        },
+        "transformations": [
+          "Documentation Generation",
+          "Sticky Note Placement",
+          "Workflow Finalization"
+        ]
+      },
+      "stateDelta": {
+        "added": {},
+        "modified": {
+          "state": {
+            "old": {
+              "phase": "documentation",
+              "userPrompt": "send a slack message saying hello",
+              "discovered": [
+                {
+                  "id": "node_1",
+                  "type": "nodes-base.slack",
+                  "config": {
+                    "text": "",
+                    "channel": "",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "resource": "message",
+                    "operation": "post",
+                    "retryOnFail": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Send a message to Slack channel",
+                  "displayName": "send slack message",
+                  "isPreConfigured": true
+                }
+              ],
+              "selected": [
+                "node_1"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "name": "Send Hello Slack Message",
+                "nodes": [
+                  {
+                    "id": "manualTrigger_1",
+                    "name": "Manual Trigger",
+                    "type": "n8n-nodes-base.manualTrigger",
+                    "onError": "stopWorkflow",
+                    "position": [
+                      250,
+                      300
+                    ],
+                    "parameters": {},
+                    "typeVersion": 1
+                  },
+                  {
+                    "id": "slack_1",
+                    "name": "Send Hello Message",
+                    "type": "n8n-nodes-base.slack",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "position": [
+                      550,
+                      300
+                    ],
+                    "parameters": {
+                      "text": "Hello!",
+                      "select": "channel",
+                      "resource": "message",
+                      "channelId": "#general",
+                      "operation": "post"
+                    },
+                    "typeVersion": 2.3
+                  }
+                ],
+                "valid": true,
+                "settings": {
+                  "executionOrder": "v1",
+                  "saveManualExecutions": true,
+                  "saveDataErrorExecution": "all",
+                  "saveDataSuccessExecution": "all"
+                },
+                "connections": {
+                  "Manual Trigger": {
+                    "main": [
+                      [
+                        {
+                          "node": "Send Hello Message",
+                          "type": "main",
+                          "index": 0
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "buildPhases": [
+                {
+                  "type": "trigger",
+                  "nodeIds": [
+                    "manualTrigger_1"
+                  ],
+                  "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                },
+                {
+                  "type": "notification",
+                  "nodeIds": [
+                    "slack_1"
+                  ],
+                  "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                }
+              ],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "node_1",
+                    "type": "nodes-base.slack",
+                    "config": {
+                      "text": "",
+                      "channel": "",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 2,
+                      "resource": "message",
+                      "operation": "post",
+                      "retryOnFail": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Send a message to Slack channel",
+                    "displayName": "send slack message",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "node_1",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-10T18:25:18.297Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Send a hello message to Slack channel",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "parameters": {
+                      "text": "Hello!",
+                      "channel": "",
+                      "resource": "message",
+                      "operation": "post"
+                    },
+                    "retryOnFail": true,
+                    "typeVersion": 3,
+                    "waitBetweenTries": 2000
+                  },
+                  "nodeId": "node_1",
+                  "purpose": "Send a message to Slack channel",
+                  "nodeType": "nodes-base.slack",
+                  "reasoning": "Customized the template by setting the 'text' parameter to 'Hello!' to match the user's goal of sending a hello message",
+                  "timestamp": "2025-08-10T18:25:18.546Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "node_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-10T18:25:18.785Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-10T18:25:18.785Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "building",
+                  "timestamp": "2025-08-10T18:25:26.570Z"
+                },
+                {
+                  "type": "setWorkflow",
+                  "workflow": {
+                    "name": "Send Hello Slack Message",
+                    "nodes": [
+                      {
+                        "id": "manualTrigger_1",
+                        "name": "Manual Trigger",
+                        "type": "n8n-nodes-base.manualTrigger",
+                        "onError": "stopWorkflow",
+                        "position": [
+                          250,
+                          300
+                        ],
+                        "parameters": {},
+                        "typeVersion": 1
+                      },
+                      {
+                        "id": "slack_1",
+                        "name": "Send Hello Message",
+                        "type": "n8n-nodes-base.slack",
+                        "onError": "continueRegularOutput",
+                        "maxTries": 2,
+                        "position": [
+                          550,
+                          300
+                        ],
+                        "parameters": {
+                          "text": "Hello!",
+                          "channel": "",
+                          "resource": "message",
+                          "operation": "post"
+                        },
+                        "typeVersion": 2
+                      }
+                    ],
+                    "settings": {
+                      "executionOrder": "v1",
+                      "saveManualExecutions": true,
+                      "saveDataErrorExecution": "all",
+                      "saveDataSuccessExecution": "all"
+                    },
+                    "connections": {
+                      "Manual Trigger": {
+                        "main": [
+                          [
+                            {
+                              "node": "Send Hello Message",
+                              "type": "main",
+                              "index": 0
+                            }
+                          ]
+                        ]
+                      }
+                    }
+                  },
+                  "timestamp": "2025-08-10T18:25:26.792Z"
+                },
+                {
+                  "type": "setBuildPhases",
+                  "phases": [
+                    {
+                      "type": "trigger",
+                      "nodeIds": [
+                        "manualTrigger_1"
+                      ],
+                      "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                    },
+                    {
+                      "type": "notification",
+                      "nodeIds": [
+                        "slack_1"
+                      ],
+                      "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                    }
+                  ],
+                  "timestamp": "2025-08-10T18:25:26.792Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "building",
+                  "timestamp": "2025-08-10T18:25:26.792Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "validation",
+                  "timestamp": "2025-08-10T18:25:41.654Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "slack_1",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      "Node replaced entirely"
+                    ]
+                  },
+                  "attempt": 1,
+                  "reasoning": "Node replaced to fix validation errors",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "slack_1",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      "Node replaced entirely"
+                    ]
+                  },
+                  "attempt": 2,
+                  "reasoning": "Node replaced to fix validation errors",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "slack_1",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      "Node replaced entirely"
+                    ]
+                  },
+                  "attempt": 3,
+                  "reasoning": "Node replaced to fix validation errors",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "slack_1",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      "Node replaced entirely"
+                    ]
+                  },
+                  "attempt": 4,
+                  "reasoning": "Node replaced to fix validation errors",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "manualTrigger_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "attempt": 5,
+                  "reasoning": "Node passed all validation checks",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "slack_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "attempt": 5,
+                  "reasoning": "Node passed all validation checks",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "setWorkflow",
+                  "workflow": {
+                    "name": "Send Hello Slack Message",
+                    "nodes": [
+                      {
+                        "id": "manualTrigger_1",
+                        "name": "Manual Trigger",
+                        "type": "n8n-nodes-base.manualTrigger",
+                        "onError": "stopWorkflow",
+                        "position": [
+                          250,
+                          300
+                        ],
+                        "parameters": {},
+                        "typeVersion": 1
+                      },
+                      {
+                        "id": "slack_1",
+                        "name": "Send Hello Message",
+                        "type": "n8n-nodes-base.slack",
+                        "onError": "continueRegularOutput",
+                        "maxTries": 2,
+                        "position": [
+                          550,
+                          300
+                        ],
+                        "parameters": {
+                          "text": "Hello!",
+                          "select": "channel",
+                          "resource": "message",
+                          "channelId": "#general",
+                          "operation": "post"
+                        },
+                        "typeVersion": 2.3
+                      }
+                    ],
+                    "valid": true,
+                    "settings": {
+                      "executionOrder": "v1",
+                      "saveManualExecutions": true,
+                      "saveDataErrorExecution": "all",
+                      "saveDataSuccessExecution": "all"
+                    },
+                    "connections": {
+                      "Manual Trigger": {
+                        "main": [
+                          [
+                            {
+                              "node": "Send Hello Message",
+                              "type": "main",
+                              "index": 0
+                            }
+                          ]
+                        ]
+                      }
+                    }
+                  },
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "validation",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            },
+            "new": {
+              "phase": "complete",
+              "userPrompt": "send a slack message saying hello",
+              "discovered": [
+                {
+                  "id": "node_1",
+                  "type": "nodes-base.slack",
+                  "config": {
+                    "text": "",
+                    "channel": "",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "resource": "message",
+                    "operation": "post",
+                    "retryOnFail": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Send a message to Slack channel",
+                  "displayName": "send slack message",
+                  "isPreConfigured": true
+                }
+              ],
+              "selected": [
+                "node_1"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "name": "Send Hello Slack Message",
+                "nodes": [
+                  {
+                    "id": "manualTrigger_1",
+                    "name": "Manual Trigger",
+                    "type": "n8n-nodes-base.manualTrigger",
+                    "onError": "stopWorkflow",
+                    "position": [
+                      250,
+                      300
+                    ],
+                    "parameters": {},
+                    "typeVersion": 1
+                  },
+                  {
+                    "id": "slack_1",
+                    "name": "Send Hello Message",
+                    "type": "n8n-nodes-base.slack",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "position": [
+                      550,
+                      300
+                    ],
+                    "parameters": {
+                      "text": "Hello!",
+                      "select": "channel",
+                      "resource": "message",
+                      "channelId": "#general",
+                      "operation": "post"
+                    },
+                    "typeVersion": 2.3
+                  },
+                  {
+                    "id": "sticky_triggers_1754850342361",
+                    "name": "Triggers Notes",
+                    "type": "n8n-nodes-base.stickyNote",
+                    "position": [
+                      210,
+                      160
+                    ],
+                    "parameters": {
+                      "color": 6,
+                      "width": 230,
+                      "height": 300,
+                      "content": "## 📥 Triggers\nManual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                    },
+                    "typeVersion": 1
+                  },
+                  {
+                    "id": "sticky_outputs_1754850342361",
+                    "name": "Outputs Notes",
+                    "type": "n8n-nodes-base.stickyNote",
+                    "position": [
+                      510,
+                      160
+                    ],
+                    "parameters": {
+                      "color": 7,
+                      "width": 230,
+                      "height": 300,
+                      "content": "## 🚀 Outputs\nSends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                    },
+                    "typeVersion": 1
+                  }
+                ],
+                "valid": true,
+                "settings": {
+                  "executionOrder": "v1",
+                  "saveManualExecutions": true,
+                  "saveDataErrorExecution": "all",
+                  "saveDataSuccessExecution": "all"
+                },
+                "connections": {
+                  "Manual Trigger": {
+                    "main": [
+                      [
+                        {
+                          "node": "Send Hello Message",
+                          "type": "main",
+                          "index": 0
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "buildPhases": [
+                {
+                  "type": "trigger",
+                  "nodeIds": [
+                    "manualTrigger_1"
+                  ],
+                  "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                },
+                {
+                  "type": "notification",
+                  "nodeIds": [
+                    "slack_1"
+                  ],
+                  "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                }
+              ],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "node_1",
+                    "type": "nodes-base.slack",
+                    "config": {
+                      "text": "",
+                      "channel": "",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 2,
+                      "resource": "message",
+                      "operation": "post",
+                      "retryOnFail": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Send a message to Slack channel",
+                    "displayName": "send slack message",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "node_1",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-10T18:25:05.748Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-10T18:25:18.297Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Send a hello message to Slack channel",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "parameters": {
+                      "text": "Hello!",
+                      "channel": "",
+                      "resource": "message",
+                      "operation": "post"
+                    },
+                    "retryOnFail": true,
+                    "typeVersion": 3,
+                    "waitBetweenTries": 2000
+                  },
+                  "nodeId": "node_1",
+                  "purpose": "Send a message to Slack channel",
+                  "nodeType": "nodes-base.slack",
+                  "reasoning": "Customized the template by setting the 'text' parameter to 'Hello!' to match the user's goal of sending a hello message",
+                  "timestamp": "2025-08-10T18:25:18.546Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "node_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-10T18:25:18.785Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-10T18:25:18.785Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "building",
+                  "timestamp": "2025-08-10T18:25:26.570Z"
+                },
+                {
+                  "type": "setWorkflow",
+                  "workflow": {
+                    "name": "Send Hello Slack Message",
+                    "nodes": [
+                      {
+                        "id": "manualTrigger_1",
+                        "name": "Manual Trigger",
+                        "type": "n8n-nodes-base.manualTrigger",
+                        "onError": "stopWorkflow",
+                        "position": [
+                          250,
+                          300
+                        ],
+                        "parameters": {},
+                        "typeVersion": 1
+                      },
+                      {
+                        "id": "slack_1",
+                        "name": "Send Hello Message",
+                        "type": "n8n-nodes-base.slack",
+                        "onError": "continueRegularOutput",
+                        "maxTries": 2,
+                        "position": [
+                          550,
+                          300
+                        ],
+                        "parameters": {
+                          "text": "Hello!",
+                          "channel": "",
+                          "resource": "message",
+                          "operation": "post"
+                        },
+                        "typeVersion": 2
+                      }
+                    ],
+                    "settings": {
+                      "executionOrder": "v1",
+                      "saveManualExecutions": true,
+                      "saveDataErrorExecution": "all",
+                      "saveDataSuccessExecution": "all"
+                    },
+                    "connections": {
+                      "Manual Trigger": {
+                        "main": [
+                          [
+                            {
+                              "node": "Send Hello Message",
+                              "type": "main",
+                              "index": 0
+                            }
+                          ]
+                        ]
+                      }
+                    }
+                  },
+                  "timestamp": "2025-08-10T18:25:26.792Z"
+                },
+                {
+                  "type": "setBuildPhases",
+                  "phases": [
+                    {
+                      "type": "trigger",
+                      "nodeIds": [
+                        "manualTrigger_1"
+                      ],
+                      "description": "Manual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                    },
+                    {
+                      "type": "notification",
+                      "nodeIds": [
+                        "slack_1"
+                      ],
+                      "description": "Sends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                    }
+                  ],
+                  "timestamp": "2025-08-10T18:25:26.792Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "building",
+                  "timestamp": "2025-08-10T18:25:26.792Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "validation",
+                  "timestamp": "2025-08-10T18:25:41.654Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "slack_1",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      "Node replaced entirely"
+                    ]
+                  },
+                  "attempt": 1,
+                  "reasoning": "Node replaced to fix validation errors",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "slack_1",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      "Node replaced entirely"
+                    ]
+                  },
+                  "attempt": 2,
+                  "reasoning": "Node replaced to fix validation errors",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "slack_1",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      "Node replaced entirely"
+                    ]
+                  },
+                  "attempt": 3,
+                  "reasoning": "Node replaced to fix validation errors",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "slack_1",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      "Node replaced entirely"
+                    ]
+                  },
+                  "attempt": 4,
+                  "reasoning": "Node replaced to fix validation errors",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "manualTrigger_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "attempt": 5,
+                  "reasoning": "Node passed all validation checks",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "slack_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "attempt": 5,
+                  "reasoning": "Node passed all validation checks",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "setWorkflow",
+                  "workflow": {
+                    "name": "Send Hello Slack Message",
+                    "nodes": [
+                      {
+                        "id": "manualTrigger_1",
+                        "name": "Manual Trigger",
+                        "type": "n8n-nodes-base.manualTrigger",
+                        "onError": "stopWorkflow",
+                        "position": [
+                          250,
+                          300
+                        ],
+                        "parameters": {},
+                        "typeVersion": 1
+                      },
+                      {
+                        "id": "slack_1",
+                        "name": "Send Hello Message",
+                        "type": "n8n-nodes-base.slack",
+                        "onError": "continueRegularOutput",
+                        "maxTries": 2,
+                        "position": [
+                          550,
+                          300
+                        ],
+                        "parameters": {
+                          "text": "Hello!",
+                          "select": "channel",
+                          "resource": "message",
+                          "channelId": "#general",
+                          "operation": "post"
+                        },
+                        "typeVersion": 2.3
+                      }
+                    ],
+                    "valid": true,
+                    "settings": {
+                      "executionOrder": "v1",
+                      "saveManualExecutions": true,
+                      "saveDataErrorExecution": "all",
+                      "saveDataSuccessExecution": "all"
+                    },
+                    "connections": {
+                      "Manual Trigger": {
+                        "main": [
+                          [
+                            {
+                              "node": "Send Hello Message",
+                              "type": "main",
+                              "index": 0
+                            }
+                          ]
+                        ]
+                      }
+                    }
+                  },
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "validation",
+                  "timestamp": "2025-08-10T18:25:41.895Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "documentation",
+                  "timestamp": "2025-08-10T18:25:42.362Z"
+                },
+                {
+                  "type": "setWorkflow",
+                  "workflow": {
+                    "name": "Send Hello Slack Message",
+                    "nodes": [
+                      {
+                        "id": "manualTrigger_1",
+                        "name": "Manual Trigger",
+                        "type": "n8n-nodes-base.manualTrigger",
+                        "onError": "stopWorkflow",
+                        "position": [
+                          250,
+                          300
+                        ],
+                        "parameters": {},
+                        "typeVersion": 1
+                      },
+                      {
+                        "id": "slack_1",
+                        "name": "Send Hello Message",
+                        "type": "n8n-nodes-base.slack",
+                        "onError": "continueRegularOutput",
+                        "maxTries": 2,
+                        "position": [
+                          550,
+                          300
+                        ],
+                        "parameters": {
+                          "text": "Hello!",
+                          "select": "channel",
+                          "resource": "message",
+                          "channelId": "#general",
+                          "operation": "post"
+                        },
+                        "typeVersion": 2.3
+                      },
+                      {
+                        "id": "sticky_triggers_1754850342361",
+                        "name": "Triggers Notes",
+                        "type": "n8n-nodes-base.stickyNote",
+                        "position": [
+                          210,
+                          160
+                        ],
+                        "parameters": {
+                          "color": 6,
+                          "width": 230,
+                          "height": 300,
+                          "content": "## 📥 Triggers\nManual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack."
+                        },
+                        "typeVersion": 1
+                      },
+                      {
+                        "id": "sticky_outputs_1754850342361",
+                        "name": "Outputs Notes",
+                        "type": "n8n-nodes-base.stickyNote",
+                        "position": [
+                          510,
+                          160
+                        ],
+                        "parameters": {
+                          "color": 7,
+                          "width": 230,
+                          "height": 300,
+                          "content": "## 🚀 Outputs\nSends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel."
+                        },
+                        "typeVersion": 1
+                      }
+                    ],
+                    "valid": true,
+                    "settings": {
+                      "executionOrder": "v1",
+                      "saveManualExecutions": true,
+                      "saveDataErrorExecution": "all",
+                      "saveDataSuccessExecution": "all"
+                    },
+                    "connections": {
+                      "Manual Trigger": {
+                        "main": [
+                          [
+                            {
+                              "node": "Send Hello Message",
+                              "type": "main",
+                              "index": 0
+                            }
+                          ]
+                        ]
+                      }
+                    }
+                  },
+                  "timestamp": "2025-08-10T18:25:42.532Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "documentation",
+                  "timestamp": "2025-08-10T18:25:42.533Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            }
+          }
+        },
+        "removed": [],
+        "unchanged": [
+          "sessionId",
+          "createdAt"
+        ]
+      }
+    }
+  },
+  "summary": {
+    "totalNodes": 4,
+    "totalConnections": 1,
+    "validationAttempts": 5,
+    "errorsFixed": 4,
+    "stickyNotesAdded": 2,
+    "performanceScore": 20,
+    "qualityScore": 75,
+    "completenessScore": 100
+  },
+  "optimizationSuggestions": [
+    "Consider optimizing configuration phase (took 12627ms)",
+    "Consider optimizing validation phase (took 15110ms)",
+    "High validation attempts detected. Consider improving initial node configuration."
+  ],
+  "errorPatterns": [
+    {
+      "pattern": "ValidationError",
+      "frequency": 4,
+      "suggestedFix": "Review node configuration requirements and ensure all required fields are set"
+    }
+  ]
+}

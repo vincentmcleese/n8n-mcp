@@ -7,6 +7,7 @@ import {
   ValidationRunnerDeps,
 } from "@/lib/orchestrator/contracts/validation.types";
 import { WorkflowOperation } from "@/types/workflow";
+import { OperationLogger } from "@/lib/orchestrator/utils/OperationLogger";
 
 /**
  * Runner for the validation phase
@@ -20,6 +21,17 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
    */
   async run(input: ValidationInput): Promise<ValidationOutput> {
     const { sessionId, buildingResult } = input;
+    
+    // ====================================================================
+    // Set up token tracking for this phase
+    // ====================================================================
+    const operationLogger = new OperationLogger(sessionId, 'validation');
+    const { logger: _logger, onTokenUsage } = operationLogger.withTokenTracking();
+    
+    // Connect token callback to Claude service
+    if (this.deps.claudeService.setOnUsageCallback) {
+      this.deps.claudeService.setOnUsageCallback(onTokenUsage);
+    }
     
     try {
       // Get draft workflow from building phase
@@ -654,7 +666,8 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
         // These warnings indicate the node will fail deployment to n8n
         const typeVersionWarnings = allWarnings.filter((warning: any) => {
           // Check if this is a typeVersion warning based on the message
-          const message = warning?.message || warning?.text || '';
+          const rawMessage = warning?.message || warning?.text || '';
+          const message = Array.isArray(rawMessage) ? rawMessage[0] : String(rawMessage);
           return message.startsWith('Outdated typeVersion');
         });
         
@@ -703,7 +716,11 @@ export class ValidationRunner implements PhaseRunner<ValidationInput, Validation
       // The errors have a complex structure with node and message fields
       results.workflow = {
         errors: allErrors, // Now includes typeVersion warnings promoted to errors
-        warnings: allWarnings.filter(w => !w?.message?.startsWith('Outdated typeVersion')), // Remove promoted warnings
+        warnings: allWarnings.filter(w => {
+          const rawMessage = w?.message || w?.text || '';
+          const message = Array.isArray(rawMessage) ? rawMessage[0] : String(rawMessage);
+          return !message.startsWith('Outdated typeVersion');
+        }), // Remove promoted warnings
         valid: validationResult.valid && allErrors.length === 0, // Not valid if we have errors
         statistics: validationResult.statistics || validationResult.summary,
       };

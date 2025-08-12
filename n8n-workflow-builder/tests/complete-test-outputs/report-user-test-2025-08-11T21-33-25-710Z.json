@@ -1,0 +1,264 @@
+{
+  "testName": "User Test",
+  "userPrompt": "“When a new podcast episode is uploaded, transcribe it, identify the top 3 most engaging 60-second clips with AI, generate captions, and auto-post them to TikTok and Instagram Reels.",
+  "sessionId": "complete_e2e_user_test_1754947982092",
+  "timestamp": "2025-08-11T21:33:02.092Z",
+  "duration": 23618,
+  "success": false,
+  "phases": {
+    "discovery": {
+      "name": "Discovery",
+      "success": true,
+      "metrics": {
+        "startTime": 1754947982435,
+        "endTime": 1754948005597,
+        "duration": 23162,
+        "memoryUsage": {
+          "heapUsed": -1389144,
+          "heapTotal": 32882688,
+          "external": 6277100
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-11T21:33:02.435Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting discovery phase"
+        },
+        {
+          "timestamp": "2025-08-11T21:33:02.435Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for discovery phase"
+        },
+        {
+          "timestamp": "2025-08-11T21:33:25.597Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-11T21:33:25.597Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [],
+      "sessionState": {
+        "sessionId": "complete_e2e_user_test_1754947982092",
+        "createdAt": "2025-08-11T21:33:02.424Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "“When a new podcast episode is uploaded, transcribe it, identify the top 3 most engaging 60-second clips with AI, generate captions, and auto-post them to TikTok and Instagram Reels.",
+          "discovered": [],
+          "selected": [],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-11T21:33:24.988Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "prompt": "“When a new podcast episode is uploaded, transcribe it, identify the top 3 most engaging 60-second clips with AI, generate captions, and auto-post them to TikTok and Instagram Reels."
+        },
+        "output": {
+          "nodes": []
+        },
+        "transformations": [
+          "Intent Analysis",
+          "Node Discovery",
+          "Selection"
+        ]
+      }
+    },
+    "configuration": {
+      "name": "Configuration",
+      "success": false,
+      "metrics": {
+        "startTime": 1754948005597,
+        "endTime": 1754948005709,
+        "duration": 112,
+        "memoryUsage": {
+          "heapUsed": 428656,
+          "heapTotal": 32882688,
+          "external": 6315530
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-11T21:33:25.597Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting configuration phase"
+        },
+        {
+          "timestamp": "2025-08-11T21:33:25.597Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for configuration phase"
+        },
+        {
+          "timestamp": "2025-08-11T21:33:25.709Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-11T21:33:25.709Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [],
+      "sessionState": {
+        "sessionId": "complete_e2e_user_test_1754947982092",
+        "createdAt": "2025-08-11T21:33:02.424Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "“When a new podcast episode is uploaded, transcribe it, identify the top 3 most engaging 60-second clips with AI, generate captions, and auto-post them to TikTok and Instagram Reels.",
+          "discovered": [],
+          "selected": [],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-11T21:33:24.988Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "discoveredNodes": []
+        },
+        "output": {
+          "configuredNodes": []
+        },
+        "transformations": [
+          "Parameter Configuration",
+          "Validation",
+          "Type Checking"
+        ]
+      },
+      "stateDelta": {
+        "added": {},
+        "modified": {},
+        "removed": [],
+        "unchanged": [
+          "sessionId",
+          "createdAt",
+          "state"
+        ]
+      },
+      "errors": [
+        {
+          "type": "validation",
+          "message": "No nodes discovered for configuration"
+        }
+      ]
+    },
+    "building": {
+      "name": "Building",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "validation": {
+      "name": "Validation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "documentation": {
+      "name": "Documentation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    }
+  },
+  "summary": {
+    "totalNodes": 0,
+    "totalConnections": 0,
+    "validationAttempts": 0,
+    "errorsFixed": 0,
+    "stickyNotesAdded": 0,
+    "performanceScore": 40,
+    "qualityScore": 105,
+    "completenessScore": 20
+  },
+  "optimizationSuggestions": [
+    "Consider optimizing discovery phase (took 23162ms)"
+  ],
+  "errorPatterns": [
+    {
+      "pattern": "validation",
+      "frequency": 1,
+      "suggestedFix": "Review error details and adjust workflow accordingly"
+    }
+  ]
+}

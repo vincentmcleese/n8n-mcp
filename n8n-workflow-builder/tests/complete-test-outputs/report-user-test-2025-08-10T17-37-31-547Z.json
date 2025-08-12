@@ -1,0 +1,1257 @@
+{
+  "testName": "User Test",
+  "userPrompt": "when anthropic update stheir github send me an email with a summary of the update",
+  "sessionId": "complete_e2e_user_test_1754847417698",
+  "timestamp": "2025-08-10T17:36:57.700Z",
+  "duration": 33847,
+  "success": false,
+  "phases": {
+    "discovery": {
+      "name": "Discovery",
+      "success": true,
+      "metrics": {
+        "startTime": 1754847418604,
+        "endTime": 1754847434793,
+        "duration": 16189,
+        "memoryUsage": {
+          "heapUsed": 3562992,
+          "heapTotal": 30801920,
+          "external": 6336336
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-10T17:36:58.604Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting discovery phase"
+        },
+        {
+          "timestamp": "2025-08-10T17:36:58.604Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for discovery phase"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:08.905Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:08.906Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"transform_data\"}"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:08.906Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:08.906Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"chat_with_ai\"}"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:08.907Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:08.907Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"send_email\"}"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:09.117Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:09.155Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:09.205Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:09.205Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: search_nodes"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:09.205Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"query\":\"github\",\"limit\":20}"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:09.331Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool search_nodes completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:14.686Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.openAi (Send a message to an AI model and get response)"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:14.686Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.code (Transform data structure using JavaScript)"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:14.686Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.emailSend (Send an email notification)"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:14.686Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.githubTrigger (Monitor Anthropic's GitHub repository for updates and trigger workflow when changes occur)"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:14.793Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:14.793Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "node_2",
+          "type": "nodes-base.openAi",
+          "purpose": "Send a message to an AI model and get response"
+        },
+        {
+          "id": "node_1",
+          "type": "nodes-base.code",
+          "purpose": "Transform data structure using JavaScript"
+        },
+        {
+          "id": "node_3",
+          "type": "nodes-base.emailSend",
+          "purpose": "Send an email notification"
+        },
+        {
+          "id": "gap_node_placeholder",
+          "type": "nodes-base.githubTrigger",
+          "purpose": "Monitor Anthropic's GitHub repository for updates and trigger workflow when changes occur"
+        }
+      ],
+      "sessionState": {
+        "sessionId": "complete_e2e_user_test_1754847417698",
+        "createdAt": "2025-08-10T17:36:58.588Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "when anthropic update stheir github send me an email with a summary of the update",
+          "discovered": [
+            {
+              "id": "node_2",
+              "type": "nodes-base.openAi",
+              "config": {
+                "modelId": "gpt-3.5-turbo",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "messages": {
+                  "values": [
+                    {
+                      "role": "user",
+                      "content": ""
+                    }
+                  ]
+                },
+                "resource": "chat",
+                "operation": "message",
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 5000
+              },
+              "purpose": "Send a message to an AI model and get response",
+              "displayName": "chat with ai",
+              "isPreConfigured": true
+            },
+            {
+              "id": "node_1",
+              "type": "nodes-base.code",
+              "config": {
+                "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                "language": "javaScript"
+              },
+              "purpose": "Transform data structure using JavaScript",
+              "displayName": "transform data",
+              "isPreConfigured": true
+            },
+            {
+              "id": "node_3",
+              "type": "nodes-base.emailSend",
+              "config": {
+                "text": "",
+                "onError": "continueRegularOutput",
+                "subject": "",
+                "toEmail": "",
+                "maxTries": 3,
+                "fromEmail": "",
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 3000
+              },
+              "purpose": "Send an email notification",
+              "displayName": "send email",
+              "isPreConfigured": true
+            },
+            {
+              "id": "gap_node_placeholder",
+              "type": "nodes-base.githubTrigger",
+              "purpose": "Monitor Anthropic's GitHub repository for updates and trigger workflow when changes occur"
+            }
+          ],
+          "selected": [
+            "node_2",
+            "node_1",
+            "node_3",
+            "gap_node_placeholder"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "node_2",
+                "type": "nodes-base.openAi",
+                "config": {
+                  "modelId": "gpt-3.5-turbo",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 3,
+                  "messages": {
+                    "values": [
+                      {
+                        "role": "user",
+                        "content": ""
+                      }
+                    ]
+                  },
+                  "resource": "chat",
+                  "operation": "message",
+                  "retryOnFail": true,
+                  "alwaysOutputData": true,
+                  "waitBetweenTries": 5000
+                },
+                "purpose": "Send a message to an AI model and get response",
+                "displayName": "chat with ai",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "node_2",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "node": {
+                "id": "node_1",
+                "type": "nodes-base.code",
+                "config": {
+                  "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                  "language": "javaScript"
+                },
+                "purpose": "Transform data structure using JavaScript",
+                "displayName": "transform data",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "node_1",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "node": {
+                "id": "node_3",
+                "type": "nodes-base.emailSend",
+                "config": {
+                  "text": "",
+                  "onError": "continueRegularOutput",
+                  "subject": "",
+                  "toEmail": "",
+                  "maxTries": 3,
+                  "fromEmail": "",
+                  "retryOnFail": true,
+                  "alwaysOutputData": true,
+                  "waitBetweenTries": 3000
+                },
+                "purpose": "Send an email notification",
+                "displayName": "send email",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "node_3",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "node": {
+                "id": "gap_node_placeholder",
+                "type": "nodes-base.githubTrigger",
+                "purpose": "Monitor Anthropic's GitHub repository for updates and trigger workflow when changes occur"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "gap_node_placeholder",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "prompt": "when anthropic update stheir github send me an email with a summary of the update"
+        },
+        "output": {
+          "nodes": [
+            {
+              "id": "node_2",
+              "type": "nodes-base.openAi",
+              "displayName": "chat with ai",
+              "purpose": "Send a message to an AI model and get response",
+              "isPreConfigured": true,
+              "config": {
+                "resource": "chat",
+                "operation": "message",
+                "modelId": "gpt-3.5-turbo",
+                "messages": {
+                  "values": [
+                    {
+                      "role": "user",
+                      "content": ""
+                    }
+                  ]
+                },
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 3,
+                "waitBetweenTries": 5000,
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "node_1",
+              "type": "nodes-base.code",
+              "displayName": "transform data",
+              "purpose": "Transform data structure using JavaScript",
+              "isPreConfigured": true,
+              "config": {
+                "language": "javaScript",
+                "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;"
+              }
+            },
+            {
+              "id": "node_3",
+              "type": "nodes-base.emailSend",
+              "displayName": "send email",
+              "purpose": "Send an email notification",
+              "isPreConfigured": true,
+              "config": {
+                "fromEmail": "",
+                "toEmail": "",
+                "subject": "",
+                "text": "",
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 3,
+                "waitBetweenTries": 3000,
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "gap_node_placeholder",
+              "type": "nodes-base.githubTrigger",
+              "displayName": "nodes-base.githubTrigger",
+              "purpose": "Monitor Anthropic's GitHub repository for updates and trigger workflow when changes occur",
+              "needsConfiguration": true
+            }
+          ]
+        },
+        "transformations": [
+          "Intent Analysis",
+          "Node Discovery",
+          "Selection"
+        ]
+      }
+    },
+    "configuration": {
+      "name": "Configuration",
+      "success": false,
+      "metrics": {
+        "startTime": 1754847434793,
+        "endTime": 1754847451545,
+        "duration": 16752,
+        "memoryUsage": {
+          "heapUsed": 1918904,
+          "heapTotal": 34471936,
+          "external": 6707660
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-10T17:37:14.793Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting configuration phase"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:14.793Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for configuration phase"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:23.105Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:23.105Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.emailSend\",\"config\":{\"text\":\"Hi there!\\n\\nAnthropic has updated their GitHub repository. Here's a summary of the changes:\\n\\n**Repository:** {{$json.repository.full_name}}\\n**Update Type:** {{$json.action}}\\n**Timestamp:** {{$json.updated_at}}\\n\\n**Summary:**\\n{{$json.commits ? $json.commits.map(commit => '• ' + commit.message).join('\\\\n') : 'Repository metadata or settings updated'}}\\n\\n**View Changes:** {{$json.repository.html_url}}\\n\\nBest regards,\\nYour GitHub Monitor\",\"subject\":\"🔔 Anthropic GitHub Update: {{$json.repository.name}}\",\"toEmail\":\"your-email@example.com\",\"fromEmail\":\"github-monitor@yourdomain.com\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:23.354Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:23.356Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_essentials"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:23.356Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.githubTrigger\"}"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:23.556Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_essentials completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:23.911Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:23.911Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.openAi\",\"config\":{\"modelId\":\"gpt-3.5-turbo\",\"messages\":{\"values\":[{\"role\":\"user\",\"content\":\"Please analyze the following GitHub repository update from Anthropic and provide a concise summary of the key changes, new features, bug fixes, and any important information that would be relevant to users:\\n\\n{{$json.body}}\"}]},\"resource\":\"chat\",\"operation\":\"message\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:24.026Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:28.837Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:28.837Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.code\",\"config\":{\"jsCode\":\"// Transform GitHub webhook data for email summary\\nconst results = [];\\n\\nfor (const item of items) {\\n  const payload = item.json;\\n  \\n  // Check if this is an Anthropic repository update\\n  if (payload.repository && payload.repository.owner && \\n      payload.repository.owner.login.toLowerCase() === 'anthropic') {\\n    \\n    let summary = '';\\n    let updateType = '';\\n    \\n    // Handle different GitHub event types\\n    if (payload.commits && payload.commits.length > 0) {\\n      // Push event\\n      updateType = 'Code Push';\\n      const commitMessages = payload.commits.map(commit => \\n        `- ${commit.message.split('\\\\n')[0]}`\\n      ).join('\\\\n');\\n      summary = `New commits pushed to ${payload.repository.name}:\\\\n${commitMessages}`;\\n    } else if (payload.release) {\\n      // Release event\\n      updateType = 'New Release';\\n      summary = `New release ${payload.release.tag_name}: ${payload.release.name}\\\\n${payload.release.body || 'No description provided'}`;\\n    } else if (payload.pull_request) {\\n      // Pull request event\\n      updateType = 'Pull Request';\\n      summary = `Pull request ${payload.action}: ${payload.pull_request.title}\\\\n${payload.pull_request.body || 'No description provided'}`;\\n    } else {\\n      // Generic repository event\\n      updateType = 'Repository Update';\\n      summary = `Repository ${payload.repository.name} was updated`;\\n    }\\n    \\n    results.push({\\n      json: {\\n        repository: payload.repository.name,\\n        repositoryUrl: payload.repository.html_url,\\n        updateType: updateType,\\n        summary: summary,\\n        timestamp: new Date().toISOString(),\\n        sender: payload.sender ? payload.sender.login : 'Unknown',\\n        // Email-ready fields\\n        emailSubject: `Anthropic GitHub Update: ${updateType} in ${payload.repository.name}`,\\n        emailBody: `Hi,\\\\n\\\\nThere's been an update to the Anthropic repository \\\"${payload.repository.name}\\\":\\\\n\\\\n${summary}\\\\n\\\\nRepository: ${payload.repository.html_url}\\\\nTime: ${new Date().toLocaleString()}\\\\nUpdated by: ${payload.sender ? payload.sender.login : 'Unknown'}\\\\n\\\\nBest regards,\\\\nYour GitHub Monitor`\\n      }\\n    });\\n  }\\n}\\n\\nreturn results;\",\"language\":\"javaScript\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:28.994Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:29.910Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:29.910Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.githubTrigger\",\"config\":{\"owner\":{\"mode\":\"name\",\"value\":\"anthropic\"},\"repository\":{\"mode\":\"name\",\"value\":\"anthropic-sdk-python\"},\"events\":[\"push\",\"release\",\"pull_request\"]},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:30.031Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:31.433Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.openAi (Send a message to an AI model and get response)"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:31.433Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.code (Transform data structure using JavaScript)"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:31.433Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.emailSend (Send an email notification)"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:31.433Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.githubTrigger (Monitor Anthropic's GitHub repository for updates and trigger workflow when changes occur)"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:31.545Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-10T17:37:31.545Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "node_2",
+          "type": "nodes-base.openAi",
+          "purpose": "Send a message to an AI model and get response",
+          "configuration": {
+            "onError": "continueRegularOutput",
+            "maxTries": 3,
+            "retryOnFail": true,
+            "alwaysOutputData": true,
+            "waitBetweenTries": 5000,
+            "typeVersion": 1,
+            "notes": "Generate a summary of Anthropic's GitHub repository updates using OpenAI",
+            "parameters": {
+              "modelId": "gpt-3.5-turbo",
+              "messages": {
+                "values": [
+                  {
+                    "role": "user",
+                    "content": "Please analyze the following GitHub repository update from Anthropic and provide a concise summary of the key changes, new features, bug fixes, and any important information that would be relevant to users:\n\n{{$json.body}}"
+                  }
+                ]
+              },
+              "resource": "chat",
+              "operation": "message"
+            }
+          },
+          "validationStatus": "invalid",
+          "validationErrors": []
+        },
+        {
+          "id": "node_1",
+          "type": "nodes-base.code",
+          "purpose": "Transform data structure using JavaScript",
+          "configuration": {
+            "typeVersion": 1,
+            "notes": "Transform GitHub webhook data to extract repository update summary for email notification",
+            "parameters": {
+              "jsCode": "// Transform GitHub webhook data for email summary\nconst results = [];\n\nfor (const item of items) {\n  const payload = item.json;\n  \n  // Check if this is an Anthropic repository update\n  if (payload.repository && payload.repository.owner && \n      payload.repository.owner.login.toLowerCase() === 'anthropic') {\n    \n    let summary = '';\n    let updateType = '';\n    \n    // Handle different GitHub event types\n    if (payload.commits && payload.commits.length > 0) {\n      // Push event\n      updateType = 'Code Push';\n      const commitMessages = payload.commits.map(commit => \n        `- ${commit.message.split('\\n')[0]}`\n      ).join('\\n');\n      summary = `New commits pushed to ${payload.repository.name}:\\n${commitMessages}`;\n    } else if (payload.release) {\n      // Release event\n      updateType = 'New Release';\n      summary = `New release ${payload.release.tag_name}: ${payload.release.name}\\n${payload.release.body || 'No description provided'}`;\n    } else if (payload.pull_request) {\n      // Pull request event\n      updateType = 'Pull Request';\n      summary = `Pull request ${payload.action}: ${payload.pull_request.title}\\n${payload.pull_request.body || 'No description provided'}`;\n    } else {\n      // Generic repository event\n      updateType = 'Repository Update';\n      summary = `Repository ${payload.repository.name} was updated`;\n    }\n    \n    results.push({\n      json: {\n        repository: payload.repository.name,\n        repositoryUrl: payload.repository.html_url,\n        updateType: updateType,\n        summary: summary,\n        timestamp: new Date().toISOString(),\n        sender: payload.sender ? payload.sender.login : 'Unknown',\n        // Email-ready fields\n        emailSubject: `Anthropic GitHub Update: ${updateType} in ${payload.repository.name}`,\n        emailBody: `Hi,\\n\\nThere's been an update to the Anthropic repository \"${payload.repository.name}\":\\n\\n${summary}\\n\\nRepository: ${payload.repository.html_url}\\nTime: ${new Date().toLocaleString()}\\nUpdated by: ${payload.sender ? payload.sender.login : 'Unknown'}\\n\\nBest regards,\\nYour GitHub Monitor`\n      }\n    });\n  }\n}\n\nreturn results;",
+              "language": "javaScript"
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "node_3",
+          "type": "nodes-base.emailSend",
+          "purpose": "Send an email notification",
+          "configuration": {
+            "onError": "continueRegularOutput",
+            "maxTries": 3,
+            "retryOnFail": true,
+            "alwaysOutputData": true,
+            "waitBetweenTries": 3000,
+            "typeVersion": 1,
+            "notes": "Send email notification when Anthropic updates their GitHub repository with a summary of the changes",
+            "parameters": {
+              "text": "Hi there!\n\nAnthropic has updated their GitHub repository. Here's a summary of the changes:\n\n**Repository:** {{$json.repository.full_name}}\n**Update Type:** {{$json.action}}\n**Timestamp:** {{$json.updated_at}}\n\n**Summary:**\n{{$json.commits ? $json.commits.map(commit => '• ' + commit.message).join('\\n') : 'Repository metadata or settings updated'}}\n\n**View Changes:** {{$json.repository.html_url}}\n\nBest regards,\nYour GitHub Monitor",
+              "subject": "🔔 Anthropic GitHub Update: {{$json.repository.name}}",
+              "toEmail": "your-email@example.com",
+              "fromEmail": "github-monitor@yourdomain.com"
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "gap_node_placeholder",
+          "type": "nodes-base.githubTrigger",
+          "purpose": "Monitor Anthropic's GitHub repository for updates and trigger workflow when changes occur",
+          "configuration": {
+            "typeVersion": 1,
+            "notes": "Monitors Anthropic's GitHub repository for updates and triggers workflow when changes occur",
+            "authentication": "accessToken",
+            "parameters": {
+              "owner": {
+                "mode": "name",
+                "value": "anthropic"
+              },
+              "repository": {
+                "mode": "name",
+                "value": "anthropic-sdk-python"
+              },
+              "events": [
+                "push",
+                "release",
+                "pull_request"
+              ]
+            }
+          },
+          "validationStatus": "valid"
+        }
+      ],
+      "sessionState": {
+        "sessionId": "complete_e2e_user_test_1754847417698",
+        "createdAt": "2025-08-10T17:36:58.588Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "when anthropic update stheir github send me an email with a summary of the update",
+          "discovered": [
+            {
+              "id": "node_2",
+              "type": "nodes-base.openAi",
+              "config": {
+                "modelId": "gpt-3.5-turbo",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "messages": {
+                  "values": [
+                    {
+                      "role": "user",
+                      "content": ""
+                    }
+                  ]
+                },
+                "resource": "chat",
+                "operation": "message",
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 5000
+              },
+              "purpose": "Send a message to an AI model and get response",
+              "displayName": "chat with ai",
+              "isPreConfigured": true
+            },
+            {
+              "id": "node_1",
+              "type": "nodes-base.code",
+              "config": {
+                "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                "language": "javaScript"
+              },
+              "purpose": "Transform data structure using JavaScript",
+              "displayName": "transform data",
+              "isPreConfigured": true
+            },
+            {
+              "id": "node_3",
+              "type": "nodes-base.emailSend",
+              "config": {
+                "text": "",
+                "onError": "continueRegularOutput",
+                "subject": "",
+                "toEmail": "",
+                "maxTries": 3,
+                "fromEmail": "",
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 3000
+              },
+              "purpose": "Send an email notification",
+              "displayName": "send email",
+              "isPreConfigured": true
+            },
+            {
+              "id": "gap_node_placeholder",
+              "type": "nodes-base.githubTrigger",
+              "purpose": "Monitor Anthropic's GitHub repository for updates and trigger workflow when changes occur"
+            }
+          ],
+          "selected": [
+            "node_2",
+            "node_1",
+            "node_3",
+            "gap_node_placeholder"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "node_2",
+                "type": "nodes-base.openAi",
+                "config": {
+                  "modelId": "gpt-3.5-turbo",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 3,
+                  "messages": {
+                    "values": [
+                      {
+                        "role": "user",
+                        "content": ""
+                      }
+                    ]
+                  },
+                  "resource": "chat",
+                  "operation": "message",
+                  "retryOnFail": true,
+                  "alwaysOutputData": true,
+                  "waitBetweenTries": 5000
+                },
+                "purpose": "Send a message to an AI model and get response",
+                "displayName": "chat with ai",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "node_2",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "node": {
+                "id": "node_1",
+                "type": "nodes-base.code",
+                "config": {
+                  "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                  "language": "javaScript"
+                },
+                "purpose": "Transform data structure using JavaScript",
+                "displayName": "transform data",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "node_1",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "node": {
+                "id": "node_3",
+                "type": "nodes-base.emailSend",
+                "config": {
+                  "text": "",
+                  "onError": "continueRegularOutput",
+                  "subject": "",
+                  "toEmail": "",
+                  "maxTries": 3,
+                  "fromEmail": "",
+                  "retryOnFail": true,
+                  "alwaysOutputData": true,
+                  "waitBetweenTries": 3000
+                },
+                "purpose": "Send an email notification",
+                "displayName": "send email",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "node_3",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "node": {
+                "id": "gap_node_placeholder",
+                "type": "nodes-base.githubTrigger",
+                "purpose": "Monitor Anthropic's GitHub repository for updates and trigger workflow when changes occur"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "gap_node_placeholder",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-10T17:37:13.914Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "configuration",
+              "timestamp": "2025-08-10T17:37:30.033Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Generate a summary of Anthropic's GitHub repository updates using OpenAI",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "parameters": {
+                  "modelId": "gpt-3.5-turbo",
+                  "messages": {
+                    "values": [
+                      {
+                        "role": "user",
+                        "content": "Please analyze the following GitHub repository update from Anthropic and provide a concise summary of the key changes, new features, bug fixes, and any important information that would be relevant to users:\n\n{{$json.body}}"
+                      }
+                    ]
+                  },
+                  "resource": "chat",
+                  "operation": "message"
+                },
+                "retryOnFail": true,
+                "typeVersion": 1,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 5000
+              },
+              "nodeId": "node_2",
+              "purpose": "Send a message to an AI model and get response",
+              "nodeType": "nodes-base.openAi",
+              "reasoning": "Customized the template to serve as a GitHub update summarizer for Anthropic's repository",
+              "timestamp": "2025-08-10T17:37:30.263Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "node_2",
+              "result": {
+                "valid": false,
+                "errors": []
+              },
+              "timestamp": "2025-08-10T17:37:30.504Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Transform GitHub webhook data to extract repository update summary for email notification",
+                "parameters": {
+                  "jsCode": "// Transform GitHub webhook data for email summary\nconst results = [];\n\nfor (const item of items) {\n  const payload = item.json;\n  \n  // Check if this is an Anthropic repository update\n  if (payload.repository && payload.repository.owner && \n      payload.repository.owner.login.toLowerCase() === 'anthropic') {\n    \n    let summary = '';\n    let updateType = '';\n    \n    // Handle different GitHub event types\n    if (payload.commits && payload.commits.length > 0) {\n      // Push event\n      updateType = 'Code Push';\n      const commitMessages = payload.commits.map(commit => \n        `- ${commit.message.split('\\n')[0]}`\n      ).join('\\n');\n      summary = `New commits pushed to ${payload.repository.name}:\\n${commitMessages}`;\n    } else if (payload.release) {\n      // Release event\n      updateType = 'New Release';\n      summary = `New release ${payload.release.tag_name}: ${payload.release.name}\\n${payload.release.body || 'No description provided'}`;\n    } else if (payload.pull_request) {\n      // Pull request event\n      updateType = 'Pull Request';\n      summary = `Pull request ${payload.action}: ${payload.pull_request.title}\\n${payload.pull_request.body || 'No description provided'}`;\n    } else {\n      // Generic repository event\n      updateType = 'Repository Update';\n      summary = `Repository ${payload.repository.name} was updated`;\n    }\n    \n    results.push({\n      json: {\n        repository: payload.repository.name,\n        repositoryUrl: payload.repository.html_url,\n        updateType: updateType,\n        summary: summary,\n        timestamp: new Date().toISOString(),\n        sender: payload.sender ? payload.sender.login : 'Unknown',\n        // Email-ready fields\n        emailSubject: `Anthropic GitHub Update: ${updateType} in ${payload.repository.name}`,\n        emailBody: `Hi,\\n\\nThere's been an update to the Anthropic repository \"${payload.repository.name}\":\\n\\n${summary}\\n\\nRepository: ${payload.repository.html_url}\\nTime: ${new Date().toLocaleString()}\\nUpdated by: ${payload.sender ? payload.sender.login : 'Unknown'}\\n\\nBest regards,\\nYour GitHub Monitor`\n      }\n    });\n  }\n}\n\nreturn results;",
+                  "language": "javaScript"
+                },
+                "typeVersion": 1
+              },
+              "nodeId": "node_1",
+              "purpose": "Transform data structure using JavaScript",
+              "nodeType": "nodes-base.code",
+              "reasoning": "Customized the template to specifically handle GitHub webhook data from Anthropic repositories",
+              "timestamp": "2025-08-10T17:37:30.504Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "node_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-10T17:37:30.804Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Send email notification when Anthropic updates their GitHub repository with a summary of the changes",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "parameters": {
+                  "text": "Hi there!\n\nAnthropic has updated their GitHub repository. Here's a summary of the changes:\n\n**Repository:** {{$json.repository.full_name}}\n**Update Type:** {{$json.action}}\n**Timestamp:** {{$json.updated_at}}\n\n**Summary:**\n{{$json.commits ? $json.commits.map(commit => '• ' + commit.message).join('\\n') : 'Repository metadata or settings updated'}}\n\n**View Changes:** {{$json.repository.html_url}}\n\nBest regards,\nYour GitHub Monitor",
+                  "subject": "🔔 Anthropic GitHub Update: {{$json.repository.name}}",
+                  "toEmail": "your-email@example.com",
+                  "fromEmail": "github-monitor@yourdomain.com"
+                },
+                "retryOnFail": true,
+                "typeVersion": 1,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 3000
+              },
+              "nodeId": "node_3",
+              "purpose": "Send an email notification",
+              "nodeType": "nodes-base.emailSend",
+              "reasoning": "Customized the email template to specifically handle GitHub repository updates from Anthropic",
+              "timestamp": "2025-08-10T17:37:30.804Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "node_3",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-10T17:37:31.003Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Monitors Anthropic's GitHub repository for updates and triggers workflow when changes occur",
+                "parameters": {
+                  "owner": {
+                    "mode": "name",
+                    "value": "anthropic"
+                  },
+                  "events": [
+                    "push",
+                    "release",
+                    "pull_request"
+                  ],
+                  "repository": {
+                    "mode": "name",
+                    "value": "anthropic-sdk-python"
+                  }
+                },
+                "typeVersion": 1,
+                "authentication": "accessToken"
+              },
+              "nodeId": "gap_node_placeholder",
+              "purpose": "Monitor Anthropic's GitHub repository for updates and trigger workflow when changes occur",
+              "nodeType": "nodes-base.githubTrigger",
+              "reasoning": "Configured GitHub trigger to monitor Anthropic's main Python SDK repository for common update events",
+              "timestamp": "2025-08-10T17:37:31.003Z",
+              "operationIndex": 0
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "gap_node_placeholder",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-10T17:37:31.273Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "discoveredNodes": [
+            {
+              "id": "node_2",
+              "type": "nodes-base.openAi",
+              "displayName": "chat with ai",
+              "purpose": "Send a message to an AI model and get response",
+              "isPreConfigured": true,
+              "config": {
+                "resource": "chat",
+                "operation": "message",
+                "modelId": "gpt-3.5-turbo",
+                "messages": {
+                  "values": [
+                    {
+                      "role": "user",
+                      "content": ""
+                    }
+                  ]
+                },
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 3,
+                "waitBetweenTries": 5000,
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "node_1",
+              "type": "nodes-base.code",
+              "displayName": "transform data",
+              "purpose": "Transform data structure using JavaScript",
+              "isPreConfigured": true,
+              "config": {
+                "language": "javaScript",
+                "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;"
+              }
+            },
+            {
+              "id": "node_3",
+              "type": "nodes-base.emailSend",
+              "displayName": "send email",
+              "purpose": "Send an email notification",
+              "isPreConfigured": true,
+              "config": {
+                "fromEmail": "",
+                "toEmail": "",
+                "subject": "",
+                "text": "",
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 3,
+                "waitBetweenTries": 3000,
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "gap_node_placeholder",
+              "type": "nodes-base.githubTrigger",
+              "displayName": "nodes-base.githubTrigger",
+              "purpose": "Monitor Anthropic's GitHub repository for updates and trigger workflow when changes occur",
+              "needsConfiguration": true
+            }
+          ]
+        },
+        "output": {
+          "configuredNodes": [
+            {
+              "id": "node_2",
+              "type": "nodes-base.openAi",
+              "purpose": "Send a message to an AI model and get response",
+              "config": {
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 5000,
+                "typeVersion": 1,
+                "notes": "Generate a summary of Anthropic's GitHub repository updates using OpenAI",
+                "parameters": {
+                  "modelId": "gpt-3.5-turbo",
+                  "messages": {
+                    "values": [
+                      {
+                        "role": "user",
+                        "content": "Please analyze the following GitHub repository update from Anthropic and provide a concise summary of the key changes, new features, bug fixes, and any important information that would be relevant to users:\n\n{{$json.body}}"
+                      }
+                    ]
+                  },
+                  "resource": "chat",
+                  "operation": "message"
+                }
+              },
+              "validated": false,
+              "validationErrors": []
+            },
+            {
+              "id": "node_1",
+              "type": "nodes-base.code",
+              "purpose": "Transform data structure using JavaScript",
+              "config": {
+                "typeVersion": 1,
+                "notes": "Transform GitHub webhook data to extract repository update summary for email notification",
+                "parameters": {
+                  "jsCode": "// Transform GitHub webhook data for email summary\nconst results = [];\n\nfor (const item of items) {\n  const payload = item.json;\n  \n  // Check if this is an Anthropic repository update\n  if (payload.repository && payload.repository.owner && \n      payload.repository.owner.login.toLowerCase() === 'anthropic') {\n    \n    let summary = '';\n    let updateType = '';\n    \n    // Handle different GitHub event types\n    if (payload.commits && payload.commits.length > 0) {\n      // Push event\n      updateType = 'Code Push';\n      const commitMessages = payload.commits.map(commit => \n        `- ${commit.message.split('\\n')[0]}`\n      ).join('\\n');\n      summary = `New commits pushed to ${payload.repository.name}:\\n${commitMessages}`;\n    } else if (payload.release) {\n      // Release event\n      updateType = 'New Release';\n      summary = `New release ${payload.release.tag_name}: ${payload.release.name}\\n${payload.release.body || 'No description provided'}`;\n    } else if (payload.pull_request) {\n      // Pull request event\n      updateType = 'Pull Request';\n      summary = `Pull request ${payload.action}: ${payload.pull_request.title}\\n${payload.pull_request.body || 'No description provided'}`;\n    } else {\n      // Generic repository event\n      updateType = 'Repository Update';\n      summary = `Repository ${payload.repository.name} was updated`;\n    }\n    \n    results.push({\n      json: {\n        repository: payload.repository.name,\n        repositoryUrl: payload.repository.html_url,\n        updateType: updateType,\n        summary: summary,\n        timestamp: new Date().toISOString(),\n        sender: payload.sender ? payload.sender.login : 'Unknown',\n        // Email-ready fields\n        emailSubject: `Anthropic GitHub Update: ${updateType} in ${payload.repository.name}`,\n        emailBody: `Hi,\\n\\nThere's been an update to the Anthropic repository \"${payload.repository.name}\":\\n\\n${summary}\\n\\nRepository: ${payload.repository.html_url}\\nTime: ${new Date().toLocaleString()}\\nUpdated by: ${payload.sender ? payload.sender.login : 'Unknown'}\\n\\nBest regards,\\nYour GitHub Monitor`\n      }\n    });\n  }\n}\n\nreturn results;",
+                  "language": "javaScript"
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "node_3",
+              "type": "nodes-base.emailSend",
+              "purpose": "Send an email notification",
+              "config": {
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 3000,
+                "typeVersion": 1,
+                "notes": "Send email notification when Anthropic updates their GitHub repository with a summary of the changes",
+                "parameters": {
+                  "text": "Hi there!\n\nAnthropic has updated their GitHub repository. Here's a summary of the changes:\n\n**Repository:** {{$json.repository.full_name}}\n**Update Type:** {{$json.action}}\n**Timestamp:** {{$json.updated_at}}\n\n**Summary:**\n{{$json.commits ? $json.commits.map(commit => '• ' + commit.message).join('\\n') : 'Repository metadata or settings updated'}}\n\n**View Changes:** {{$json.repository.html_url}}\n\nBest regards,\nYour GitHub Monitor",
+                  "subject": "🔔 Anthropic GitHub Update: {{$json.repository.name}}",
+                  "toEmail": "your-email@example.com",
+                  "fromEmail": "github-monitor@yourdomain.com"
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "gap_node_placeholder",
+              "type": "nodes-base.githubTrigger",
+              "purpose": "Monitor Anthropic's GitHub repository for updates and trigger workflow when changes occur",
+              "config": {
+                "typeVersion": 1,
+                "notes": "Monitors Anthropic's GitHub repository for updates and triggers workflow when changes occur",
+                "authentication": "accessToken",
+                "parameters": {
+                  "owner": {
+                    "mode": "name",
+                    "value": "anthropic"
+                  },
+                  "repository": {
+                    "mode": "name",
+                    "value": "anthropic-sdk-python"
+                  },
+                  "events": [
+                    "push",
+                    "release",
+                    "pull_request"
+                  ]
+                }
+              },
+              "validated": true
+            }
+          ]
+        },
+        "transformations": [
+          "Parameter Configuration",
+          "Validation",
+          "Type Checking"
+        ]
+      },
+      "errors": [
+        {
+          "type": "validation",
+          "message": "1 nodes failed validation"
+        }
+      ]
+    },
+    "building": {
+      "name": "Building",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "validation": {
+      "name": "Validation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "documentation": {
+      "name": "Documentation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    }
+  },
+  "summary": {
+    "totalNodes": 0,
+    "totalConnections": 0,
+    "validationAttempts": 0,
+    "errorsFixed": 0,
+    "stickyNotesAdded": 0,
+    "performanceScore": 20,
+    "qualityScore": 105,
+    "completenessScore": 20
+  },
+  "optimizationSuggestions": [
+    "Consider optimizing discovery phase (took 16189ms)",
+    "Consider optimizing configuration phase (took 16752ms)"
+  ],
+  "errorPatterns": [
+    {
+      "pattern": "validation",
+      "frequency": 1,
+      "suggestedFix": "Review error details and adjust workflow accordingly"
+    }
+  ]
+}

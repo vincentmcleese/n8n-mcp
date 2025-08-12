@@ -13,7 +13,7 @@ Create magazine-quality n8n workflows with professional spacing and organized st
 
 ## **Phase Organization System**
 
-### **4 Standard Phases with Enhanced Categorization**
+### **9 Workflow Phases with Enhanced Categorization**
 
 ```javascript
 const PHASE_DEFINITIONS = {
@@ -21,30 +21,55 @@ const PHASE_DEFINITIONS = {
     icon: "📥",
     name: "Triggers",
     description: "Workflow entry points",
-    categories: ["trigger"],
     color: 6  // Yellow
   },
   inputs: {
     icon: "📊", 
     name: "Inputs",
     description: "Data collection",
-    categories: ["input"],
     color: 5  // Blue
   },
   transforms: {
     icon: "⚙️",
     name: "Transform",
     description: "Processing & routing",
-    categories: ["transform"],
-    specialTypes: ["code", "if", "switch", "merge", "loop", "filter", "set"],
     color: 4  // Green
+  },
+  decision: {
+    icon: "🔀",
+    name: "Decision",
+    description: "Routing & conditional logic",
+    color: 3  // Purple/Violet
+  },
+  aggregation: {
+    icon: "🔄",
+    name: "Aggregation",
+    description: "Combining data streams",
+    color: 2  // Cyan
+  },
+  storage: {
+    icon: "💾",
+    name: "Storage",
+    description: "Save & persist data",
+    color: 8  // Pink
+  },
+  integration: {
+    icon: "🔗",
+    name: "Integration",
+    description: "External system updates",
+    color: 6  // Yellow
   },
   outputs: {
     icon: "🚀",
     name: "Outputs", 
     description: "Actions & destinations",
-    categories: ["output"],
     color: 7  // Orange
+  },
+  finalization: {
+    icon: "✅",
+    name: "Finalization",
+    description: "Post-output processing",
+    color: 1  // Gray
   }
 };
 ```
@@ -84,24 +109,20 @@ function categorizeNode(node) {
 ```javascript
 const LAYOUT_CONFIG = {
   spacing: {
-    horizontal: 220,      // Between nodes horizontally
-    vertical: 180,        // Between rows vertically
-    stickyPadding: 40,    // Space around sticky edges
-    phaseGap: 100,        // Gap between phase sections
-    gridSnap: 20          // Grid alignment
+    horizontal: 220,        // Between nodes horizontally
+    vertical: 180,          // Between rows vertically
+    stickyPadding: 80,      // Space around sticky edges - increased for better padding
+    stickyTopSpacing: 250,  // Space above workflow nodes for sticky note title & description
+    phaseGap: 100,          // Gap between phase sections
+    gridSnap: 20,           // Grid alignment
+    promoStickyOffset: 150  // Extra offset for promotional sticky to the left
   },
   
   dimensions: {
-    minStickyHeight: 200, // Minimum sticky note height
-    nodeWidth: 150,       // Standard node width
-    nodeHeight: 100       // Standard node height
-  },
-  
-  colors: {
-    triggers: 6,          // Yellow
-    inputs: 5,            // Blue
-    transforms: 4,        // Green
-    outputs: 7            // Orange
+    minStickyHeight: 200,   // Minimum sticky note height
+    nodeWidth: 150,         // Standard node width
+    nodeHeight: 100,        // Standard node height
+    promoStickyWidth: 280   // Fixed width for promotional sticky
   }
 };
 ```
@@ -109,26 +130,49 @@ const LAYOUT_CONFIG = {
 ### **Unified-Dynamic Height Strategy**
 
 ```javascript
-function calculateUnifiedHeight(phaseGroups) {
+function calculateUnifiedHeight(phaseGroups, nodes) {
   const phaseHeights = [];
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
   
   for (const [phase, nodeIds] of Object.entries(phaseGroups)) {
     if (nodeIds.length === 0) continue;
     
-    // Calculate vertical span for this phase
-    const nodePositions = nodeIds.map(id => getNodePosition(id));
-    const yPositions = nodePositions.map(pos => pos[1]);
+    // Get actual node positions
+    const nodePositions = nodeIds
+      .map(id => nodeMap.get(id)?.position)
+      .filter(pos => pos !== undefined);
     
-    if (yPositions.length > 0) {
+    if (nodePositions.length > 0) {
+      const yPositions = nodePositions.map(pos => pos[1]);
       const minY = Math.min(...yPositions);
       const maxY = Math.max(...yPositions);
+      
+      // Calculate the full span including the node height
       const span = maxY - minY + LAYOUT_CONFIG.dimensions.nodeHeight;
-      phaseHeights.push(span + (LAYOUT_CONFIG.spacing.stickyPadding * 2));
+      
+      // Height should cover from the top position (with space for description) to below the nodes
+      const totalHeight = LAYOUT_CONFIG.spacing.stickyTopSpacing + 
+                         LAYOUT_CONFIG.spacing.stickyPadding + 
+                         span + 
+                         LAYOUT_CONFIG.spacing.stickyPadding;
+      
+      phaseHeights.push(totalHeight);
     }
   }
   
-  // Use maximum height across all phases
-  return Math.max(...phaseHeights, LAYOUT_CONFIG.dimensions.minStickyHeight);
+  // Use maximum height across all phases, ensuring minimum height includes space for descriptions
+  return Math.max(...phaseHeights, 
+                  LAYOUT_CONFIG.dimensions.minStickyHeight + LAYOUT_CONFIG.spacing.stickyTopSpacing);
+}
+
+// Calculate unified top position for ALL sticky notes
+function calculateStickyTopY(nodes, unifiedHeight) {
+  const allYPositions = nodes.map(n => n.position[1]);
+  const globalMinY = allYPositions.length > 0 ? Math.min(...allYPositions) : 300;
+  
+  // Ensure sticky notes end well above the topmost node
+  // The bottom of the sticky should be at least stickyPadding above the topmost node
+  return globalMinY - unifiedHeight - LAYOUT_CONFIG.spacing.stickyPadding;
 }
 ```
 
@@ -335,40 +379,88 @@ function applyPhaseLayout(nodes, metadata) {
 
 ```javascript
 // In documentation.runner.ts
-function createPhaseStickyNotes(metadata) {
-  const { phaseGroups, visualRequirements } = metadata;
+function createPhaseStickyNotes(phaseGroups, nodes, unifiedHeight, phaseDescriptions) {
   const stickyNotes = [];
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
   
-  let currentX = 100;  // Starting X position
+  // Calculate unified top position for all sticky notes
+  const stickyTopY = calculateStickyTopY(nodes, unifiedHeight);
   
-  for (const [phase, nodeIds] of Object.entries(phaseGroups)) {
-    if (nodeIds.length === 0) continue;
+  // Process each phase
+  const phaseOrder = ["triggers", "inputs", "transforms", "decision", 
+                     "aggregation", "storage", "integration", "outputs", "finalization"];
+  
+  for (const phase of phaseOrder) {
+    const nodeIds = phaseGroups[phase];
+    if (!nodeIds || nodeIds.length === 0) continue;
     
     const phaseConfig = PHASE_DEFINITIONS[phase];
-    const nodes = nodeIds.map(id => getNodeById(id));
     
-    // Calculate phase boundaries
-    const xPositions = nodes.map(n => n.position[0]);
-    const minX = Math.min(...xPositions) - LAYOUT_CONFIG.spacing.stickyPadding;
-    const maxX = Math.max(...xPositions) + LAYOUT_CONFIG.dimensions.nodeWidth + LAYOUT_CONFIG.spacing.stickyPadding;
+    // Get actual nodes in this phase
+    const phaseNodes = nodeIds
+      .map(id => nodeMap.get(id))
+      .filter(n => n !== undefined);
     
-    // Create sticky note for this phase
+    if (phaseNodes.length === 0) continue;
+    
+    // Calculate phase boundaries based on actual node positions
+    const xPositions = phaseNodes.map(n => n.position[0]);
+    const nodeMinX = Math.min(...xPositions);
+    const nodeMaxX = Math.max(...xPositions);
+    
+    // Position sticky to align with nodes in this phase
+    const stickyX = nodeMinX - LAYOUT_CONFIG.spacing.stickyPadding;
+    
+    // Calculate sticky width to cover all nodes in this phase
+    const stickyWidth = Math.max(
+      310,  // Minimum width for readability
+      (nodeMaxX - nodeMinX) + LAYOUT_CONFIG.dimensions.nodeWidth + 
+      (LAYOUT_CONFIG.spacing.stickyPadding * 2)
+    );
+    
+    // Use custom description if available, otherwise use default
+    const description = phaseDescriptions?.get(phase) || phaseConfig.description;
+    
+    // Create sticky note aligned with this phase's nodes
     stickyNotes.push({
       id: `sticky_${phase}_${Date.now()}`,
+      name: `${phaseConfig.name} Notes`,
       type: "n8n-nodes-base.stickyNote",
-      position: [minX, 60],  // Above nodes
+      typeVersion: 1,
+      position: [stickyX, stickyTopY],  // Aligned with phase nodes
       parameters: {
-        content: `## ${phaseConfig.icon} ${phaseConfig.name}\n${phaseConfig.description}`,
-        height: visualRequirements.unifiedHeight,
-        width: maxX - minX,
+        content: `## ${phaseConfig.icon} ${phaseConfig.name}\n${description}`,
+        height: unifiedHeight,
+        width: stickyWidth,
         color: phaseConfig.color
-      },
-      _nodeGroupIds: nodeIds  // For reference
+      }
     });
-    
-    currentX = maxX + LAYOUT_CONFIG.spacing.phaseGap;
   }
   
+  // Add promotional sticky note to the LEFT of all workflow content
+  // Calculate leftmost workflow position
+  const allNodeXPositions = nodes.map(n => n.position[0]);
+  const workflowMinX = Math.min(...allNodeXPositions);
+  
+  // Position promo sticky well to the left with extra spacing
+  const promoX = workflowMinX - LAYOUT_CONFIG.spacing.promoStickyOffset - 
+                 LAYOUT_CONFIG.dimensions.promoStickyWidth;
+  
+  const promoStickyNote = {
+    id: `sticky_promo_${Date.now()}`,
+    name: "Ghost Team Promo",
+    type: "n8n-nodes-base.stickyNote",
+    typeVersion: 1,
+    position: [Math.max(100, promoX), stickyTopY],  // Same Y as other stickies, but to the left
+    parameters: {
+      content: `## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.`,
+      height: unifiedHeight,
+      width: LAYOUT_CONFIG.dimensions.promoStickyWidth,
+      color: 4  // Green
+    }
+  };
+  
+  stickyNotes.push(promoStickyNote);
   return stickyNotes;
 }
 ```

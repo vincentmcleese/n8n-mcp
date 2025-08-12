@@ -1,0 +1,1099 @@
+{
+  "testName": "Custom Test",
+  "userPrompt": "Create a simple webhook that sends data to Slack",
+  "sessionId": "complete_e2e_custom_test_1754848626030",
+  "timestamp": "2025-08-10T17:57:06.030Z",
+  "duration": 16163,
+  "success": false,
+  "phases": {
+    "discovery": {
+      "name": "Discovery",
+      "success": true,
+      "metrics": {
+        "startTime": 1754848626542,
+        "endTime": 1754848634440,
+        "duration": 7898,
+        "memoryUsage": {
+          "heapUsed": 5842328,
+          "heapTotal": 60948480,
+          "external": 6657427
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-10T17:57:06.542Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting discovery phase"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:06.542Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for discovery phase"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:13.493Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:13.493Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"receive_webhook\"}"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:13.495Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:13.495Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"send_slack_message\"}"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:13.721Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:13.724Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:14.354Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.slack (Send a message to Slack channel)"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:14.358Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.webhook (Set up a webhook to receive data from external services)"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:14.440Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:14.440Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "node_2",
+          "type": "nodes-base.slack",
+          "purpose": "Send a message to Slack channel"
+        },
+        {
+          "id": "node_1",
+          "type": "nodes-base.webhook",
+          "purpose": "Set up a webhook to receive data from external services"
+        }
+      ],
+      "sessionState": {
+        "sessionId": "complete_e2e_custom_test_1754848626030",
+        "createdAt": "2025-08-10T17:57:06.514Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "Create a simple webhook that sends data to Slack",
+          "discovered": [
+            {
+              "id": "node_2",
+              "type": "nodes-base.slack",
+              "config": {
+                "text": "",
+                "channel": "",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "resource": "message",
+                "operation": "post",
+                "retryOnFail": true,
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Send a message to Slack channel",
+              "displayName": "send slack message",
+              "isPreConfigured": true
+            },
+            {
+              "id": "node_1",
+              "type": "nodes-base.webhook",
+              "config": {
+                "path": "webhook",
+                "onError": "continueRegularOutput",
+                "httpMethod": "POST",
+                "responseData": "allEntries",
+                "responseMode": "lastNode",
+                "alwaysOutputData": true
+              },
+              "purpose": "Set up a webhook to receive data from external services",
+              "displayName": "receive webhook",
+              "isPreConfigured": true
+            }
+          ],
+          "selected": [
+            "node_2",
+            "node_1"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "node_2",
+                "type": "nodes-base.slack",
+                "config": {
+                  "text": "",
+                  "channel": "",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 2,
+                  "resource": "message",
+                  "operation": "post",
+                  "retryOnFail": true,
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Send a message to Slack channel",
+                "displayName": "send slack message",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T17:57:13.726Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "node_2",
+              "timestamp": "2025-08-10T17:57:13.726Z"
+            },
+            {
+              "node": {
+                "id": "node_1",
+                "type": "nodes-base.webhook",
+                "config": {
+                  "path": "webhook",
+                  "onError": "continueRegularOutput",
+                  "httpMethod": "POST",
+                  "responseData": "allEntries",
+                  "responseMode": "lastNode",
+                  "alwaysOutputData": true
+                },
+                "purpose": "Set up a webhook to receive data from external services",
+                "displayName": "receive webhook",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T17:57:13.726Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "node_1",
+              "timestamp": "2025-08-10T17:57:13.726Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-10T17:57:13.726Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "prompt": "Create a simple webhook that sends data to Slack"
+        },
+        "output": {
+          "nodes": [
+            {
+              "id": "node_2",
+              "type": "nodes-base.slack",
+              "displayName": "send slack message",
+              "purpose": "Send a message to Slack channel",
+              "isPreConfigured": true,
+              "config": {
+                "resource": "message",
+                "operation": "post",
+                "channel": "",
+                "text": "",
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 2,
+                "waitBetweenTries": 2000
+              }
+            },
+            {
+              "id": "node_1",
+              "type": "nodes-base.webhook",
+              "displayName": "receive webhook",
+              "purpose": "Set up a webhook to receive data from external services",
+              "isPreConfigured": true,
+              "config": {
+                "httpMethod": "POST",
+                "path": "webhook",
+                "responseMode": "lastNode",
+                "responseData": "allEntries",
+                "onError": "continueRegularOutput",
+                "alwaysOutputData": true
+              }
+            }
+          ]
+        },
+        "transformations": [
+          "Intent Analysis",
+          "Node Discovery",
+          "Selection"
+        ]
+      }
+    },
+    "configuration": {
+      "name": "Configuration",
+      "success": false,
+      "metrics": {
+        "startTime": 1754848634440,
+        "endTime": 1754848642193,
+        "duration": 7753,
+        "memoryUsage": {
+          "heapUsed": -8550000,
+          "heapTotal": 53149696,
+          "external": 6412012
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-10T17:57:14.440Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting configuration phase"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:14.440Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for configuration phase"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:19.652Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:19.652Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.webhook\",\"config\":{\"path\":\"slack-webhook\",\"httpMethod\":\"POST\",\"responseData\":\"allEntries\",\"responseMode\":\"lastNode\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:19.914Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:20.579Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:20.579Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.slack\",\"config\":{\"text\":\"New webhook data received: {{$json}}\",\"channel\":\"#general\",\"resource\":\"message\",\"operation\":\"post\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:20.728Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:20.728Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:20.728Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.slack\",\"config\":{\"text\":\"New webhook data received: {{$json}}\",\"channel\":\"#general\",\"resource\":\"message\",\"operation\":\"post\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:20.910Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:20.910Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:20.910Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.slack\",\"config\":{\"text\":\"New webhook data received: {{$json}}\",\"channel\":\"#general\",\"resource\":\"message\",\"operation\":\"post\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:21.032Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:21.032Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:21.032Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.slack\",\"config\":{\"text\":\"New webhook data received: {{$json}}\",\"channel\":\"#general\",\"resource\":\"message\",\"operation\":\"post\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:21.164Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:22.038Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.slack (Send a message to Slack channel)"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:22.038Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.webhook (Set up a webhook to receive data from external services)"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:22.192Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-10T17:57:22.193Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "node_2",
+          "type": "nodes-base.slack",
+          "purpose": "Send a message to Slack channel",
+          "configuration": {
+            "onError": "continueRegularOutput",
+            "maxTries": 2,
+            "retryOnFail": true,
+            "waitBetweenTries": 2000,
+            "typeVersion": 3,
+            "notes": "Send webhook data to Slack channel - customized for webhook integration",
+            "parameters": {
+              "text": "New webhook data received: {{$json}}",
+              "channel": "#general",
+              "resource": "message",
+              "operation": "post"
+            }
+          },
+          "validationStatus": "invalid",
+          "validationErrors": []
+        },
+        {
+          "id": "node_1",
+          "type": "nodes-base.webhook",
+          "purpose": "Set up a webhook to receive data from external services",
+          "configuration": {
+            "onError": "continueRegularOutput",
+            "alwaysOutputData": true,
+            "typeVersion": 1,
+            "notes": "Webhook endpoint to receive data from external services and forward to Slack",
+            "parameters": {
+              "path": "slack-webhook",
+              "httpMethod": "POST",
+              "responseData": "allEntries",
+              "responseMode": "lastNode"
+            }
+          },
+          "validationStatus": "valid"
+        }
+      ],
+      "sessionState": {
+        "sessionId": "complete_e2e_custom_test_1754848626030",
+        "createdAt": "2025-08-10T17:57:06.514Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "Create a simple webhook that sends data to Slack",
+          "discovered": [
+            {
+              "id": "node_2",
+              "type": "nodes-base.slack",
+              "config": {
+                "text": "",
+                "channel": "",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "resource": "message",
+                "operation": "post",
+                "retryOnFail": true,
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Send a message to Slack channel",
+              "displayName": "send slack message",
+              "isPreConfigured": true
+            },
+            {
+              "id": "node_1",
+              "type": "nodes-base.webhook",
+              "config": {
+                "path": "webhook",
+                "onError": "continueRegularOutput",
+                "httpMethod": "POST",
+                "responseData": "allEntries",
+                "responseMode": "lastNode",
+                "alwaysOutputData": true
+              },
+              "purpose": "Set up a webhook to receive data from external services",
+              "displayName": "receive webhook",
+              "isPreConfigured": true
+            }
+          ],
+          "selected": [
+            "node_2",
+            "node_1"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "node_2",
+                "type": "nodes-base.slack",
+                "config": {
+                  "text": "",
+                  "channel": "",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 2,
+                  "resource": "message",
+                  "operation": "post",
+                  "retryOnFail": true,
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Send a message to Slack channel",
+                "displayName": "send slack message",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T17:57:13.726Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "node_2",
+              "timestamp": "2025-08-10T17:57:13.726Z"
+            },
+            {
+              "node": {
+                "id": "node_1",
+                "type": "nodes-base.webhook",
+                "config": {
+                  "path": "webhook",
+                  "onError": "continueRegularOutput",
+                  "httpMethod": "POST",
+                  "responseData": "allEntries",
+                  "responseMode": "lastNode",
+                  "alwaysOutputData": true
+                },
+                "purpose": "Set up a webhook to receive data from external services",
+                "displayName": "receive webhook",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-10T17:57:13.726Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "node_1",
+              "timestamp": "2025-08-10T17:57:13.726Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-10T17:57:13.726Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "configuration",
+              "timestamp": "2025-08-10T17:57:21.166Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Send webhook data to Slack channel - customized for webhook integration",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "parameters": {
+                  "text": "New webhook data received: {{$json}}",
+                  "channel": "#general",
+                  "resource": "message",
+                  "operation": "post"
+                },
+                "retryOnFail": true,
+                "typeVersion": 3,
+                "waitBetweenTries": 2000
+              },
+              "nodeId": "node_2",
+              "purpose": "Send a message to Slack channel",
+              "nodeType": "nodes-base.slack",
+              "reasoning": "Customized the template for webhook-to-Slack integration by setting a dynamic message that includes the webhook payload",
+              "timestamp": "2025-08-10T17:57:21.442Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "node_2",
+              "result": {
+                "valid": false,
+                "errors": []
+              },
+              "timestamp": "2025-08-10T17:57:21.635Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Webhook endpoint to receive data from external services and forward to Slack",
+                "onError": "continueRegularOutput",
+                "parameters": {
+                  "path": "slack-webhook",
+                  "httpMethod": "POST",
+                  "responseData": "allEntries",
+                  "responseMode": "lastNode"
+                },
+                "typeVersion": 1,
+                "alwaysOutputData": true
+              },
+              "nodeId": "node_1",
+              "purpose": "Set up a webhook to receive data from external services",
+              "nodeType": "nodes-base.webhook",
+              "reasoning": "Customized the webhook path from generic 'webhook' to 'slack-webhook' to make it more descriptive for the Slack integration use case",
+              "timestamp": "2025-08-10T17:57:21.635Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "node_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-10T17:57:21.845Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "discoveredNodes": [
+            {
+              "id": "node_2",
+              "type": "nodes-base.slack",
+              "displayName": "send slack message",
+              "purpose": "Send a message to Slack channel",
+              "isPreConfigured": true,
+              "config": {
+                "resource": "message",
+                "operation": "post",
+                "channel": "",
+                "text": "",
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 2,
+                "waitBetweenTries": 2000
+              }
+            },
+            {
+              "id": "node_1",
+              "type": "nodes-base.webhook",
+              "displayName": "receive webhook",
+              "purpose": "Set up a webhook to receive data from external services",
+              "isPreConfigured": true,
+              "config": {
+                "httpMethod": "POST",
+                "path": "webhook",
+                "responseMode": "lastNode",
+                "responseData": "allEntries",
+                "onError": "continueRegularOutput",
+                "alwaysOutputData": true
+              }
+            }
+          ]
+        },
+        "output": {
+          "configuredNodes": [
+            {
+              "id": "node_2",
+              "type": "nodes-base.slack",
+              "purpose": "Send a message to Slack channel",
+              "config": {
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "retryOnFail": true,
+                "waitBetweenTries": 2000,
+                "typeVersion": 3,
+                "notes": "Send webhook data to Slack channel - customized for webhook integration",
+                "parameters": {
+                  "text": "New webhook data received: {{$json}}",
+                  "channel": "#general",
+                  "resource": "message",
+                  "operation": "post"
+                }
+              },
+              "validated": false,
+              "validationErrors": []
+            },
+            {
+              "id": "node_1",
+              "type": "nodes-base.webhook",
+              "purpose": "Set up a webhook to receive data from external services",
+              "config": {
+                "onError": "continueRegularOutput",
+                "alwaysOutputData": true,
+                "typeVersion": 1,
+                "notes": "Webhook endpoint to receive data from external services and forward to Slack",
+                "parameters": {
+                  "path": "slack-webhook",
+                  "httpMethod": "POST",
+                  "responseData": "allEntries",
+                  "responseMode": "lastNode"
+                }
+              },
+              "validated": true
+            }
+          ]
+        },
+        "transformations": [
+          "Parameter Configuration",
+          "Validation",
+          "Type Checking"
+        ]
+      },
+      "stateDelta": {
+        "added": {},
+        "modified": {
+          "state": {
+            "old": {
+              "phase": "configuration",
+              "userPrompt": "Create a simple webhook that sends data to Slack",
+              "discovered": [
+                {
+                  "id": "node_2",
+                  "type": "nodes-base.slack",
+                  "config": {
+                    "text": "",
+                    "channel": "",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "resource": "message",
+                    "operation": "post",
+                    "retryOnFail": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Send a message to Slack channel",
+                  "displayName": "send slack message",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "node_1",
+                  "type": "nodes-base.webhook",
+                  "config": {
+                    "path": "webhook",
+                    "onError": "continueRegularOutput",
+                    "httpMethod": "POST",
+                    "responseData": "allEntries",
+                    "responseMode": "lastNode",
+                    "alwaysOutputData": true
+                  },
+                  "purpose": "Set up a webhook to receive data from external services",
+                  "displayName": "receive webhook",
+                  "isPreConfigured": true
+                }
+              ],
+              "selected": [
+                "node_2",
+                "node_1"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "nodes": [],
+                "settings": {},
+                "connections": {}
+              },
+              "buildPhases": [],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "node_2",
+                    "type": "nodes-base.slack",
+                    "config": {
+                      "text": "",
+                      "channel": "",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 2,
+                      "resource": "message",
+                      "operation": "post",
+                      "retryOnFail": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Send a message to Slack channel",
+                    "displayName": "send slack message",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-10T17:57:13.726Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "node_2",
+                  "timestamp": "2025-08-10T17:57:13.726Z"
+                },
+                {
+                  "node": {
+                    "id": "node_1",
+                    "type": "nodes-base.webhook",
+                    "config": {
+                      "path": "webhook",
+                      "onError": "continueRegularOutput",
+                      "httpMethod": "POST",
+                      "responseData": "allEntries",
+                      "responseMode": "lastNode",
+                      "alwaysOutputData": true
+                    },
+                    "purpose": "Set up a webhook to receive data from external services",
+                    "displayName": "receive webhook",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-10T17:57:13.726Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "node_1",
+                  "timestamp": "2025-08-10T17:57:13.726Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-10T17:57:13.726Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            },
+            "new": {
+              "phase": "configuration",
+              "userPrompt": "Create a simple webhook that sends data to Slack",
+              "discovered": [
+                {
+                  "id": "node_2",
+                  "type": "nodes-base.slack",
+                  "config": {
+                    "text": "",
+                    "channel": "",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "resource": "message",
+                    "operation": "post",
+                    "retryOnFail": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Send a message to Slack channel",
+                  "displayName": "send slack message",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "node_1",
+                  "type": "nodes-base.webhook",
+                  "config": {
+                    "path": "webhook",
+                    "onError": "continueRegularOutput",
+                    "httpMethod": "POST",
+                    "responseData": "allEntries",
+                    "responseMode": "lastNode",
+                    "alwaysOutputData": true
+                  },
+                  "purpose": "Set up a webhook to receive data from external services",
+                  "displayName": "receive webhook",
+                  "isPreConfigured": true
+                }
+              ],
+              "selected": [
+                "node_2",
+                "node_1"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "nodes": [],
+                "settings": {},
+                "connections": {}
+              },
+              "buildPhases": [],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "node_2",
+                    "type": "nodes-base.slack",
+                    "config": {
+                      "text": "",
+                      "channel": "",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 2,
+                      "resource": "message",
+                      "operation": "post",
+                      "retryOnFail": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Send a message to Slack channel",
+                    "displayName": "send slack message",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-10T17:57:13.726Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "node_2",
+                  "timestamp": "2025-08-10T17:57:13.726Z"
+                },
+                {
+                  "node": {
+                    "id": "node_1",
+                    "type": "nodes-base.webhook",
+                    "config": {
+                      "path": "webhook",
+                      "onError": "continueRegularOutput",
+                      "httpMethod": "POST",
+                      "responseData": "allEntries",
+                      "responseMode": "lastNode",
+                      "alwaysOutputData": true
+                    },
+                    "purpose": "Set up a webhook to receive data from external services",
+                    "displayName": "receive webhook",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-10T17:57:13.726Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "node_1",
+                  "timestamp": "2025-08-10T17:57:13.726Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-10T17:57:13.726Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-10T17:57:21.166Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Send webhook data to Slack channel - customized for webhook integration",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "parameters": {
+                      "text": "New webhook data received: {{$json}}",
+                      "channel": "#general",
+                      "resource": "message",
+                      "operation": "post"
+                    },
+                    "retryOnFail": true,
+                    "typeVersion": 3,
+                    "waitBetweenTries": 2000
+                  },
+                  "nodeId": "node_2",
+                  "purpose": "Send a message to Slack channel",
+                  "nodeType": "nodes-base.slack",
+                  "reasoning": "Customized the template for webhook-to-Slack integration by setting a dynamic message that includes the webhook payload",
+                  "timestamp": "2025-08-10T17:57:21.442Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "node_2",
+                  "result": {
+                    "valid": false,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-10T17:57:21.635Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Webhook endpoint to receive data from external services and forward to Slack",
+                    "onError": "continueRegularOutput",
+                    "parameters": {
+                      "path": "slack-webhook",
+                      "httpMethod": "POST",
+                      "responseData": "allEntries",
+                      "responseMode": "lastNode"
+                    },
+                    "typeVersion": 1,
+                    "alwaysOutputData": true
+                  },
+                  "nodeId": "node_1",
+                  "purpose": "Set up a webhook to receive data from external services",
+                  "nodeType": "nodes-base.webhook",
+                  "reasoning": "Customized the webhook path from generic 'webhook' to 'slack-webhook' to make it more descriptive for the Slack integration use case",
+                  "timestamp": "2025-08-10T17:57:21.635Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "node_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-10T17:57:21.845Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            }
+          }
+        },
+        "removed": [],
+        "unchanged": [
+          "sessionId",
+          "createdAt"
+        ]
+      },
+      "errors": [
+        {
+          "type": "validation",
+          "message": "1 nodes failed validation"
+        }
+      ]
+    },
+    "building": {
+      "name": "Building",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "validation": {
+      "name": "Validation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "documentation": {
+      "name": "Documentation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    }
+  },
+  "summary": {
+    "totalNodes": 0,
+    "totalConnections": 0,
+    "validationAttempts": 0,
+    "errorsFixed": 0,
+    "stickyNotesAdded": 0,
+    "performanceScore": 60,
+    "qualityScore": 105,
+    "completenessScore": 20
+  },
+  "optimizationSuggestions": [],
+  "errorPatterns": [
+    {
+      "pattern": "validation",
+      "frequency": 1,
+      "suggestedFix": "Review error details and adjust workflow accordingly"
+    }
+  ]
+}

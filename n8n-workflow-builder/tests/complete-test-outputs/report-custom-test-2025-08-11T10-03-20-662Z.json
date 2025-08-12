@@ -1,0 +1,1785 @@
+{
+  "testName": "Custom Test",
+  "userPrompt": "Create a workflow that receives support tickets via webhook, uses AI to categorize them (technical, billing, general), and routes them to different Slack channels based on the category using a switch node",
+  "sessionId": "complete_e2e_custom_test_1754906555994",
+  "timestamp": "2025-08-11T10:02:35.994Z",
+  "duration": 44667,
+  "success": false,
+  "phases": {
+    "discovery": {
+      "name": "Discovery",
+      "success": true,
+      "metrics": {
+        "startTime": 1754906556824,
+        "endTime": 1754906575068,
+        "duration": 18244,
+        "memoryUsage": {
+          "heapUsed": 635296,
+          "heapTotal": 32178176,
+          "external": 6335976
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-11T10:02:36.824Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting discovery phase"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:36.825Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for discovery phase"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:48.813Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:48.814Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"receive_webhook\"}"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:48.814Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:48.814Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"chat_with_ai\"}"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:48.814Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:48.814Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"send_slack_message\"}"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:48.963Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:48.966Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:48.981Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:48.982Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: search_nodes"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:48.982Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"query\":\"switch\",\"limit\":20}"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:49.210Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool search_nodes completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:54.990Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.slack (Send a message to Slack channel)"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:54.990Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.openAi (Send a message to an AI model and get response)"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:54.990Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.webhook (Set up a webhook to receive data from external services)"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:54.990Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.switch (Route support tickets to different Slack channels based on AI categorization (technical, billing, general))"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:55.067Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:55.067Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "task_node_3",
+          "type": "nodes-base.slack",
+          "purpose": "Send a message to Slack channel"
+        },
+        {
+          "id": "task_node_2",
+          "type": "nodes-base.openAi",
+          "purpose": "Send a message to an AI model and get response"
+        },
+        {
+          "id": "task_node_1",
+          "type": "nodes-base.webhook",
+          "purpose": "Set up a webhook to receive data from external services"
+        },
+        {
+          "id": "search_node_1",
+          "type": "nodes-base.switch",
+          "purpose": "Route support tickets to different Slack channels based on AI categorization (technical, billing, general)"
+        }
+      ],
+      "sessionState": {
+        "sessionId": "complete_e2e_custom_test_1754906555994",
+        "createdAt": "2025-08-11T10:02:36.594Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "Create a workflow that receives support tickets via webhook, uses AI to categorize them (technical, billing, general), and routes them to different Slack channels based on the category using a switch node",
+          "discovered": [
+            {
+              "id": "task_node_3",
+              "type": "nodes-base.slack",
+              "config": {
+                "text": "",
+                "channel": "",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "resource": "message",
+                "operation": "post",
+                "parameters": {},
+                "retryOnFail": true,
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Send a message to Slack channel",
+              "displayName": "send slack message",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_2",
+              "type": "nodes-base.openAi",
+              "config": {
+                "modelId": "gpt-3.5-turbo",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "messages": {
+                  "values": [
+                    {
+                      "role": "user",
+                      "content": ""
+                    }
+                  ]
+                },
+                "resource": "chat",
+                "operation": "message",
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 5000
+              },
+              "purpose": "Send a message to an AI model and get response",
+              "displayName": "chat with ai",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.webhook",
+              "config": {
+                "path": "webhook",
+                "onError": "continueRegularOutput",
+                "httpMethod": "POST",
+                "responseData": "allEntries",
+                "responseMode": "lastNode",
+                "alwaysOutputData": true
+              },
+              "purpose": "Set up a webhook to receive data from external services",
+              "displayName": "receive webhook",
+              "isPreConfigured": true
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.switch",
+              "purpose": "Route support tickets to different Slack channels based on AI categorization (technical, billing, general)"
+            }
+          ],
+          "selected": [
+            "task_node_3",
+            "task_node_2",
+            "task_node_1",
+            "search_node_1"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "task_node_3",
+                "type": "nodes-base.slack",
+                "config": {
+                  "text": "",
+                  "channel": "",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 2,
+                  "resource": "message",
+                  "operation": "post",
+                  "parameters": {},
+                  "retryOnFail": true,
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Send a message to Slack channel",
+                "displayName": "send slack message",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_3",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "node": {
+                "id": "task_node_2",
+                "type": "nodes-base.openAi",
+                "config": {
+                  "modelId": "gpt-3.5-turbo",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 3,
+                  "messages": {
+                    "values": [
+                      {
+                        "role": "user",
+                        "content": ""
+                      }
+                    ]
+                  },
+                  "resource": "chat",
+                  "operation": "message",
+                  "retryOnFail": true,
+                  "alwaysOutputData": true,
+                  "waitBetweenTries": 5000
+                },
+                "purpose": "Send a message to an AI model and get response",
+                "displayName": "chat with ai",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_2",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "node": {
+                "id": "task_node_1",
+                "type": "nodes-base.webhook",
+                "config": {
+                  "path": "webhook",
+                  "onError": "continueRegularOutput",
+                  "httpMethod": "POST",
+                  "responseData": "allEntries",
+                  "responseMode": "lastNode",
+                  "alwaysOutputData": true
+                },
+                "purpose": "Set up a webhook to receive data from external services",
+                "displayName": "receive webhook",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_1",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "node": {
+                "id": "search_node_1",
+                "type": "nodes-base.switch",
+                "purpose": "Route support tickets to different Slack channels based on AI categorization (technical, billing, general)"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_1",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "prompt": "Create a workflow that receives support tickets via webhook, uses AI to categorize them (technical, billing, general), and routes them to different Slack channels based on the category using a switch node"
+        },
+        "output": {
+          "nodes": [
+            {
+              "id": "task_node_3",
+              "type": "nodes-base.slack",
+              "displayName": "send slack message",
+              "purpose": "Send a message to Slack channel",
+              "isPreConfigured": true,
+              "config": {
+                "resource": "message",
+                "operation": "post",
+                "channel": "",
+                "text": "",
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 2,
+                "waitBetweenTries": 2000,
+                "parameters": {}
+              }
+            },
+            {
+              "id": "task_node_2",
+              "type": "nodes-base.openAi",
+              "displayName": "chat with ai",
+              "purpose": "Send a message to an AI model and get response",
+              "isPreConfigured": true,
+              "config": {
+                "resource": "chat",
+                "operation": "message",
+                "modelId": "gpt-3.5-turbo",
+                "messages": {
+                  "values": [
+                    {
+                      "role": "user",
+                      "content": ""
+                    }
+                  ]
+                },
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 3,
+                "waitBetweenTries": 5000,
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.webhook",
+              "displayName": "receive webhook",
+              "purpose": "Set up a webhook to receive data from external services",
+              "isPreConfigured": true,
+              "config": {
+                "httpMethod": "POST",
+                "path": "webhook",
+                "responseMode": "lastNode",
+                "responseData": "allEntries",
+                "onError": "continueRegularOutput",
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.switch",
+              "displayName": "nodes-base.switch",
+              "purpose": "Route support tickets to different Slack channels based on AI categorization (technical, billing, general)",
+              "needsConfiguration": true
+            }
+          ]
+        },
+        "transformations": [
+          "Intent Analysis",
+          "Node Discovery",
+          "Selection"
+        ]
+      }
+    },
+    "configuration": {
+      "name": "Configuration",
+      "success": false,
+      "metrics": {
+        "startTime": 1754906575068,
+        "endTime": 1754906600661,
+        "duration": 25593,
+        "memoryUsage": {
+          "heapUsed": 1366296,
+          "heapTotal": 33751040,
+          "external": 6583099
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-11T10:02:55.068Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting configuration phase"
+        },
+        {
+          "timestamp": "2025-08-11T10:02:55.068Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for configuration phase"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:01.946Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:01.946Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.webhook\",\"config\":{\"path\":\"support-tickets\",\"httpMethod\":\"POST\",\"responseData\":\"allEntries\",\"responseMode\":\"lastNode\"}}"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:02.119Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:02.120Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_essentials"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:02.120Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.switch\"}"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:02.277Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_essentials completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:02.607Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:02.607Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.openAi\",\"config\":{\"modelId\":\"gpt-3.5-turbo\",\"messages\":{\"values\":[{\"role\":\"system\",\"content\":\"You are a support ticket categorization assistant. Analyze the incoming support ticket and categorize it into exactly one of these categories: technical, billing, or general. Respond with only the category name in lowercase.\"},{\"role\":\"user\",\"content\":\"Please categorize this support ticket:\\n\\nSubject: {{$json.subject}}\\nMessage: {{$json.message}}\\nCustomer: {{$json.customer_email}}\"}]},\"resource\":\"chat\",\"operation\":\"message\"}}"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:02.735Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:03.155Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:03.155Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.slack\",\"config\":{\"text\":\"🎫 **New Support Ticket**\\n\\n**Category:** {{$json.category}}\\n**Subject:** {{$json.subject}}\\n**From:** {{$json.email}}\\n**Priority:** {{$json.priority || 'Normal'}}\\n\\n**Description:**\\n{{$json.description}}\\n\\n**Ticket ID:** {{$json.ticketId}}\\n**Created:** {{$json.createdAt}}\",\"resource\":\"message\",\"operation\":\"post\",\"parameters\":{},\"channelId\":\"{{$json.slackChannel}}\",\"select\":\"channel\"}}"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:03.274Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:13.055Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:13.055Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.switch\",\"config\":{\"typeVersion\":3.2,\"notes\":\"Routes support tickets to different Slack channels based on AI categorization (technical, billing, general)\",\"parameters\":{\"mode\":\"rules\",\"rules\":{\"values\":[{\"conditions\":{\"options\":{\"caseSensitive\":true,\"leftValue\":\"\",\"typeValidation\":\"strict\"},\"conditions\":[{\"leftValue\":\"={{ $json.category }}\",\"rightValue\":\"technical\",\"operator\":{\"operation\":\"equals\",\"type\":\"string\"}}]},\"renameOutput\":true,\"outputKey\":\"technical\"},{\"conditions\":{\"options\":{\"caseSensitive\":true,\"leftValue\":\"\",\"typeValidation\":\"strict\"},\"conditions\":[{\"leftValue\":\"={{ $json.category }}\",\"rightValue\":\"billing\",\"operator\":{\"operation\":\"equals\",\"type\":\"string\"}}]},\"renameOutput\":true,\"outputKey\":\"billing\"},{\"conditions\":{\"options\":{\"caseSensitive\":true,\"leftValue\":\"\",\"typeValidation\":\"strict\"},\"conditions\":[{\"leftValue\":\"={{ $json.category }}\",\"rightValue\":\"general\",\"operator\":{\"operation\":\"equals\",\"type\":\"string\"}}]},\"renameOutput\":true,\"outputKey\":\"general\"}]}}}}"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:13.213Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:20.599Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.slack (Send a message to Slack channel)"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:20.599Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.openAi (Send a message to an AI model and get response)"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:20.599Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.webhook (Set up a webhook to receive data from external services)"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:20.599Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.switch (Route support tickets to different Slack channels based on AI categorization (technical, billing, general))"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:20.599Z",
+          "level": "WARN",
+          "source": "Orchestrator",
+          "message": "Node search_node_1: Failed to generate configuration for nodes-base.switch"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:20.661Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-11T10:03:20.661Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "task_node_3",
+          "type": "nodes-base.slack",
+          "purpose": "Send a message to Slack channel",
+          "configuration": {
+            "onError": "continueRegularOutput",
+            "maxTries": 2,
+            "retryOnFail": true,
+            "waitBetweenTries": 2000,
+            "typeVersion": 1,
+            "notes": "Send categorized support ticket to appropriate Slack channel based on AI categorization (technical, billing, or general)",
+            "parameters": {
+              "text": "🎫 **New Support Ticket**\n\n**Category:** {{$json.category}}\n**Subject:** {{$json.subject}}\n**From:** {{$json.email}}\n**Priority:** {{$json.priority || 'Normal'}}\n\n**Description:**\n{{$json.description}}\n\n**Ticket ID:** {{$json.ticketId}}\n**Created:** {{$json.createdAt}}",
+              "resource": "message",
+              "operation": "post",
+              "parameters": {},
+              "channelId": "{{$json.slackChannel}}",
+              "select": "channel"
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "task_node_2",
+          "type": "nodes-base.openAi",
+          "purpose": "Send a message to an AI model and get response",
+          "configuration": {
+            "onError": "continueRegularOutput",
+            "maxTries": 3,
+            "retryOnFail": true,
+            "alwaysOutputData": true,
+            "waitBetweenTries": 5000,
+            "typeVersion": 1,
+            "notes": "AI categorization node that analyzes support tickets and classifies them as technical, billing, or general for routing to appropriate Slack channels",
+            "parameters": {
+              "modelId": "gpt-3.5-turbo",
+              "messages": {
+                "values": [
+                  {
+                    "role": "system",
+                    "content": "You are a support ticket categorization assistant. Analyze the incoming support ticket and categorize it into exactly one of these categories: technical, billing, or general. Respond with only the category name in lowercase."
+                  },
+                  {
+                    "role": "user",
+                    "content": "Please categorize this support ticket:\n\nSubject: {{$json.subject}}\nMessage: {{$json.message}}\nCustomer: {{$json.customer_email}}"
+                  }
+                ]
+              },
+              "resource": "chat",
+              "operation": "message"
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "task_node_1",
+          "type": "nodes-base.webhook",
+          "purpose": "Set up a webhook to receive data from external services",
+          "configuration": {
+            "onError": "continueRegularOutput",
+            "alwaysOutputData": true,
+            "typeVersion": 1,
+            "notes": "Webhook endpoint to receive support tickets from external systems. Configured to accept POST requests with ticket data that will be processed by AI for categorization and routing to appropriate Slack channels.",
+            "parameters": {
+              "path": "support-tickets",
+              "httpMethod": "POST",
+              "responseData": "allEntries",
+              "responseMode": "lastNode"
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "search_node_1",
+          "type": "nodes-base.switch",
+          "purpose": "Route support tickets to different Slack channels based on AI categorization (technical, billing, general)",
+          "configuration": {},
+          "validationStatus": "invalid",
+          "validationErrors": [
+            "Failed to generate configuration for nodes-base.switch"
+          ]
+        }
+      ],
+      "sessionState": {
+        "sessionId": "complete_e2e_custom_test_1754906555994",
+        "createdAt": "2025-08-11T10:02:36.594Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "Create a workflow that receives support tickets via webhook, uses AI to categorize them (technical, billing, general), and routes them to different Slack channels based on the category using a switch node",
+          "discovered": [
+            {
+              "id": "task_node_3",
+              "type": "nodes-base.slack",
+              "config": {
+                "text": "",
+                "channel": "",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "resource": "message",
+                "operation": "post",
+                "parameters": {},
+                "retryOnFail": true,
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Send a message to Slack channel",
+              "displayName": "send slack message",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_2",
+              "type": "nodes-base.openAi",
+              "config": {
+                "modelId": "gpt-3.5-turbo",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "messages": {
+                  "values": [
+                    {
+                      "role": "user",
+                      "content": ""
+                    }
+                  ]
+                },
+                "resource": "chat",
+                "operation": "message",
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 5000
+              },
+              "purpose": "Send a message to an AI model and get response",
+              "displayName": "chat with ai",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.webhook",
+              "config": {
+                "path": "webhook",
+                "onError": "continueRegularOutput",
+                "httpMethod": "POST",
+                "responseData": "allEntries",
+                "responseMode": "lastNode",
+                "alwaysOutputData": true
+              },
+              "purpose": "Set up a webhook to receive data from external services",
+              "displayName": "receive webhook",
+              "isPreConfigured": true
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.switch",
+              "purpose": "Route support tickets to different Slack channels based on AI categorization (technical, billing, general)"
+            }
+          ],
+          "selected": [
+            "task_node_3",
+            "task_node_2",
+            "task_node_1",
+            "search_node_1"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "task_node_3",
+                "type": "nodes-base.slack",
+                "config": {
+                  "text": "",
+                  "channel": "",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 2,
+                  "resource": "message",
+                  "operation": "post",
+                  "parameters": {},
+                  "retryOnFail": true,
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Send a message to Slack channel",
+                "displayName": "send slack message",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_3",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "node": {
+                "id": "task_node_2",
+                "type": "nodes-base.openAi",
+                "config": {
+                  "modelId": "gpt-3.5-turbo",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 3,
+                  "messages": {
+                    "values": [
+                      {
+                        "role": "user",
+                        "content": ""
+                      }
+                    ]
+                  },
+                  "resource": "chat",
+                  "operation": "message",
+                  "retryOnFail": true,
+                  "alwaysOutputData": true,
+                  "waitBetweenTries": 5000
+                },
+                "purpose": "Send a message to an AI model and get response",
+                "displayName": "chat with ai",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_2",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "node": {
+                "id": "task_node_1",
+                "type": "nodes-base.webhook",
+                "config": {
+                  "path": "webhook",
+                  "onError": "continueRegularOutput",
+                  "httpMethod": "POST",
+                  "responseData": "allEntries",
+                  "responseMode": "lastNode",
+                  "alwaysOutputData": true
+                },
+                "purpose": "Set up a webhook to receive data from external services",
+                "displayName": "receive webhook",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_1",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "node": {
+                "id": "search_node_1",
+                "type": "nodes-base.switch",
+                "purpose": "Route support tickets to different Slack channels based on AI categorization (technical, billing, general)"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_1",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-11T10:02:54.461Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "configuration",
+              "timestamp": "2025-08-11T10:03:19.646Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Send categorized support ticket to appropriate Slack channel based on AI categorization (technical, billing, or general)",
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "parameters": {
+                  "text": "🎫 **New Support Ticket**\n\n**Category:** {{$json.category}}\n**Subject:** {{$json.subject}}\n**From:** {{$json.email}}\n**Priority:** {{$json.priority || 'Normal'}}\n\n**Description:**\n{{$json.description}}\n\n**Ticket ID:** {{$json.ticketId}}\n**Created:** {{$json.createdAt}}",
+                  "select": "channel",
+                  "resource": "message",
+                  "channelId": "{{$json.slackChannel}}",
+                  "operation": "post",
+                  "parameters": {}
+                },
+                "retryOnFail": true,
+                "typeVersion": 1,
+                "waitBetweenTries": 2000
+              },
+              "nodeId": "task_node_3",
+              "purpose": "Send a message to Slack channel",
+              "nodeType": "nodes-base.slack",
+              "reasoning": "Customized the template to handle support ticket routing by using dynamic channel selection via {{$json.slackChannel}} which will be set by the preceding switch node based on AI categorization",
+              "timestamp": "2025-08-11T10:03:19.871Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "task_node_3",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T10:03:20.121Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "AI categorization node that analyzes support tickets and classifies them as technical, billing, or general for routing to appropriate Slack channels",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "parameters": {
+                  "modelId": "gpt-3.5-turbo",
+                  "messages": {
+                    "values": [
+                      {
+                        "role": "system",
+                        "content": "You are a support ticket categorization assistant. Analyze the incoming support ticket and categorize it into exactly one of these categories: technical, billing, or general. Respond with only the category name in lowercase."
+                      },
+                      {
+                        "role": "user",
+                        "content": "Please categorize this support ticket:\n\nSubject: {{$json.subject}}\nMessage: {{$json.message}}\nCustomer: {{$json.customer_email}}"
+                      }
+                    ]
+                  },
+                  "resource": "chat",
+                  "operation": "message"
+                },
+                "retryOnFail": true,
+                "typeVersion": 1,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 5000
+              },
+              "nodeId": "task_node_2",
+              "purpose": "Send a message to an AI model and get response",
+              "nodeType": "nodes-base.openAi",
+              "reasoning": "Customized the template by adding a system message to provide clear instructions for ticket categorization",
+              "timestamp": "2025-08-11T10:03:20.121Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "task_node_2",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T10:03:20.276Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Webhook endpoint to receive support tickets from external systems. Configured to accept POST requests with ticket data that will be processed by AI for categorization and routing to appropriate Slack channels.",
+                "onError": "continueRegularOutput",
+                "parameters": {
+                  "path": "support-tickets",
+                  "httpMethod": "POST",
+                  "responseData": "allEntries",
+                  "responseMode": "lastNode"
+                },
+                "typeVersion": 1,
+                "alwaysOutputData": true
+              },
+              "nodeId": "task_node_1",
+              "purpose": "Set up a webhook to receive data from external services",
+              "nodeType": "nodes-base.webhook",
+              "reasoning": "Customized the webhook path from generic 'webhook' to 'support-tickets' to clearly identify this endpoint's purpose for receiving support ticket data",
+              "timestamp": "2025-08-11T10:03:20.276Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "task_node_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T10:03:20.446Z"
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "search_node_1",
+              "result": {
+                "valid": false,
+                "errors": [
+                  {
+                    "nodeId": "search_node_1",
+                    "message": "Failed to generate configuration for nodes-base.switch",
+                    "severity": "error"
+                  }
+                ]
+              },
+              "timestamp": "2025-08-11T10:03:20.446Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "discoveredNodes": [
+            {
+              "id": "task_node_3",
+              "type": "nodes-base.slack",
+              "displayName": "send slack message",
+              "purpose": "Send a message to Slack channel",
+              "isPreConfigured": true,
+              "config": {
+                "resource": "message",
+                "operation": "post",
+                "channel": "",
+                "text": "",
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 2,
+                "waitBetweenTries": 2000,
+                "parameters": {}
+              }
+            },
+            {
+              "id": "task_node_2",
+              "type": "nodes-base.openAi",
+              "displayName": "chat with ai",
+              "purpose": "Send a message to an AI model and get response",
+              "isPreConfigured": true,
+              "config": {
+                "resource": "chat",
+                "operation": "message",
+                "modelId": "gpt-3.5-turbo",
+                "messages": {
+                  "values": [
+                    {
+                      "role": "user",
+                      "content": ""
+                    }
+                  ]
+                },
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 3,
+                "waitBetweenTries": 5000,
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.webhook",
+              "displayName": "receive webhook",
+              "purpose": "Set up a webhook to receive data from external services",
+              "isPreConfigured": true,
+              "config": {
+                "httpMethod": "POST",
+                "path": "webhook",
+                "responseMode": "lastNode",
+                "responseData": "allEntries",
+                "onError": "continueRegularOutput",
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.switch",
+              "displayName": "nodes-base.switch",
+              "purpose": "Route support tickets to different Slack channels based on AI categorization (technical, billing, general)",
+              "needsConfiguration": true
+            }
+          ]
+        },
+        "output": {
+          "configuredNodes": [
+            {
+              "id": "task_node_3",
+              "type": "nodes-base.slack",
+              "purpose": "Send a message to Slack channel",
+              "config": {
+                "onError": "continueRegularOutput",
+                "maxTries": 2,
+                "retryOnFail": true,
+                "waitBetweenTries": 2000,
+                "typeVersion": 1,
+                "notes": "Send categorized support ticket to appropriate Slack channel based on AI categorization (technical, billing, or general)",
+                "parameters": {
+                  "text": "🎫 **New Support Ticket**\n\n**Category:** {{$json.category}}\n**Subject:** {{$json.subject}}\n**From:** {{$json.email}}\n**Priority:** {{$json.priority || 'Normal'}}\n\n**Description:**\n{{$json.description}}\n\n**Ticket ID:** {{$json.ticketId}}\n**Created:** {{$json.createdAt}}",
+                  "resource": "message",
+                  "operation": "post",
+                  "parameters": {},
+                  "channelId": "{{$json.slackChannel}}",
+                  "select": "channel"
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "task_node_2",
+              "type": "nodes-base.openAi",
+              "purpose": "Send a message to an AI model and get response",
+              "config": {
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 5000,
+                "typeVersion": 1,
+                "notes": "AI categorization node that analyzes support tickets and classifies them as technical, billing, or general for routing to appropriate Slack channels",
+                "parameters": {
+                  "modelId": "gpt-3.5-turbo",
+                  "messages": {
+                    "values": [
+                      {
+                        "role": "system",
+                        "content": "You are a support ticket categorization assistant. Analyze the incoming support ticket and categorize it into exactly one of these categories: technical, billing, or general. Respond with only the category name in lowercase."
+                      },
+                      {
+                        "role": "user",
+                        "content": "Please categorize this support ticket:\n\nSubject: {{$json.subject}}\nMessage: {{$json.message}}\nCustomer: {{$json.customer_email}}"
+                      }
+                    ]
+                  },
+                  "resource": "chat",
+                  "operation": "message"
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.webhook",
+              "purpose": "Set up a webhook to receive data from external services",
+              "config": {
+                "onError": "continueRegularOutput",
+                "alwaysOutputData": true,
+                "typeVersion": 1,
+                "notes": "Webhook endpoint to receive support tickets from external systems. Configured to accept POST requests with ticket data that will be processed by AI for categorization and routing to appropriate Slack channels.",
+                "parameters": {
+                  "path": "support-tickets",
+                  "httpMethod": "POST",
+                  "responseData": "allEntries",
+                  "responseMode": "lastNode"
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.switch",
+              "purpose": "Route support tickets to different Slack channels based on AI categorization (technical, billing, general)",
+              "config": {},
+              "validated": false,
+              "validationErrors": [
+                "Failed to generate configuration for nodes-base.switch"
+              ]
+            }
+          ]
+        },
+        "transformations": [
+          "Parameter Configuration",
+          "Validation",
+          "Type Checking"
+        ]
+      },
+      "warnings": [
+        "Node search_node_1: Failed to generate configuration for nodes-base.switch"
+      ],
+      "stateDelta": {
+        "added": {},
+        "modified": {
+          "state": {
+            "old": {
+              "phase": "configuration",
+              "userPrompt": "Create a workflow that receives support tickets via webhook, uses AI to categorize them (technical, billing, general), and routes them to different Slack channels based on the category using a switch node",
+              "discovered": [
+                {
+                  "id": "task_node_3",
+                  "type": "nodes-base.slack",
+                  "config": {
+                    "text": "",
+                    "channel": "",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "resource": "message",
+                    "operation": "post",
+                    "parameters": {},
+                    "retryOnFail": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Send a message to Slack channel",
+                  "displayName": "send slack message",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_2",
+                  "type": "nodes-base.openAi",
+                  "config": {
+                    "modelId": "gpt-3.5-turbo",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 3,
+                    "messages": {
+                      "values": [
+                        {
+                          "role": "user",
+                          "content": ""
+                        }
+                      ]
+                    },
+                    "resource": "chat",
+                    "operation": "message",
+                    "retryOnFail": true,
+                    "alwaysOutputData": true,
+                    "waitBetweenTries": 5000
+                  },
+                  "purpose": "Send a message to an AI model and get response",
+                  "displayName": "chat with ai",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_1",
+                  "type": "nodes-base.webhook",
+                  "config": {
+                    "path": "webhook",
+                    "onError": "continueRegularOutput",
+                    "httpMethod": "POST",
+                    "responseData": "allEntries",
+                    "responseMode": "lastNode",
+                    "alwaysOutputData": true
+                  },
+                  "purpose": "Set up a webhook to receive data from external services",
+                  "displayName": "receive webhook",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "search_node_1",
+                  "type": "nodes-base.switch",
+                  "purpose": "Route support tickets to different Slack channels based on AI categorization (technical, billing, general)"
+                }
+              ],
+              "selected": [
+                "task_node_3",
+                "task_node_2",
+                "task_node_1",
+                "search_node_1"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "nodes": [],
+                "settings": {},
+                "connections": {}
+              },
+              "buildPhases": [],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "task_node_3",
+                    "type": "nodes-base.slack",
+                    "config": {
+                      "text": "",
+                      "channel": "",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 2,
+                      "resource": "message",
+                      "operation": "post",
+                      "parameters": {},
+                      "retryOnFail": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Send a message to Slack channel",
+                    "displayName": "send slack message",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_3",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_2",
+                    "type": "nodes-base.openAi",
+                    "config": {
+                      "modelId": "gpt-3.5-turbo",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 3,
+                      "messages": {
+                        "values": [
+                          {
+                            "role": "user",
+                            "content": ""
+                          }
+                        ]
+                      },
+                      "resource": "chat",
+                      "operation": "message",
+                      "retryOnFail": true,
+                      "alwaysOutputData": true,
+                      "waitBetweenTries": 5000
+                    },
+                    "purpose": "Send a message to an AI model and get response",
+                    "displayName": "chat with ai",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_2",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_1",
+                    "type": "nodes-base.webhook",
+                    "config": {
+                      "path": "webhook",
+                      "onError": "continueRegularOutput",
+                      "httpMethod": "POST",
+                      "responseData": "allEntries",
+                      "responseMode": "lastNode",
+                      "alwaysOutputData": true
+                    },
+                    "purpose": "Set up a webhook to receive data from external services",
+                    "displayName": "receive webhook",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_1",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_1",
+                    "type": "nodes-base.switch",
+                    "purpose": "Route support tickets to different Slack channels based on AI categorization (technical, billing, general)"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_1",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            },
+            "new": {
+              "phase": "configuration",
+              "userPrompt": "Create a workflow that receives support tickets via webhook, uses AI to categorize them (technical, billing, general), and routes them to different Slack channels based on the category using a switch node",
+              "discovered": [
+                {
+                  "id": "task_node_3",
+                  "type": "nodes-base.slack",
+                  "config": {
+                    "text": "",
+                    "channel": "",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "resource": "message",
+                    "operation": "post",
+                    "parameters": {},
+                    "retryOnFail": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Send a message to Slack channel",
+                  "displayName": "send slack message",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_2",
+                  "type": "nodes-base.openAi",
+                  "config": {
+                    "modelId": "gpt-3.5-turbo",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 3,
+                    "messages": {
+                      "values": [
+                        {
+                          "role": "user",
+                          "content": ""
+                        }
+                      ]
+                    },
+                    "resource": "chat",
+                    "operation": "message",
+                    "retryOnFail": true,
+                    "alwaysOutputData": true,
+                    "waitBetweenTries": 5000
+                  },
+                  "purpose": "Send a message to an AI model and get response",
+                  "displayName": "chat with ai",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_1",
+                  "type": "nodes-base.webhook",
+                  "config": {
+                    "path": "webhook",
+                    "onError": "continueRegularOutput",
+                    "httpMethod": "POST",
+                    "responseData": "allEntries",
+                    "responseMode": "lastNode",
+                    "alwaysOutputData": true
+                  },
+                  "purpose": "Set up a webhook to receive data from external services",
+                  "displayName": "receive webhook",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "search_node_1",
+                  "type": "nodes-base.switch",
+                  "purpose": "Route support tickets to different Slack channels based on AI categorization (technical, billing, general)"
+                }
+              ],
+              "selected": [
+                "task_node_3",
+                "task_node_2",
+                "task_node_1",
+                "search_node_1"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "nodes": [],
+                "settings": {},
+                "connections": {}
+              },
+              "buildPhases": [],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "task_node_3",
+                    "type": "nodes-base.slack",
+                    "config": {
+                      "text": "",
+                      "channel": "",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 2,
+                      "resource": "message",
+                      "operation": "post",
+                      "parameters": {},
+                      "retryOnFail": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Send a message to Slack channel",
+                    "displayName": "send slack message",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_3",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_2",
+                    "type": "nodes-base.openAi",
+                    "config": {
+                      "modelId": "gpt-3.5-turbo",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 3,
+                      "messages": {
+                        "values": [
+                          {
+                            "role": "user",
+                            "content": ""
+                          }
+                        ]
+                      },
+                      "resource": "chat",
+                      "operation": "message",
+                      "retryOnFail": true,
+                      "alwaysOutputData": true,
+                      "waitBetweenTries": 5000
+                    },
+                    "purpose": "Send a message to an AI model and get response",
+                    "displayName": "chat with ai",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_2",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_1",
+                    "type": "nodes-base.webhook",
+                    "config": {
+                      "path": "webhook",
+                      "onError": "continueRegularOutput",
+                      "httpMethod": "POST",
+                      "responseData": "allEntries",
+                      "responseMode": "lastNode",
+                      "alwaysOutputData": true
+                    },
+                    "purpose": "Set up a webhook to receive data from external services",
+                    "displayName": "receive webhook",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_1",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_1",
+                    "type": "nodes-base.switch",
+                    "purpose": "Route support tickets to different Slack channels based on AI categorization (technical, billing, general)"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_1",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-11T10:02:54.461Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-11T10:03:19.646Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Send categorized support ticket to appropriate Slack channel based on AI categorization (technical, billing, or general)",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 2,
+                    "parameters": {
+                      "text": "🎫 **New Support Ticket**\n\n**Category:** {{$json.category}}\n**Subject:** {{$json.subject}}\n**From:** {{$json.email}}\n**Priority:** {{$json.priority || 'Normal'}}\n\n**Description:**\n{{$json.description}}\n\n**Ticket ID:** {{$json.ticketId}}\n**Created:** {{$json.createdAt}}",
+                      "select": "channel",
+                      "resource": "message",
+                      "channelId": "{{$json.slackChannel}}",
+                      "operation": "post",
+                      "parameters": {}
+                    },
+                    "retryOnFail": true,
+                    "typeVersion": 1,
+                    "waitBetweenTries": 2000
+                  },
+                  "nodeId": "task_node_3",
+                  "purpose": "Send a message to Slack channel",
+                  "nodeType": "nodes-base.slack",
+                  "reasoning": "Customized the template to handle support ticket routing by using dynamic channel selection via {{$json.slackChannel}} which will be set by the preceding switch node based on AI categorization",
+                  "timestamp": "2025-08-11T10:03:19.871Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "task_node_3",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T10:03:20.121Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "AI categorization node that analyzes support tickets and classifies them as technical, billing, or general for routing to appropriate Slack channels",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 3,
+                    "parameters": {
+                      "modelId": "gpt-3.5-turbo",
+                      "messages": {
+                        "values": [
+                          {
+                            "role": "system",
+                            "content": "You are a support ticket categorization assistant. Analyze the incoming support ticket and categorize it into exactly one of these categories: technical, billing, or general. Respond with only the category name in lowercase."
+                          },
+                          {
+                            "role": "user",
+                            "content": "Please categorize this support ticket:\n\nSubject: {{$json.subject}}\nMessage: {{$json.message}}\nCustomer: {{$json.customer_email}}"
+                          }
+                        ]
+                      },
+                      "resource": "chat",
+                      "operation": "message"
+                    },
+                    "retryOnFail": true,
+                    "typeVersion": 1,
+                    "alwaysOutputData": true,
+                    "waitBetweenTries": 5000
+                  },
+                  "nodeId": "task_node_2",
+                  "purpose": "Send a message to an AI model and get response",
+                  "nodeType": "nodes-base.openAi",
+                  "reasoning": "Customized the template by adding a system message to provide clear instructions for ticket categorization",
+                  "timestamp": "2025-08-11T10:03:20.121Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "task_node_2",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T10:03:20.276Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Webhook endpoint to receive support tickets from external systems. Configured to accept POST requests with ticket data that will be processed by AI for categorization and routing to appropriate Slack channels.",
+                    "onError": "continueRegularOutput",
+                    "parameters": {
+                      "path": "support-tickets",
+                      "httpMethod": "POST",
+                      "responseData": "allEntries",
+                      "responseMode": "lastNode"
+                    },
+                    "typeVersion": 1,
+                    "alwaysOutputData": true
+                  },
+                  "nodeId": "task_node_1",
+                  "purpose": "Set up a webhook to receive data from external services",
+                  "nodeType": "nodes-base.webhook",
+                  "reasoning": "Customized the webhook path from generic 'webhook' to 'support-tickets' to clearly identify this endpoint's purpose for receiving support ticket data",
+                  "timestamp": "2025-08-11T10:03:20.276Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "task_node_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T10:03:20.446Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "search_node_1",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      {
+                        "nodeId": "search_node_1",
+                        "message": "Failed to generate configuration for nodes-base.switch",
+                        "severity": "error"
+                      }
+                    ]
+                  },
+                  "timestamp": "2025-08-11T10:03:20.446Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            }
+          }
+        },
+        "removed": [],
+        "unchanged": [
+          "sessionId",
+          "createdAt"
+        ]
+      },
+      "errors": [
+        {
+          "type": "validation",
+          "message": "1 nodes failed validation"
+        }
+      ]
+    },
+    "building": {
+      "name": "Building",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "validation": {
+      "name": "Validation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "documentation": {
+      "name": "Documentation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    }
+  },
+  "summary": {
+    "totalNodes": 0,
+    "totalConnections": 0,
+    "validationAttempts": 0,
+    "errorsFixed": 0,
+    "stickyNotesAdded": 0,
+    "performanceScore": 20,
+    "qualityScore": 100,
+    "completenessScore": 20
+  },
+  "optimizationSuggestions": [
+    "Consider optimizing discovery phase (took 18244ms)",
+    "Consider optimizing configuration phase (took 25593ms)"
+  ],
+  "errorPatterns": [
+    {
+      "pattern": "validation",
+      "frequency": 1,
+      "suggestedFix": "Review error details and adjust workflow accordingly"
+    }
+  ]
+}

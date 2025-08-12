@@ -1,0 +1,106 @@
+{
+  "name": "Webhook to Slack Notification",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "webhook",
+        "httpMethod": "POST"
+      },
+      "name": "Webhook",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "text": "{{ 'New webhook received: ' + ($json.message || 'No message provided') }}",
+        "channel": "#general"
+      },
+      "name": "Slack",
+      "typeVersion": 2.3,
+      "onError": "continueRegularOutput",
+      "maxTries": 2
+    },
+    {
+      "id": "sticky_triggers_1754891969592",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook endpoint receives incoming data from external services and triggers the workflow execution.",
+        "height": 300,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_outputs_1754891969592",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        160
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nProcesses the webhook data and sends a formatted notification message to the configured Slack channel.",
+        "height": 300,
+        "width": 230,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-11T05:59:30.063Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Create a workflow that receives webhook data and sends a notification to Slack",
+    "testName": "Custom Test",
+    "generatedAt": "2025-08-11T05:59:30.063Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 2
+  }
+}

@@ -4,7 +4,7 @@
  * Types for the configuration phase of workflow building.
  */
 
-import type { WorkflowPhase } from '../workflow';
+import type { WorkflowPhase, DiscoveredNode } from '../workflow';
 import type { PhaseResult } from './base';
 
 /**
@@ -43,4 +43,24 @@ export interface ConfigurationRunnerDeps {
   nodeContextService: any;
   sessionRepo: any;
   loggers: any;
+}
+
+/**
+ * Configuration context with cached essentials
+ */
+export interface ConfigurationContext {
+  discoveredNodes: DiscoveredNode[];
+  selectedNodeIds: string[];
+  userPrompt: string;
+  nodeEssentials: Map<string, any>; // Cached essentials
+}
+
+/**
+ * Represents an automatic fix for a missing required field
+ */
+export interface MissingFieldFix {
+  field: string; // Display name of the field
+  parameterName: string; // Actual parameter name in config
+  defaultValue: any; // The value we're setting
+  source: 'essentials' | 'default' | 'inferred'; // Where the value came from
 }

@@ -1,0 +1,128 @@
+{
+  "name": "Data Storage to PostgreSQL Workflow",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "data-intake",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Data Intake Webhook",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "postgres_1",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "schema": "public",
+        "table": "{{$json.tableName}}",
+        "columns": "{{$json.columns}}",
+        "operation": "insert",
+        "returnFields": "*"
+      },
+      "name": "Store in PostgreSQL",
+      "typeVersion": 2.6,
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "id": "sticky_promo_1754918461817",
+      "name": "Ghost Team Promo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -30
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 510,
+        "width": 280,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_triggers_1754918461817",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        170,
+        -30
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook receives incoming data from external services via POST request to the data-intake endpoint. This serves as the entry point for all data that needs to be stored in PostgreSQL.",
+        "height": 510,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_outputs_1754918461817",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        470,
+        -30
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nPostgreSQL node inserts the received data into the specified database table. It uses dynamic table and column mapping from the webhook payload and includes retry logic for reliability.",
+        "height": 510,
+        "width": 310,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Data Intake Webhook": {
+      "main": [
+        [
+          {
+            "node": "Store in PostgreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-11T13:21:02.279Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Create workflow that stores data in PostgreSQL database",
+    "testName": "Custom Test",
+    "generatedAt": "2025-08-11T13:21:02.279Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 2,
+    "stickyNotesAdded": 3
+  }
+}

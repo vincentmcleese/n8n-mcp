@@ -43,6 +43,8 @@ export interface CompletionResult {
     promptTokens: number;
     completionTokens: number;
     totalTokens: number;
+    wasTruncated?: boolean;
+    usagePercentage?: number;
   };
 }
 
@@ -74,6 +76,8 @@ export class AnthropicClient {
   private client: Anthropic;
   private onUsageCallback?: (tokens: number) => void;
   private toolExecutor?: ToolExecutor;
+  private currentPhase?: string;
+  private currentMethod?: string;
 
   constructor(config: ClientConfig = {}) {
     const apiKey = config.apiKey || process.env.ANTHROPIC_API_KEY;
@@ -111,9 +115,22 @@ export class AnthropicClient {
   }
 
   /**
+   * Set the current phase and method context for logging
+   */
+  setContext(phase: string, method?: string): void {
+    this.currentPhase = phase;
+    this.currentMethod = method;
+  }
+
+  /**
    * Complete a JSON generation request with automatic retry logic
    */
   async completeJSON(params: CompletionParams): Promise<CompletionResult> {
+    // Set context if phase is provided
+    if (params.phase) {
+      this.currentPhase = params.phase;
+    }
+    
     // If tools are provided and we have a tool executor, use enhanced flow
     if (params.tools && params.tools.length > 0 && this.toolExecutor) {
       return this.completeJSONWithTools(params);
@@ -192,7 +209,7 @@ export class AnthropicClient {
       : "";
     
     // Track token usage
-    const usage = this.trackTokenUsage(response);
+    const usage = this.trackTokenUsage(response, params.maxTokens);
     
     // Combine prefill with response for full content
     const fullContent = params.prefill ? params.prefill + content : content;
@@ -307,7 +324,7 @@ export class AnthropicClient {
       : "";
     
     // Track token usage
-    const usage = this.trackTokenUsage(response);
+    const usage = this.trackTokenUsage(response, params.maxTokens);
     
     // Combine prefill with response for full content
     const fullContent = params.prefill ? params.prefill + content : content;
@@ -330,24 +347,59 @@ export class AnthropicClient {
   /**
    * Track token usage from Anthropic response
    */
-  private trackTokenUsage(response: any): CompletionResult['usage'] | undefined {
+  private trackTokenUsage(response: any, maxTokens?: number): CompletionResult['usage'] | undefined {
     if (!response.usage) return undefined;
 
+    const promptTokens = response.usage.input_tokens || 0;
+    const completionTokens = response.usage.output_tokens || 0;
+    const totalTokens = promptTokens + completionTokens;
+    
+    // Check if response was truncated
+    const wasTruncated = maxTokens ? completionTokens >= maxTokens : false;
+    
+    // Calculate usage percentage
+    const usagePercentage = maxTokens ? (completionTokens / maxTokens * 100) : 0;
+    
     const usage = {
-      promptTokens: response.usage.input_tokens || 0,
-      completionTokens: response.usage.output_tokens || 0,
-      totalTokens: (response.usage.input_tokens || 0) + (response.usage.output_tokens || 0),
+      promptTokens,
+      completionTokens,
+      totalTokens,
+      wasTruncated,
+      usagePercentage,
     };
 
-    // Call the callback if set
-    if (this.onUsageCallback && LOGGING.logTokenUsage) {
-      this.onUsageCallback(usage.totalTokens);
+    // Get context for logging
+    const phase = this.currentPhase || 'unknown';
+    const method = this.currentMethod || 'request';
+    
+    // Enhanced logging at INFO level with context
+    if (maxTokens) {
+      // Log at INFO level with limit context
+      loggers.claude.info(
+        `[${phase}] ${method}: ${totalTokens} tokens (${promptTokens} in + ${completionTokens} out) of ${maxTokens} limit [${usagePercentage.toFixed(0)}%]`
+      );
+      
+      // Add warnings based on usage
+      if (wasTruncated) {
+        loggers.claude.error(
+          `🚨 TOKEN LIMIT EXCEEDED - Response truncated! Output tokens (${completionTokens}) = max_tokens limit (${maxTokens})`
+        );
+        loggers.claude.error(`🔴 CRITICAL: Response likely incomplete - attempting recovery`);
+      } else if (usagePercentage >= 90) {
+        loggers.claude.warn(`⚠️ VERY HIGH TOKEN USAGE - ${usagePercentage.toFixed(0)}% of limit used`);
+      } else if (usagePercentage >= 80) {
+        loggers.claude.warn(`⚠️ HIGH TOKEN USAGE - Approaching limit`);
+      }
+    } else {
+      // Fallback to simple INFO logging
+      loggers.claude.info(
+        `[${phase}] ${method}: ${totalTokens} tokens (${promptTokens} in + ${completionTokens} out)`
+      );
     }
 
-    if (LOGGING.logTokenUsage) {
-      loggers.claude.debug(
-        `Token usage: ${usage.totalTokens} (prompt: ${usage.promptTokens}, completion: ${usage.completionTokens})`
-      );
+    // Call the callback if set
+    if (this.onUsageCallback) {
+      this.onUsageCallback(totalTokens);
     }
 
     return usage;

@@ -453,15 +453,22 @@ export class DiscoveryRunner
   } {
     const discoveredNodes: DiscoveredNode[] = [];
     const processedOps: WorkflowOperation[] = [];
+    let searchNodeCounter = 1;
 
     for (const operation of operations) {
       if (operation.type === "discoverNode") {
+        // Replace gap_node_placeholder with proper search_node_ ID
+        const nodeId = operation.node.id === "gap_node_placeholder" 
+          ? `search_node_${searchNodeCounter++}`
+          : operation.node.id;
+        
         // LOG CATEGORY FROM GAP NODE
         this.deps.loggers.orchestrator.info(
-          `🔍 Gap node ${operation.node.id}: type=${operation.node.type}, category=${operation.node.category || 'MISSING'}`
+          `🔍 Gap node ${nodeId}: type=${operation.node.type}, category=${operation.node.category || 'MISSING'}`
         );
+        
         const node: DiscoveredNode = {
-          id: operation.node.id,
+          id: nodeId,
           type: operation.node.type,
           displayName: operation.node.displayName || operation.node.type,
           purpose: operation.node.purpose,
@@ -469,9 +476,29 @@ export class DiscoveryRunner
           needsConfiguration: true, // Gap nodes need configuration
         };
         discoveredNodes.push(node);
-        processedOps.push(operation);
+        
+        // Update operation with new ID
+        processedOps.push({
+          ...operation,
+          node: { ...operation.node, id: nodeId }
+        });
       } else if (operation.type === "selectNode") {
-        processedOps.push(operation);
+        // Update selectNode operations that reference the placeholder
+        if (operation.nodeId === "gap_node_placeholder") {
+          // Get the ID from the previous discoverNode operation
+          const prevOp = processedOps[processedOps.length - 1];
+          if (prevOp?.type === "discoverNode") {
+            processedOps.push({
+              ...operation,
+              nodeId: prevOp.node.id
+            });
+          } else {
+            // Shouldn't happen, but handle gracefully
+            processedOps.push(operation);
+          }
+        } else {
+          processedOps.push(operation);
+        }
       }
     }
 

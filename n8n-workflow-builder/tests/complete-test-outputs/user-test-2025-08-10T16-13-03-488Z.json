@@ -1,0 +1,25 @@
+{
+  "name": "User Test",
+  "nodes": [],
+  "connections": {},
+  "settings": {},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-10T16:13:03.488Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Set up a webhook that receives JSON payloads with nested arrays, transform the data structure using  custom JavaScript to flatten nested objects, validate against a schema, batch process every 100 items   into Airtable with pagination support, handle rate limits with exponential backoff, and generate a  daily report with metrics including success rate, processing time, and error breakdown",
+    "testName": "User Test",
+    "generatedAt": "2025-08-10T16:13:03.488Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": false,
+      "documentation": true
+    },
+    "validationAttempts": 0,
+    "stickyNotesAdded": 0
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "name": "Email Alert SMS Workflow",
+  "nodes": [
+    {
+      "id": "emailReadImap_1",
+      "type": "n8n-nodes-base.emailReadImap",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "format": "simple",
+        "mailbox": "INBOX",
+        "postProcessAction": "read",
+        "downloadAttachments": false,
+        "options": {
+          "allowUnauthorizedCerts": false,
+          "forceReconnect": true
+        }
+      },
+      "name": "Email Trigger",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "if_1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.from.address }}",
+              "rightValue": "jim@google.com",
+              "operator": {
+                "operation": "equals",
+                "type": "string"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "name": "Check Sender",
+      "typeVersion": 2.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "sms_1",
+      "type": "n8n-nodes-base.twilio",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "resource": "sms",
+        "operation": "send",
+        "from": "YOUR_TWILIO_PHONE_NUMBER",
+        "to": "YOUR_PHONE_NUMBER",
+        "message": "HELP!"
+      },
+      "name": "Send SMS Alert",
+      "typeVersion": 2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "sticky_triggers_1754846169603",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nMonitors INBOX for new emails and triggers the workflow when emails are received. Uses IMAP to continuously check for incoming messages.",
+        "height": 300,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_transforms_1754846169603",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nValidates that the incoming email is specifically from jim@google.com before proceeding. Filters out emails from other senders to ensure only the target sender triggers the SMS.",
+        "height": 300,
+        "width": 230,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754846169603",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        810,
+        160
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends an SMS message containing 'HELP!' to the configured phone number when an email from jim@google.com is detected. Provides immediate mobile notification of the email receipt.",
+        "height": 300,
+        "width": 230,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Email Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check Sender",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Sender": {
+      "main": [
+        [
+          {
+            "node": "Send SMS Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-10T17:16:09.997Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "when i get an email from jim@google.com, send me a sms with HELP!",
+    "testName": "Custom Test",
+    "generatedAt": "2025-08-10T17:16:09.997Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 3
+  }
+}

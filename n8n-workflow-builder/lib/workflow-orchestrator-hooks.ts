@@ -113,19 +113,86 @@ export class WorkflowOrchestratorHooks {
    */
   async updateTokenUsage(
     sessionId: string, 
-    tokensUsed: number
+    tokensUsed: number,
+    phase?: string,
+    method?: string
   ): Promise<void> {
-    if (!this.useSupabase) return;
+    if (!this.useSupabase) {
+      // Still track in memory for reporting
+      try {
+        const session = await sessionManager.loadSession(sessionId);
+        if (session?.state) {
+          // Initialize tokenUsage if not exists
+          if (!session.state.tokenUsage) {
+            session.state.tokenUsage = {
+              byPhase: {},
+              byCalls: [],
+              total: 0
+            };
+          }
+          
+          // Update phase totals
+          if (phase) {
+            session.state.tokenUsage.byPhase[phase] = 
+              (session.state.tokenUsage.byPhase[phase] || 0) + tokensUsed;
+          }
+          
+          // Add call detail
+          if (phase && method) {
+            session.state.tokenUsage.byCalls.push({
+              phase,
+              method,
+              tokens: tokensUsed,
+              timestamp: new Date().toISOString()
+            });
+          }
+          
+          // Update total
+          session.state.tokenUsage.total += tokensUsed;
+        }
+      } catch (error) {
+        this.logger.error('Failed to update in-memory token usage:', error);
+      }
+      return;
+    }
 
     try {
-      // Get current usage
-      const history = await sessionManager.getSessionHistory(sessionId);
-      const currentUsage = history.reduce((sum, op: any) => 
-        sum + (op.metadata?.tokensUsed || 0), 0
-      );
-
+      // Get current session state
+      const session = await sessionManager.loadSession(sessionId);
+      if (!session?.state) return;
+      
+      // Initialize tokenUsage if not exists
+      if (!session.state.tokenUsage) {
+        session.state.tokenUsage = {
+          byPhase: {},
+          byCalls: [],
+          total: 0
+        };
+      }
+      
+      // Update phase totals
+      if (phase) {
+        session.state.tokenUsage.byPhase[phase] = 
+          (session.state.tokenUsage.byPhase[phase] || 0) + tokensUsed;
+      }
+      
+      // Add call detail
+      if (phase && method) {
+        session.state.tokenUsage.byCalls.push({
+          phase,
+          method,
+          tokens: tokensUsed,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      // Update total
+      session.state.tokenUsage.total += tokensUsed;
+      
+      // Save updated state
       await sessionManager.updateMetadata(sessionId, {
-        claudeTokensUsed: currentUsage + tokensUsed
+        tokenUsage: session.state.tokenUsage,
+        claudeTokensUsed: session.state.tokenUsage.total
       });
     } catch (error) {
       this.logger.error('Failed to update token usage:', error);

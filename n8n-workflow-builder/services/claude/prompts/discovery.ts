@@ -65,7 +65,7 @@ These pre-configured tasks cover common workflow patterns:
 - ai_rate_limit_handling - AI API calls with rate limit handling
 
 ### Data Processing (4 tasks)
-- transform_data - Transform/modify data structure or format using JavaScript
+- transform_data - Transform data using JavaScript Code node (ONLY when standard nodes/expressions insufficient)
 - filter_data - Filter arrays/lists to keep only items matching conditions 
 - process_webhook_data - Process incoming webhook data with Code node
 - fault_tolerant_processing - Data processing that continues despite individual item failures
@@ -88,6 +88,23 @@ Before identifying capabilities, trace through:
 
 ## CRITICAL: Control Flow Nodes
 **IF, Switch, Merge nodes are NOT in the task list - add them to unmatched_capabilities when needed**
+
+## CRITICAL: Code Node (transform_data) - Use Only When Necessary
+
+### Use transform_data when:
+- Complex logic requiring 5+ standard nodes
+- Custom algorithms or business rules
+- Multi-condition validation
+- Batch operations with loops
+
+### DON'T use transform_data for:
+- Simple expressions: \`{{ $json.field.toLowerCase() }}\`
+- Basic math: \`{{ $json.price * 1.2 }}\`
+- HTTP requests → Use get_api_data/post_json_request
+- Filtering arrays → Use filter_data\`
+- Conditional routing → Use IF/Switch nodes
+
+**Always prefer standard nodes and expressions over Code nodes**
 
 ### Distinguish Filtering vs Branching
 

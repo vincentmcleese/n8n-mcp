@@ -39,6 +39,7 @@ Review the provided template configuration - it already handles the basic task p
 #### Step 2: Identify Customization Needs
 
 Compare the user's goal with the template:
+
 - What parameters need adjustment?
 - What values should be customized?
 - Are there missing features the user needs?
@@ -46,6 +47,7 @@ Compare the user's goal with the template:
 #### Step 3: Customize Parameters
 
 Modify the template based on:
+
 - User's specific data sources/destinations
 - Custom field mappings
 - Authentication requirements
@@ -82,6 +84,32 @@ search_node_properties(nodeType, "feature_name"); // Find additional properties
 - ❌ Over-customize beyond requirements
 - ❌ Change structure unless necessary
 
+### JSON Expression Rules
+
+**CRITICAL - All expressions must be valid JSON strings:**
+
+**Never use regex literals in expressions** - they break JSON parsing:
+
+- ❌ BAD: `"{{ $json.file.replace(/\.[^/.]+$/, '') }}"`
+- ✅ GOOD: `"{{ $json.file.split('.').slice(0, -1).join('.') }}"`
+- ✅ GOOD: `"{{ $json.file.substring(0, $json.file.lastIndexOf('.')) }}"`
+
+**Use string methods instead of regex:**
+
+- Remove extension: `.split('.').slice(0, -1).join('.')`
+- Replace spaces: `.replace(' ', '_')` (string literal, not regex)
+- Extract filename: `.split('/').pop()`
+- Simple conditionals: `condition ? value1 : value2`
+
+**Keep expressions simple:**
+
+- Direct field access: `{{ $json.field }}`
+- Simple defaults: `{{ $json.field || 'default' }}`
+- Basic methods: `{{ $json.field.toLowerCase() }}`
+- Simple math: `{{ $json.price * 1.2 }}`
+
+If more complex logic is needed, a Code node should have been selected during the discovery phase.
+
 ---
 
 ## Property Structure Guidelines
@@ -89,6 +117,7 @@ search_node_properties(nodeType, "feature_name"); // Find additional properties
 ### Template Structure Preservation
 
 The template already has correct property separation:
+
 1. **Node-level**: Properties like `onError`, `retryOnFail`, `notes`
 2. **Parameter-level**: Properties within `parameters` object
 
@@ -97,14 +126,17 @@ Maintain this structure when customizing.
 ### Common Customizations
 
 **Data Mappings**: Update field references
+
 - Template: `{{$json.genericField}}`
 - Customize to: `{{$json.userSpecificField}}`
 
 **Authentication**: Update credentials if specified
+
 - Template may have placeholder auth
 - Add user's specific auth method
 
 **Endpoints/Channels**: Update destinations
+
 - Template: Generic webhook path or channel
 - Customize to: User's specific endpoint
 
@@ -112,37 +144,39 @@ Maintain this structure when customizing.
 
 ## Required Output Format
 
-```json
+**IMPORTANT**: The response has been started with `{"operations":[`. You must continue this array with your configuration object.
+
+Your response should be:
+
+```
 {
-  "operations": [
-    {
-      "type": "configureNode",
-      "nodeId": "[NODE_ID]",
-      "config": {
-        "typeVersion": "[PRESERVE_FROM_TEMPLATE]", // Keep the template's typeVersion
-        "notes": "[Updated description of what this customized node achieves]",
-        // Preserve node-level properties from template
-        "parameters": {
-          // Customized parameter-level properties
-          // Start with template, modify as needed
-        }
-      }
+  "type": "configureNode",
+  "nodeId": "[NODE_ID]",
+
+  "config": {
+    "notes": "[Updated description of what this customized node achieves]",
+      "typeVersion": "1",
+    // Preserve node-level properties from template
+    "parameters": {
+      // Customized parameter-level properties
+      // Start with template, modify as needed
     }
-  ],
-  "reasoning": [
-    "How the template was customized for the user's goal",
-    "Specific parameters adjusted and why",
-    "Any features added beyond the template"
-  ]
-}
+  }
+}],
+"reasoning": [
+  "How the template was customized for the user's goal",
+  "Specific parameters adjusted and why",
+  "Any features added beyond the template"
+]}
 ```
 
 **Critical Requirements:**
 
+- **Continue the already-started JSON array** - do NOT start a new JSON structure
 - **MUST preserve `typeVersion` from template**
 - **MUST maintain template's property structure**
-- MUST include `operations` array
 - MUST have `type: "configureNode"`
 - MUST include exact `nodeId`
 - Customize values, not structure (unless necessary)
 - Include clear `reasoning` for customizations made
+- End with `]}` to properly close the array and object

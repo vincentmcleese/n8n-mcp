@@ -1,0 +1,264 @@
+{
+  "testName": "Custom Test",
+  "userPrompt": "Create workflow that stores data in PostgreSQL",
+  "sessionId": "complete_e2e_custom_test_1754916343549",
+  "timestamp": "2025-08-11T12:45:43.549Z",
+  "duration": 17721,
+  "success": false,
+  "phases": {
+    "discovery": {
+      "name": "Discovery",
+      "success": true,
+      "metrics": {
+        "startTime": 1754916343847,
+        "endTime": 1754916361100,
+        "duration": 17253,
+        "memoryUsage": {
+          "heapUsed": 816872,
+          "heapTotal": 34455552,
+          "external": 6266505
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-11T12:45:43.847Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting discovery phase"
+        },
+        {
+          "timestamp": "2025-08-11T12:45:43.847Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for discovery phase"
+        },
+        {
+          "timestamp": "2025-08-11T12:46:01.100Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-11T12:46:01.100Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [],
+      "sessionState": {
+        "sessionId": "complete_e2e_custom_test_1754916343549",
+        "createdAt": "2025-08-11T12:45:43.853Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "Create workflow that stores data in PostgreSQL",
+          "discovered": [],
+          "selected": [],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-11T12:46:00.457Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "prompt": "Create workflow that stores data in PostgreSQL"
+        },
+        "output": {
+          "nodes": []
+        },
+        "transformations": [
+          "Intent Analysis",
+          "Node Discovery",
+          "Selection"
+        ]
+      }
+    },
+    "configuration": {
+      "name": "Configuration",
+      "success": false,
+      "metrics": {
+        "startTime": 1754916361101,
+        "endTime": 1754916361270,
+        "duration": 169,
+        "memoryUsage": {
+          "heapUsed": 453792,
+          "heapTotal": 34455552,
+          "external": 6304025
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-11T12:46:01.101Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting configuration phase"
+        },
+        {
+          "timestamp": "2025-08-11T12:46:01.101Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for configuration phase"
+        },
+        {
+          "timestamp": "2025-08-11T12:46:01.270Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-11T12:46:01.270Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [],
+      "sessionState": {
+        "sessionId": "complete_e2e_custom_test_1754916343549",
+        "createdAt": "2025-08-11T12:45:43.853Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "Create workflow that stores data in PostgreSQL",
+          "discovered": [],
+          "selected": [],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-11T12:46:00.457Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "discoveredNodes": []
+        },
+        "output": {
+          "configuredNodes": []
+        },
+        "transformations": [
+          "Parameter Configuration",
+          "Validation",
+          "Type Checking"
+        ]
+      },
+      "stateDelta": {
+        "added": {},
+        "modified": {},
+        "removed": [],
+        "unchanged": [
+          "sessionId",
+          "createdAt",
+          "state"
+        ]
+      },
+      "errors": [
+        {
+          "type": "validation",
+          "message": "No nodes selected for configuration"
+        }
+      ]
+    },
+    "building": {
+      "name": "Building",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "validation": {
+      "name": "Validation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "documentation": {
+      "name": "Documentation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    }
+  },
+  "summary": {
+    "totalNodes": 0,
+    "totalConnections": 0,
+    "validationAttempts": 0,
+    "errorsFixed": 0,
+    "stickyNotesAdded": 0,
+    "performanceScore": 60,
+    "qualityScore": 105,
+    "completenessScore": 20
+  },
+  "optimizationSuggestions": [
+    "Consider optimizing discovery phase (took 17253ms)"
+  ],
+  "errorPatterns": [
+    {
+      "pattern": "validation",
+      "frequency": 1,
+      "suggestedFix": "Review error details and adjust workflow accordingly"
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "name": "Send Hello Slack Message",
+  "nodes": [
+    {
+      "id": "manualTrigger_1",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {},
+      "name": "Manual Trigger",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "text": "Hello!",
+        "channelId": "#general",
+        "resource": "message",
+        "operation": "post",
+        "select": "channel"
+      },
+      "name": "Send Hello Message",
+      "typeVersion": 2.3,
+      "onError": "continueRegularOutput",
+      "maxTries": 2
+    },
+    {
+      "id": "sticky_triggers_1754850342361",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nManual trigger to start the workflow execution. This allows the user to manually initiate sending the hello message to Slack.",
+        "height": 300,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_outputs_1754850342361",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        160
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends a hello message to the configured Slack channel. The message text is set to 'Hello!' and will be posted to the specified channel.",
+        "height": 300,
+        "width": 230,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send Hello Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-10T18:25:42.898Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "send a slack message saying hello",
+    "testName": "Custom Test",
+    "generatedAt": "2025-08-10T18:25:42.898Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 5,
+    "stickyNotesAdded": 2
+  }
+}

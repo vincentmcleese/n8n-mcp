@@ -27,6 +27,8 @@ export interface TokenUsage {
   promptTokens: number;
   completionTokens: number;
   totalTokens: number;
+  wasTruncated?: boolean;
+  usagePercentage?: number;
 }
 
 /**

@@ -1,0 +1,443 @@
+{
+  "name": "Conference Attendee LinkedIn Scraper & PDF Target List Generator",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "conference-scraper",
+        "httpMethod": "POST",
+        "responseMode": "responseNode"
+      },
+      "name": "Conference Trigger",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.attendee_list_url }}",
+        "options": {
+          "timeout": 30000,
+          "retry": {
+            "enabled": true,
+            "maxTries": 3
+          }
+        }
+      },
+      "name": "Scrape Attendee List",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "htmlExtract_1",
+      "type": "n8n-nodes-base.htmlExtract",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "extractionValues": {
+          "values": [
+            {
+              "key": "attendees",
+              "cssSelector": ".attendee-name, .participant-name, [class*='name']",
+              "returnArray": true
+            }
+          ]
+        }
+      },
+      "name": "Extract Attendee Names",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "itemLists_1",
+      "type": "n8n-nodes-base.itemLists",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "operation": "splitOutItems",
+        "fieldToSplitOut": "attendees",
+        "include": "noOtherFields"
+      },
+      "name": "Split Attendee List",
+      "typeVersion": 3.1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1450,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Clean and format attendee names for LinkedIn search\nconst rawName = $input.item.json.attendees || '';\n\n// Remove titles, company info, and clean the name\nconst cleanName = rawName\n  .replace(/\\b(Dr|Mr|Ms|Mrs|Prof|CEO|CTO|VP|Director)\\b\\.?/gi, '')\n  .replace(/\\s*\\([^)]*\\)\\s*/g, '') // Remove parentheses content\n  .replace(/\\s*,.*$/g, '') // Remove everything after comma\n  .replace(/\\s+/g, ' ') // Normalize spaces\n  .trim();\n\n// Split into first and last name\nconst nameParts = cleanName.split(' ');\nconst firstName = nameParts[0] || '';\nconst lastName = nameParts.slice(1).join(' ') || '';\n\nreturn {\n  fullName: cleanName,\n  firstName: firstName,\n  lastName: lastName,\n  searchQuery: `${firstName} ${lastName}`.trim()\n};"
+      },
+      "name": "Clean & Format Names",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "httpRequest_2",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1750,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.linkedin.com/pub/dir/+/+",
+        "options": {
+          "timeout": 15000,
+          "retry": {
+            "enabled": true,
+            "maxTries": 2
+          },
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "first",
+                "value": "={{ $json.firstName }}"
+              },
+              {
+                "name": "last",
+                "value": "={{ $json.lastName }}"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Search LinkedIn Profile",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "code_2",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        2050,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Generate personalized intro notes based on available data\nconst name = $input.item.json.fullName || 'Unknown';\nconst linkedinData = $input.item.json.body || '';\n\n// Extract basic info from LinkedIn search results\nlet title = '';\nlet company = '';\nlet location = '';\n\n// Simple regex patterns to extract info\nconst titleMatch = linkedinData.match(/<span[^>]*class=\"[^\"]*title[^\"]*\"[^>]*>([^<]+)</i);\nconst companyMatch = linkedinData.match(/<span[^>]*class=\"[^\"]*company[^\"]*\"[^>]*>([^<]+)</i);\nconst locationMatch = linkedinData.match(/<span[^>]*class=\"[^\"]*location[^\"]*\"[^>]*>([^<]+)</i);\n\nif (titleMatch) title = titleMatch[1].trim();\nif (companyMatch) company = companyMatch[1].trim();\nif (locationMatch) location = locationMatch[1].trim();\n\n// Generate conversation starters\nconst introNotes = [];\n\nif (title) {\n  introNotes.push(`Ask about their role as ${title}`);\n}\n\nif (company) {\n  introNotes.push(`Discuss trends in ${company}'s industry`);\n}\n\nif (location) {\n  introNotes.push(`Mention connection to ${location}`);\n}\n\n// Add generic conversation starters\nintroNotes.push('Ask about their conference expectations');\nintroNotes.push('Discuss industry challenges and opportunities');\nintroNotes.push('Share relevant experience or insights');\n\nreturn {\n  name: name,\n  title: title || 'Title not found',\n  company: company || 'Company not found',\n  location: location || 'Location not found',\n  introNotes: introNotes.slice(0, 3), // Limit to top 3 notes\n  profileFound: !!(title || company)\n};"
+      },
+      "name": "Generate Intro Notes",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "aggregate_1",
+      "type": "n8n-nodes-base.aggregate",
+      "position": [
+        2350,
+        300
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "name": "Collect All Profiles",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "apiTemplateIo_1",
+      "type": "n8n-nodes-base.apiTemplateIo",
+      "position": [
+        2650,
+        300
+      ],
+      "parameters": {
+        "resource": "pdf",
+        "operation": "create",
+        "pdfTemplateId": "conference-target-list-template",
+        "templateData": "={{ JSON.stringify({ attendees: $json, conference_date: new Date().toLocaleDateString(), generated_date: new Date().toISOString() }) }}",
+        "options": {
+          "fileName": "Conference_Target_List_{{ new Date().toISOString().split('T')[0] }}.pdf"
+        }
+      },
+      "name": "Generate PDF Target List",
+      "typeVersion": 1,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "respondToWebhook_1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        2950,
+        300
+      ],
+      "parameters": {
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        },
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"pdf_url\": $json.download_url, \"attendee_count\": $('Collect All Profiles').item.json.length, \"message\": \"Conference target list generated successfully\" } }}"
+      },
+      "name": "Return PDF Response",
+      "typeVersion": 1.4,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "sticky_triggers_1754978386793",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -30
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook trigger that accepts conference attendee list URL and initiates the scraping workflow. Expects POST request with attendee_list_url parameter.",
+        "height": 510,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754978386793",
+      "name": "Inputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        890,
+        -30
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nScrapes the conference attendee list from the provided URL and extracts attendee names using HTML parsing. Handles various HTML structures for attendee listings.",
+        "height": 510,
+        "width": 610,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754978386793",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        -30
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nProcesses the extracted attendee list by splitting into individual items, cleaning names, and formatting them for LinkedIn searches. Removes titles and company info to get clean names.\n\nAnalyzes LinkedIn search results and generates personalized intro notes for each attendee. Creates conversation starters based on their title, company, and location.",
+        "height": 510,
+        "width": 1210,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_integration_1754978386793",
+      "name": "Integration Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2910,
+        -30
+      ],
+      "parameters": {
+        "content": "## 🔗 Integration\nSearches LinkedIn for each attendee's profile using their cleaned name data. Attempts to find professional information and profile details.\n\nGenerates a custom PDF target list using the API Template service with all attendee profiles and intro notes formatted for conference networking.",
+        "height": 510,
+        "width": 1210,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_aggregation_1754978386793",
+      "name": "Aggregation Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4220,
+        -30
+      ],
+      "parameters": {
+        "content": "## 🔄 Aggregation\nCollects all processed attendee profiles with their intro notes into a single dataset for PDF generation.",
+        "height": 510,
+        "width": 310,
+        "color": 2
+      }
+    },
+    {
+      "id": "sticky_outputs_1754978386793",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4630,
+        -30
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nReturns the generated PDF download URL and success status to the webhook caller, completing the workflow execution.",
+        "height": 510,
+        "width": 310,
+        "color": 7
+      }
+    },
+    {
+      "id": "sticky_promo_1754978386793",
+      "name": "Ghost Team Promo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -30
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 510,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Conference Trigger": {
+      "main": [
+        [
+          {
+            "node": "Scrape Attendee List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Attendee List": {
+      "main": [
+        [
+          {
+            "node": "Extract Attendee Names",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Attendee Names": {
+      "main": [
+        [
+          {
+            "node": "Split Attendee List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Attendee List": {
+      "main": [
+        [
+          {
+            "node": "Clean & Format Names",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean & Format Names": {
+      "main": [
+        [
+          {
+            "node": "Search LinkedIn Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search LinkedIn Profile": {
+      "main": [
+        [
+          {
+            "node": "Generate Intro Notes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Intro Notes": {
+      "main": [
+        [
+          {
+            "node": "Collect All Profiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect All Profiles": {
+      "main": [
+        [
+          {
+            "node": "Generate PDF Target List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate PDF Target List": {
+      "main": [
+        [
+          {
+            "node": "Return PDF Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T05:59:47.172Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "“Before a conference, scrape the attendee list, match LinkedIn profiles, and create a custom PDF ‘target list’ with intro notes for each person.”",
+    "testName": "User Test",
+    "generatedAt": "2025-08-12T05:59:47.172Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 2,
+    "stickyNotesAdded": 7
+  }
+}

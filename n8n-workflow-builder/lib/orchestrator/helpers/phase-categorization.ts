@@ -24,11 +24,41 @@ export const PHASE_DEFINITIONS = {
     description: "Processing & routing",
     color: 4, // Green
   },
+  decision: {
+    icon: "🔀",
+    name: "Decision",
+    description: "Routing & conditional logic",
+    color: 3, // Purple/Violet
+  },
+  aggregation: {
+    icon: "🔄",
+    name: "Aggregation",
+    description: "Combining data streams",
+    color: 2, // Cyan
+  },
+  storage: {
+    icon: "💾",
+    name: "Storage",
+    description: "Save & persist data",
+    color: 8, // Pink
+  },
+  integration: {
+    icon: "🔗",
+    name: "Integration",
+    description: "External system updates",
+    color: 6, // Yellow
+  },
   outputs: {
     icon: "🚀",
     name: "Outputs",
     description: "Actions & destinations",
     color: 7, // Orange
+  },
+  finalization: {
+    icon: "✅",
+    name: "Finalization",
+    description: "Post-output processing",
+    color: 1, // Gray
   },
 } as const;
 
@@ -41,7 +71,8 @@ export const LAYOUT_CONFIG = {
   spacing: {
     horizontal: 220, // Between nodes horizontally
     vertical: 180, // Between rows vertically
-    stickyPadding: 40, // Space around sticky edges
+    stickyPadding: 80, // Space around sticky edges - increased for better padding
+    stickyTopSpacing: 250, // Space above workflow nodes for sticky note descriptions
     phaseGap: 100, // Gap between phase sections
     gridSnap: 20, // Grid alignment
   },
@@ -60,16 +91,29 @@ const TRANSFORM_NODE_TYPES = [
   "function",
   "set",
   "itemLists",
-  "if",
-  "switch",
   "filter",
-  "router",
-  "merge",
-  "aggregate",
   "splitInBatches",
   "loop",
   "executeWorkflow",
   "wait",
+];
+
+/**
+ * Decision node types for routing and conditional logic
+ */
+const DECISION_NODE_TYPES = [
+  "if",
+  "switch",
+  "router",
+];
+
+/**
+ * Aggregation node types for combining data streams
+ */
+const AGGREGATION_NODE_TYPES = [
+  "merge",
+  "aggregate",
+  "combine",
 ];
 
 /**
@@ -86,6 +130,11 @@ export function categorizeNode(node: {
       case "input": return "inputs";
       case "output": return "outputs";
       case "transform": return "transforms";
+      case "decision": return "decision";
+      case "aggregation": return "aggregation";
+      case "storage": return "storage";
+      case "integration": return "integration";
+      case "finalization": return "finalization";
       default: 
         // Log unexpected category but don't fail
         console.warn(`Unexpected node category: ${node.category} for node type ${node.type}`);
@@ -94,6 +143,15 @@ export function categorizeNode(node: {
 
   // Fallback: Special case handling based on node type
   const nodeTypeBase = node.type.split(".").pop() || "";
+  
+  if (DECISION_NODE_TYPES.includes(nodeTypeBase)) {
+    return "decision";
+  }
+  
+  if (AGGREGATION_NODE_TYPES.includes(nodeTypeBase)) {
+    return "aggregation";
+  }
+  
   if (TRANSFORM_NODE_TYPES.includes(nodeTypeBase)) {
     return "transforms";
   }
@@ -109,7 +167,12 @@ export interface PhaseGroups {
   triggers: string[];
   inputs: string[];
   transforms: string[];
+  decision: string[];
+  aggregation: string[];
+  storage: string[];
+  integration: string[];
   outputs: string[];
+  finalization: string[];
 }
 
 /**
@@ -122,7 +185,12 @@ export function detectActivePhases(
     triggers: [],
     inputs: [],
     transforms: [],
+    decision: [],
+    aggregation: [],
+    storage: [],
+    integration: [],
     outputs: [],
+    finalization: [],
   };
 
   // Categorize each node
@@ -150,7 +218,7 @@ export function calculateUnifiedHeight(
     // Get positions for nodes in this phase
     const nodePositions = nodeIds
       .map((id: string) => nodeMap.get(id)?.position)
-      .filter((pos): pos is [number, number] => pos !== undefined);
+      .filter((pos: any): pos is [number, number] => pos !== undefined);
 
     if (nodePositions.length > 0) {
       const yPositions = nodePositions.map((pos: [number, number]) => pos[1]);
@@ -161,17 +229,16 @@ export function calculateUnifiedHeight(
       // Add padding both above and below the nodes
       const span = maxY - minY + LAYOUT_CONFIG.dimensions.nodeHeight;
       
-      // Add top padding (above the nodes) and bottom padding (below the nodes)
-      // Plus extra space for the sticky note header (title area)
-      const stickyHeaderSpace = 100; // Space for the sticky note title
-      const totalHeight = stickyHeaderSpace + LAYOUT_CONFIG.spacing.stickyPadding + span + LAYOUT_CONFIG.spacing.stickyPadding;
+      // Height should cover from the top position (with space for description) to below the nodes
+      // Include the top spacing for descriptions, padding, and the node span
+      const totalHeight = LAYOUT_CONFIG.spacing.stickyTopSpacing + LAYOUT_CONFIG.spacing.stickyPadding + span + LAYOUT_CONFIG.spacing.stickyPadding;
       
       phaseHeights.push(totalHeight);
     }
   }
 
-  // Use maximum height across all phases, ensuring minimum height
-  return Math.max(...phaseHeights, LAYOUT_CONFIG.dimensions.minStickyHeight + 100);
+  // Use maximum height across all phases, ensuring minimum height includes space for descriptions
+  return Math.max(...phaseHeights, LAYOUT_CONFIG.dimensions.minStickyHeight + LAYOUT_CONFIG.spacing.stickyTopSpacing);
 }
 
 /**
@@ -230,7 +297,7 @@ export function generateLayoutHints(
 
     const yPositions = nodeIds
       .map((id: string) => nodeMap.get(id)?.position[1])
-      .filter((y): y is number => y !== undefined);
+      .filter((y: any): y is number => y !== undefined);
 
     if (yPositions.length > 1) {
       const yRange = Math.max(...yPositions) - Math.min(...yPositions);

@@ -1,0 +1,2371 @@
+{
+  "testName": "User Test",
+  "userPrompt": "Create a workflow that monitors a Google Drive folder for new images, uses AI vision to analyze and tag them, generates SEO-optimized descriptions with GPT-4, automatically resizes images for web/mobile, uploads to AWS S3, updates a database with metadata, and posts to social media with custom captions based on the content detected.",
+  "sessionId": "complete_e2e_user_test_1754930814900",
+  "timestamp": "2025-08-11T16:46:54.901Z",
+  "duration": 42733,
+  "success": false,
+  "phases": {
+    "discovery": {
+      "name": "Discovery",
+      "success": true,
+      "metrics": {
+        "startTime": 1754930815454,
+        "endTime": 1754930837272,
+        "duration": 21818,
+        "memoryUsage": {
+          "heapUsed": -5531904,
+          "heapTotal": 31391744,
+          "external": 6354861
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-11T16:46:55.454Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting discovery phase"
+        },
+        {
+          "timestamp": "2025-08-11T16:46:55.454Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for discovery phase"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.311Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.311Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"chat_with_ai\"}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.312Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.312Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"insert_postgres_data\"}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.503Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.509Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.511Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: search_nodes"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.511Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"query\":\"google\",\"limit\":20}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.511Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: search_nodes"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.511Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"query\":\"image\",\"limit\":20}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.511Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: search_nodes"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.511Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"query\":\"aws\",\"limit\":20}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.511Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: search_nodes"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.511Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"query\":\"social\",\"limit\":20}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.653Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool search_nodes completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.665Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool search_nodes completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.721Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool search_nodes completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:09.737Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool search_nodes completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.203Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.openAi (Send a message to an AI model and get response)"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.203Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.postgres (Insert data into PostgreSQL table)"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.204Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.editImage (Resize images for web and mobile optimization)"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.204Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.googleDrive (Monitor Google Drive folder for new image files)"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.204Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.twitter (Post to social media with custom captions)"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.204Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.s3 (Upload resized images to AWS S3 storage)"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.272Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.272Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "task_node_1",
+          "type": "nodes-base.openAi",
+          "purpose": "Send a message to an AI model and get response"
+        },
+        {
+          "id": "task_node_2",
+          "type": "nodes-base.postgres",
+          "purpose": "Insert data into PostgreSQL table"
+        },
+        {
+          "id": "search_node_1",
+          "type": "nodes-base.editImage",
+          "purpose": "Resize images for web and mobile optimization"
+        },
+        {
+          "id": "search_node_2",
+          "type": "nodes-base.googleDrive",
+          "purpose": "Monitor Google Drive folder for new image files"
+        },
+        {
+          "id": "search_node_3",
+          "type": "nodes-base.twitter",
+          "purpose": "Post to social media with custom captions"
+        },
+        {
+          "id": "search_node_4",
+          "type": "nodes-base.s3",
+          "purpose": "Upload resized images to AWS S3 storage"
+        }
+      ],
+      "sessionState": {
+        "sessionId": "complete_e2e_user_test_1754930814900",
+        "createdAt": "2025-08-11T16:46:55.443Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "Create a workflow that monitors a Google Drive folder for new images, uses AI vision to analyze and tag them, generates SEO-optimized descriptions with GPT-4, automatically resizes images for web/mobile, uploads to AWS S3, updates a database with metadata, and posts to social media with custom captions based on the content detected.",
+          "discovered": [
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.openAi",
+              "config": {
+                "modelId": "gpt-3.5-turbo",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "messages": {
+                  "values": [
+                    {
+                      "role": "user",
+                      "content": ""
+                    }
+                  ]
+                },
+                "resource": "chat",
+                "operation": "message",
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 5000
+              },
+              "purpose": "Send a message to an AI model and get response",
+              "displayName": "chat with ai",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_2",
+              "type": "nodes-base.postgres",
+              "config": {
+                "table": "",
+                "columns": "",
+                "onError": "stopWorkflow",
+                "maxTries": 2,
+                "operation": "insert",
+                "retryOnFail": true,
+                "returnFields": "*",
+                "waitBetweenTries": 1000
+              },
+              "purpose": "Insert data into PostgreSQL table",
+              "displayName": "insert postgres data",
+              "isPreConfigured": true
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.editImage",
+              "purpose": "Resize images for web and mobile optimization"
+            },
+            {
+              "id": "search_node_2",
+              "type": "nodes-base.googleDrive",
+              "purpose": "Monitor Google Drive folder for new image files"
+            },
+            {
+              "id": "search_node_3",
+              "type": "nodes-base.twitter",
+              "purpose": "Post to social media with custom captions"
+            },
+            {
+              "id": "search_node_4",
+              "type": "nodes-base.s3",
+              "purpose": "Upload resized images to AWS S3 storage"
+            }
+          ],
+          "selected": [
+            "task_node_1",
+            "task_node_2",
+            "search_node_1",
+            "search_node_2",
+            "search_node_3",
+            "search_node_4"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "task_node_1",
+                "type": "nodes-base.openAi",
+                "config": {
+                  "modelId": "gpt-3.5-turbo",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 3,
+                  "messages": {
+                    "values": [
+                      {
+                        "role": "user",
+                        "content": ""
+                      }
+                    ]
+                  },
+                  "resource": "chat",
+                  "operation": "message",
+                  "retryOnFail": true,
+                  "alwaysOutputData": true,
+                  "waitBetweenTries": 5000
+                },
+                "purpose": "Send a message to an AI model and get response",
+                "displayName": "chat with ai",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_1",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "node": {
+                "id": "task_node_2",
+                "type": "nodes-base.postgres",
+                "config": {
+                  "table": "",
+                  "columns": "",
+                  "onError": "stopWorkflow",
+                  "maxTries": 2,
+                  "operation": "insert",
+                  "retryOnFail": true,
+                  "returnFields": "*",
+                  "waitBetweenTries": 1000
+                },
+                "purpose": "Insert data into PostgreSQL table",
+                "displayName": "insert postgres data",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_2",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "node": {
+                "id": "search_node_1",
+                "type": "nodes-base.editImage",
+                "purpose": "Resize images for web and mobile optimization"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_1",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "node": {
+                "id": "search_node_2",
+                "type": "nodes-base.googleDrive",
+                "purpose": "Monitor Google Drive folder for new image files"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_2",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "node": {
+                "id": "search_node_3",
+                "type": "nodes-base.twitter",
+                "purpose": "Post to social media with custom captions"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_3",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "node": {
+                "id": "search_node_4",
+                "type": "nodes-base.s3",
+                "purpose": "Upload resized images to AWS S3 storage"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T16:47:16.570Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_4",
+              "timestamp": "2025-08-11T16:47:16.570Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-11T16:47:16.570Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "prompt": "Create a workflow that monitors a Google Drive folder for new images, uses AI vision to analyze and tag them, generates SEO-optimized descriptions with GPT-4, automatically resizes images for web/mobile, uploads to AWS S3, updates a database with metadata, and posts to social media with custom captions based on the content detected."
+        },
+        "output": {
+          "nodes": [
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.openAi",
+              "displayName": "chat with ai",
+              "purpose": "Send a message to an AI model and get response",
+              "isPreConfigured": true,
+              "config": {
+                "resource": "chat",
+                "operation": "message",
+                "modelId": "gpt-3.5-turbo",
+                "messages": {
+                  "values": [
+                    {
+                      "role": "user",
+                      "content": ""
+                    }
+                  ]
+                },
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 3,
+                "waitBetweenTries": 5000,
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "task_node_2",
+              "type": "nodes-base.postgres",
+              "displayName": "insert postgres data",
+              "purpose": "Insert data into PostgreSQL table",
+              "isPreConfigured": true,
+              "config": {
+                "operation": "insert",
+                "table": "",
+                "columns": "",
+                "returnFields": "*",
+                "onError": "stopWorkflow",
+                "retryOnFail": true,
+                "maxTries": 2,
+                "waitBetweenTries": 1000
+              }
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.editImage",
+              "displayName": "nodes-base.editImage",
+              "purpose": "Resize images for web and mobile optimization",
+              "needsConfiguration": true
+            },
+            {
+              "id": "search_node_2",
+              "type": "nodes-base.googleDrive",
+              "displayName": "nodes-base.googleDrive",
+              "purpose": "Monitor Google Drive folder for new image files",
+              "needsConfiguration": true
+            },
+            {
+              "id": "search_node_3",
+              "type": "nodes-base.twitter",
+              "displayName": "nodes-base.twitter",
+              "purpose": "Post to social media with custom captions",
+              "needsConfiguration": true
+            },
+            {
+              "id": "search_node_4",
+              "type": "nodes-base.s3",
+              "displayName": "nodes-base.s3",
+              "purpose": "Upload resized images to AWS S3 storage",
+              "needsConfiguration": true
+            }
+          ]
+        },
+        "transformations": [
+          "Intent Analysis",
+          "Node Discovery",
+          "Selection"
+        ]
+      }
+    },
+    "configuration": {
+      "name": "Configuration",
+      "success": false,
+      "metrics": {
+        "startTime": 1754930837272,
+        "endTime": 1754930857633,
+        "duration": 20361,
+        "memoryUsage": {
+          "heapUsed": 2916976,
+          "heapTotal": 35061760,
+          "external": 6862127
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-11T16:47:17.272Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting configuration phase"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.273Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for configuration phase"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.377Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_essentials"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.377Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.openAi\"}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.377Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_essentials"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.377Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.postgres\"}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.377Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_essentials"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.377Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.editImage\"}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.377Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_essentials"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.377Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.googleDrive\"}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.377Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_essentials"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.377Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.twitter\"}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.377Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_essentials"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.377Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.s3\"}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.602Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_essentials completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.603Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_essentials completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.617Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_essentials completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.620Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_essentials completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.650Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_essentials completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:17.681Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_essentials completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:23.771Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:23.772Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.editImage\",\"config\":{\"operation\":\"multiStep\",\"dataPropertyName\":\"data\",\"operations\":{\"operations\":[{\"operation\":\"resize\",\"width\":1920,\"height\":1080,\"resizeOption\":\"maximumArea\",\"format\":\"jpeg\",\"quality\":85},{\"operation\":\"resize\",\"width\":800,\"height\":600,\"resizeOption\":\"maximumArea\",\"format\":\"jpeg\",\"quality\":80},{\"operation\":\"resize\",\"width\":400,\"height\":300,\"resizeOption\":\"maximumArea\",\"format\":\"jpeg\",\"quality\":75}]}}}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:23.985Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:24.613Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:24.613Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.postgres\",\"config\":{\"table\":\"image_metadata\",\"columns\":\"filename, original_path, s3_url, file_size, dimensions, ai_tags, seo_description, upload_timestamp, content_analysis, social_media_posted\",\"operation\":\"insert\",\"returnFields\":\"*\"}}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:24.821Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:24.821Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:24.821Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.postgres\",\"config\":{\"table\":\"image_metadata\",\"columns\":\"filename, original_path, s3_url, file_size, dimensions, ai_tags, seo_description, upload_timestamp, content_analysis, social_media_posted\",\"operation\":\"insert\",\"returnFields\":\"*\",\"schema\":\"public\"}}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:25.022Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:28.901Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:28.901Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.openAi\",\"config\":{\"modelId\":\"gpt-4\",\"messages\":{\"values\":[{\"role\":\"system\",\"content\":\"You are an expert SEO content writer specializing in image descriptions for social media and web content. Create engaging, SEO-optimized descriptions that incorporate detected visual elements and tags.\"},{\"role\":\"user\",\"content\":\"Based on this image analysis data: {{$json.visionAnalysis}} and detected tags: {{$json.detectedTags}}, create an SEO-optimized description for social media posting. The description should be engaging, include relevant hashtags, and be optimized for discovery. Keep it under 280 characters for Twitter compatibility but also provide a longer version for other platforms. Format as JSON with 'short' and 'long' versions.\"}]},\"resource\":\"chat\",\"operation\":\"message\"}}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:29.188Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:30.387Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:30.388Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.twitter\",\"config\":{\"resource\":\"tweet\",\"operation\":\"create\",\"text\":\"={{ $json.seoDescription }}\"}}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:30.540Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:31.503Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_minimal"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:31.503Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.googleDrive\",\"config\":{\"resource\":\"fileFolder\",\"operation\":\"search\",\"driveId\":{\"mode\":\"list\",\"value\":\"root\"},\"folderId\":{\"mode\":\"list\",\"value\":\"\"},\"queryFilters\":{\"name\":\"\",\"parents\":\"\",\"mimeType\":\"image/jpeg,image/png,image/gif,image/webp,image/bmp,image/tiff\"},\"limit\":50,\"returnAll\":false}}"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:31.685Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_minimal completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:37.528Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.openAi (Send a message to an AI model and get response)"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:37.528Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.postgres (Insert data into PostgreSQL table)"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:37.528Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.editImage (Resize images for web and mobile optimization)"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:37.528Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.googleDrive (Monitor Google Drive folder for new image files)"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:37.528Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.twitter (Post to social media with custom captions)"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:37.528Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.s3 (Upload resized images to AWS S3 storage)"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:37.528Z",
+          "level": "WARN",
+          "source": "Orchestrator",
+          "message": "Node search_node_4: Failed to generate configuration for nodes-base.s3"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:37.633Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-11T16:47:37.633Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "task_node_1",
+          "type": "nodes-base.openAi",
+          "purpose": "Send a message to an AI model and get response",
+          "configuration": {
+            "onError": "continueRegularOutput",
+            "maxTries": 3,
+            "retryOnFail": true,
+            "alwaysOutputData": true,
+            "waitBetweenTries": 5000,
+            "typeVersion": 1,
+            "notes": "Generate SEO-optimized descriptions for images using GPT-4 based on AI vision analysis and detected content tags",
+            "parameters": {
+              "modelId": "gpt-4",
+              "messages": {
+                "values": [
+                  {
+                    "role": "system",
+                    "content": "You are an expert SEO content writer specializing in image descriptions for social media and web content. Create engaging, SEO-optimized descriptions that incorporate detected visual elements and tags."
+                  },
+                  {
+                    "role": "user",
+                    "content": "Based on this image analysis data: {{$json.visionAnalysis}} and detected tags: {{$json.detectedTags}}, create an SEO-optimized description for social media posting. The description should be engaging, include relevant hashtags, and be optimized for discovery. Keep it under 280 characters for Twitter compatibility but also provide a longer version for other platforms. Format as JSON with 'short' and 'long' versions."
+                  }
+                ]
+              },
+              "resource": "chat",
+              "operation": "message"
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "task_node_2",
+          "type": "nodes-base.postgres",
+          "purpose": "Insert data into PostgreSQL table",
+          "configuration": {
+            "onError": "stopWorkflow",
+            "maxTries": 2,
+            "retryOnFail": true,
+            "waitBetweenTries": 1000,
+            "parameters": {
+              "table": "image_metadata",
+              "columns": "filename, original_path, s3_url, file_size, dimensions, ai_tags, seo_description, upload_timestamp, content_analysis, social_media_posted",
+              "operation": "insert",
+              "returnFields": "*",
+              "schema": "public"
+            },
+            "notes": "Insert processed image metadata into PostgreSQL database including AI analysis results, S3 URLs, and social media posting status"
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "search_node_1",
+          "type": "nodes-base.editImage",
+          "purpose": "Resize images for web and mobile optimization",
+          "configuration": {
+            "typeVersion": "1",
+            "notes": "Resizes images for web and mobile optimization with multiple output sizes",
+            "parameters": {
+              "operation": "multiStep",
+              "dataPropertyName": "data",
+              "operations": {
+                "operations": [
+                  {
+                    "operation": "resize",
+                    "width": 1920,
+                    "height": 1080,
+                    "resizeOption": "maximumArea",
+                    "format": "jpeg",
+                    "quality": 85
+                  },
+                  {
+                    "operation": "resize",
+                    "width": 800,
+                    "height": 600,
+                    "resizeOption": "maximumArea",
+                    "format": "jpeg",
+                    "quality": 80
+                  },
+                  {
+                    "operation": "resize",
+                    "width": 400,
+                    "height": 300,
+                    "resizeOption": "maximumArea",
+                    "format": "jpeg",
+                    "quality": 75
+                  }
+                ]
+              }
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "search_node_2",
+          "type": "nodes-base.googleDrive",
+          "purpose": "Monitor Google Drive folder for new image files",
+          "configuration": {
+            "typeVersion": "3",
+            "notes": "Monitors Google Drive folder for new image files to trigger the automated image processing workflow",
+            "parameters": {
+              "resource": "fileFolder",
+              "operation": "search",
+              "driveId": {
+                "mode": "list",
+                "value": "root"
+              },
+              "folderId": {
+                "mode": "list",
+                "value": ""
+              },
+              "queryFilters": {
+                "name": "",
+                "parents": "",
+                "mimeType": "image/jpeg,image/png,image/gif,image/webp,image/bmp,image/tiff"
+              },
+              "limit": 50,
+              "returnAll": false
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "search_node_3",
+          "type": "nodes-base.twitter",
+          "purpose": "Post to social media with custom captions",
+          "configuration": {
+            "typeVersion": "2",
+            "notes": "Posts to X (Twitter) with custom captions generated from AI image analysis",
+            "parameters": {
+              "resource": "tweet",
+              "operation": "create",
+              "text": "={{ $json.seoDescription }}"
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "search_node_4",
+          "type": "nodes-base.s3",
+          "purpose": "Upload resized images to AWS S3 storage",
+          "configuration": {},
+          "validationStatus": "invalid",
+          "validationErrors": [
+            "Failed to generate configuration for nodes-base.s3"
+          ]
+        }
+      ],
+      "sessionState": {
+        "sessionId": "complete_e2e_user_test_1754930814900",
+        "createdAt": "2025-08-11T16:46:55.443Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "Create a workflow that monitors a Google Drive folder for new images, uses AI vision to analyze and tag them, generates SEO-optimized descriptions with GPT-4, automatically resizes images for web/mobile, uploads to AWS S3, updates a database with metadata, and posts to social media with custom captions based on the content detected.",
+          "discovered": [
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.openAi",
+              "config": {
+                "modelId": "gpt-3.5-turbo",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "messages": {
+                  "values": [
+                    {
+                      "role": "user",
+                      "content": ""
+                    }
+                  ]
+                },
+                "resource": "chat",
+                "operation": "message",
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 5000
+              },
+              "purpose": "Send a message to an AI model and get response",
+              "displayName": "chat with ai",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_2",
+              "type": "nodes-base.postgres",
+              "config": {
+                "table": "",
+                "columns": "",
+                "onError": "stopWorkflow",
+                "maxTries": 2,
+                "operation": "insert",
+                "retryOnFail": true,
+                "returnFields": "*",
+                "waitBetweenTries": 1000
+              },
+              "purpose": "Insert data into PostgreSQL table",
+              "displayName": "insert postgres data",
+              "isPreConfigured": true
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.editImage",
+              "purpose": "Resize images for web and mobile optimization"
+            },
+            {
+              "id": "search_node_2",
+              "type": "nodes-base.googleDrive",
+              "purpose": "Monitor Google Drive folder for new image files"
+            },
+            {
+              "id": "search_node_3",
+              "type": "nodes-base.twitter",
+              "purpose": "Post to social media with custom captions"
+            },
+            {
+              "id": "search_node_4",
+              "type": "nodes-base.s3",
+              "purpose": "Upload resized images to AWS S3 storage"
+            }
+          ],
+          "selected": [
+            "task_node_1",
+            "task_node_2",
+            "search_node_1",
+            "search_node_2",
+            "search_node_3",
+            "search_node_4"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "task_node_1",
+                "type": "nodes-base.openAi",
+                "config": {
+                  "modelId": "gpt-3.5-turbo",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 3,
+                  "messages": {
+                    "values": [
+                      {
+                        "role": "user",
+                        "content": ""
+                      }
+                    ]
+                  },
+                  "resource": "chat",
+                  "operation": "message",
+                  "retryOnFail": true,
+                  "alwaysOutputData": true,
+                  "waitBetweenTries": 5000
+                },
+                "purpose": "Send a message to an AI model and get response",
+                "displayName": "chat with ai",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_1",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "node": {
+                "id": "task_node_2",
+                "type": "nodes-base.postgres",
+                "config": {
+                  "table": "",
+                  "columns": "",
+                  "onError": "stopWorkflow",
+                  "maxTries": 2,
+                  "operation": "insert",
+                  "retryOnFail": true,
+                  "returnFields": "*",
+                  "waitBetweenTries": 1000
+                },
+                "purpose": "Insert data into PostgreSQL table",
+                "displayName": "insert postgres data",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_2",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "node": {
+                "id": "search_node_1",
+                "type": "nodes-base.editImage",
+                "purpose": "Resize images for web and mobile optimization"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_1",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "node": {
+                "id": "search_node_2",
+                "type": "nodes-base.googleDrive",
+                "purpose": "Monitor Google Drive folder for new image files"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_2",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "node": {
+                "id": "search_node_3",
+                "type": "nodes-base.twitter",
+                "purpose": "Post to social media with custom captions"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_3",
+              "timestamp": "2025-08-11T16:47:16.257Z"
+            },
+            {
+              "node": {
+                "id": "search_node_4",
+                "type": "nodes-base.s3",
+                "purpose": "Upload resized images to AWS S3 storage"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T16:47:16.570Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_4",
+              "timestamp": "2025-08-11T16:47:16.570Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-11T16:47:16.570Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "configuration",
+              "timestamp": "2025-08-11T16:47:35.722Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Generate SEO-optimized descriptions for images using GPT-4 based on AI vision analysis and detected content tags",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "parameters": {
+                  "modelId": "gpt-4",
+                  "messages": {
+                    "values": [
+                      {
+                        "role": "system",
+                        "content": "You are an expert SEO content writer specializing in image descriptions for social media and web content. Create engaging, SEO-optimized descriptions that incorporate detected visual elements and tags."
+                      },
+                      {
+                        "role": "user",
+                        "content": "Based on this image analysis data: {{$json.visionAnalysis}} and detected tags: {{$json.detectedTags}}, create an SEO-optimized description for social media posting. The description should be engaging, include relevant hashtags, and be optimized for discovery. Keep it under 280 characters for Twitter compatibility but also provide a longer version for other platforms. Format as JSON with 'short' and 'long' versions."
+                      }
+                    ]
+                  },
+                  "resource": "chat",
+                  "operation": "message"
+                },
+                "retryOnFail": true,
+                "typeVersion": 1,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 5000
+              },
+              "nodeId": "task_node_1",
+              "purpose": "Send a message to an AI model and get response",
+              "nodeType": "nodes-base.openAi",
+              "reasoning": "Upgraded model from gpt-3.5-turbo to gpt-4 as specifically requested by user for higher quality SEO content generation",
+              "timestamp": "2025-08-11T16:47:36.037Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "task_node_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T16:47:36.353Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Insert processed image metadata into PostgreSQL database including AI analysis results, S3 URLs, and social media posting status",
+                "onError": "stopWorkflow",
+                "maxTries": 2,
+                "parameters": {
+                  "table": "image_metadata",
+                  "columns": "filename, original_path, s3_url, file_size, dimensions, ai_tags, seo_description, upload_timestamp, content_analysis, social_media_posted",
+                  "operation": "insert",
+                  "returnFields": "*"
+                },
+                "retryOnFail": true,
+                "waitBetweenTries": 1000
+              },
+              "nodeId": "task_node_2",
+              "purpose": "Insert data into PostgreSQL table",
+              "nodeType": "nodes-base.postgres",
+              "reasoning": "Customized the table name to 'image_metadata' to store information about processed images from the Google Drive monitoring workflow",
+              "timestamp": "2025-08-11T16:47:36.353Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "task_node_2",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T16:47:36.564Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Resizes images for web and mobile optimization with multiple output sizes",
+                "parameters": {
+                  "operation": "multiStep",
+                  "operations": {
+                    "operations": [
+                      {
+                        "width": 1920,
+                        "format": "jpeg",
+                        "height": 1080,
+                        "quality": 85,
+                        "operation": "resize",
+                        "resizeOption": "maximumArea"
+                      },
+                      {
+                        "width": 800,
+                        "format": "jpeg",
+                        "height": 600,
+                        "quality": 80,
+                        "operation": "resize",
+                        "resizeOption": "maximumArea"
+                      },
+                      {
+                        "width": 400,
+                        "format": "jpeg",
+                        "height": 300,
+                        "quality": 75,
+                        "operation": "resize",
+                        "resizeOption": "maximumArea"
+                      }
+                    ]
+                  },
+                  "dataPropertyName": "data"
+                },
+                "typeVersion": "1"
+              },
+              "nodeId": "search_node_1",
+              "purpose": "Resize images for web and mobile optimization",
+              "nodeType": "nodes-base.editImage",
+              "reasoning": "Uses multiStep operation to create multiple optimized image sizes in a single node execution",
+              "timestamp": "2025-08-11T16:47:36.564Z",
+              "operationIndex": 0
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "search_node_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T16:47:36.811Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Monitors Google Drive folder for new image files to trigger the automated image processing workflow",
+                "parameters": {
+                  "limit": 50,
+                  "driveId": {
+                    "mode": "list",
+                    "value": "root"
+                  },
+                  "folderId": {
+                    "mode": "list",
+                    "value": ""
+                  },
+                  "resource": "fileFolder",
+                  "operation": "search",
+                  "returnAll": false,
+                  "queryFilters": {
+                    "name": "",
+                    "parents": "",
+                    "mimeType": "image/jpeg,image/png,image/gif,image/webp,image/bmp,image/tiff"
+                  }
+                },
+                "typeVersion": "3"
+              },
+              "nodeId": "search_node_2",
+              "purpose": "Monitor Google Drive folder for new image files",
+              "nodeType": "nodes-base.googleDrive",
+              "reasoning": "Configured Google Drive node to search for files in a specific folder with image MIME types to monitor for new images",
+              "timestamp": "2025-08-11T16:47:36.811Z",
+              "operationIndex": 0
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "search_node_2",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T16:47:37.032Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Posts to X (Twitter) with custom captions generated from AI image analysis",
+                "parameters": {
+                  "text": "={{ $json.seoDescription }}",
+                  "resource": "tweet",
+                  "operation": "create"
+                },
+                "typeVersion": "2"
+              },
+              "nodeId": "search_node_3",
+              "purpose": "Post to social media with custom captions",
+              "nodeType": "nodes-base.twitter",
+              "reasoning": "Configured Twitter node to post tweets using the 'tweet' resource and 'create' operation",
+              "timestamp": "2025-08-11T16:47:37.032Z",
+              "operationIndex": 0
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "search_node_3",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T16:47:37.284Z"
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "search_node_4",
+              "result": {
+                "valid": false,
+                "errors": [
+                  {
+                    "nodeId": "search_node_4",
+                    "message": "Failed to generate configuration for nodes-base.s3",
+                    "severity": "error"
+                  }
+                ]
+              },
+              "timestamp": "2025-08-11T16:47:37.284Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "discoveredNodes": [
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.openAi",
+              "displayName": "chat with ai",
+              "purpose": "Send a message to an AI model and get response",
+              "isPreConfigured": true,
+              "config": {
+                "resource": "chat",
+                "operation": "message",
+                "modelId": "gpt-3.5-turbo",
+                "messages": {
+                  "values": [
+                    {
+                      "role": "user",
+                      "content": ""
+                    }
+                  ]
+                },
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 3,
+                "waitBetweenTries": 5000,
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "task_node_2",
+              "type": "nodes-base.postgres",
+              "displayName": "insert postgres data",
+              "purpose": "Insert data into PostgreSQL table",
+              "isPreConfigured": true,
+              "config": {
+                "operation": "insert",
+                "table": "",
+                "columns": "",
+                "returnFields": "*",
+                "onError": "stopWorkflow",
+                "retryOnFail": true,
+                "maxTries": 2,
+                "waitBetweenTries": 1000
+              }
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.editImage",
+              "displayName": "nodes-base.editImage",
+              "purpose": "Resize images for web and mobile optimization",
+              "needsConfiguration": true
+            },
+            {
+              "id": "search_node_2",
+              "type": "nodes-base.googleDrive",
+              "displayName": "nodes-base.googleDrive",
+              "purpose": "Monitor Google Drive folder for new image files",
+              "needsConfiguration": true
+            },
+            {
+              "id": "search_node_3",
+              "type": "nodes-base.twitter",
+              "displayName": "nodes-base.twitter",
+              "purpose": "Post to social media with custom captions",
+              "needsConfiguration": true
+            },
+            {
+              "id": "search_node_4",
+              "type": "nodes-base.s3",
+              "displayName": "nodes-base.s3",
+              "purpose": "Upload resized images to AWS S3 storage",
+              "needsConfiguration": true
+            }
+          ]
+        },
+        "output": {
+          "configuredNodes": [
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.openAi",
+              "purpose": "Send a message to an AI model and get response",
+              "config": {
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 5000,
+                "typeVersion": 1,
+                "notes": "Generate SEO-optimized descriptions for images using GPT-4 based on AI vision analysis and detected content tags",
+                "parameters": {
+                  "modelId": "gpt-4",
+                  "messages": {
+                    "values": [
+                      {
+                        "role": "system",
+                        "content": "You are an expert SEO content writer specializing in image descriptions for social media and web content. Create engaging, SEO-optimized descriptions that incorporate detected visual elements and tags."
+                      },
+                      {
+                        "role": "user",
+                        "content": "Based on this image analysis data: {{$json.visionAnalysis}} and detected tags: {{$json.detectedTags}}, create an SEO-optimized description for social media posting. The description should be engaging, include relevant hashtags, and be optimized for discovery. Keep it under 280 characters for Twitter compatibility but also provide a longer version for other platforms. Format as JSON with 'short' and 'long' versions."
+                      }
+                    ]
+                  },
+                  "resource": "chat",
+                  "operation": "message"
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "task_node_2",
+              "type": "nodes-base.postgres",
+              "purpose": "Insert data into PostgreSQL table",
+              "config": {
+                "onError": "stopWorkflow",
+                "maxTries": 2,
+                "retryOnFail": true,
+                "waitBetweenTries": 1000,
+                "parameters": {
+                  "table": "image_metadata",
+                  "columns": "filename, original_path, s3_url, file_size, dimensions, ai_tags, seo_description, upload_timestamp, content_analysis, social_media_posted",
+                  "operation": "insert",
+                  "returnFields": "*",
+                  "schema": "public"
+                },
+                "notes": "Insert processed image metadata into PostgreSQL database including AI analysis results, S3 URLs, and social media posting status"
+              },
+              "validated": true
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.editImage",
+              "purpose": "Resize images for web and mobile optimization",
+              "config": {
+                "typeVersion": "1",
+                "notes": "Resizes images for web and mobile optimization with multiple output sizes",
+                "parameters": {
+                  "operation": "multiStep",
+                  "dataPropertyName": "data",
+                  "operations": {
+                    "operations": [
+                      {
+                        "operation": "resize",
+                        "width": 1920,
+                        "height": 1080,
+                        "resizeOption": "maximumArea",
+                        "format": "jpeg",
+                        "quality": 85
+                      },
+                      {
+                        "operation": "resize",
+                        "width": 800,
+                        "height": 600,
+                        "resizeOption": "maximumArea",
+                        "format": "jpeg",
+                        "quality": 80
+                      },
+                      {
+                        "operation": "resize",
+                        "width": 400,
+                        "height": 300,
+                        "resizeOption": "maximumArea",
+                        "format": "jpeg",
+                        "quality": 75
+                      }
+                    ]
+                  }
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "search_node_2",
+              "type": "nodes-base.googleDrive",
+              "purpose": "Monitor Google Drive folder for new image files",
+              "config": {
+                "typeVersion": "3",
+                "notes": "Monitors Google Drive folder for new image files to trigger the automated image processing workflow",
+                "parameters": {
+                  "resource": "fileFolder",
+                  "operation": "search",
+                  "driveId": {
+                    "mode": "list",
+                    "value": "root"
+                  },
+                  "folderId": {
+                    "mode": "list",
+                    "value": ""
+                  },
+                  "queryFilters": {
+                    "name": "",
+                    "parents": "",
+                    "mimeType": "image/jpeg,image/png,image/gif,image/webp,image/bmp,image/tiff"
+                  },
+                  "limit": 50,
+                  "returnAll": false
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "search_node_3",
+              "type": "nodes-base.twitter",
+              "purpose": "Post to social media with custom captions",
+              "config": {
+                "typeVersion": "2",
+                "notes": "Posts to X (Twitter) with custom captions generated from AI image analysis",
+                "parameters": {
+                  "resource": "tweet",
+                  "operation": "create",
+                  "text": "={{ $json.seoDescription }}"
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "search_node_4",
+              "type": "nodes-base.s3",
+              "purpose": "Upload resized images to AWS S3 storage",
+              "config": {},
+              "validated": false,
+              "validationErrors": [
+                "Failed to generate configuration for nodes-base.s3"
+              ]
+            }
+          ]
+        },
+        "transformations": [
+          "Parameter Configuration",
+          "Validation",
+          "Type Checking"
+        ]
+      },
+      "warnings": [
+        "Node search_node_4: Failed to generate configuration for nodes-base.s3"
+      ],
+      "stateDelta": {
+        "added": {},
+        "modified": {
+          "state": {
+            "old": {
+              "phase": "configuration",
+              "userPrompt": "Create a workflow that monitors a Google Drive folder for new images, uses AI vision to analyze and tag them, generates SEO-optimized descriptions with GPT-4, automatically resizes images for web/mobile, uploads to AWS S3, updates a database with metadata, and posts to social media with custom captions based on the content detected.",
+              "discovered": [
+                {
+                  "id": "task_node_1",
+                  "type": "nodes-base.openAi",
+                  "config": {
+                    "modelId": "gpt-3.5-turbo",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 3,
+                    "messages": {
+                      "values": [
+                        {
+                          "role": "user",
+                          "content": ""
+                        }
+                      ]
+                    },
+                    "resource": "chat",
+                    "operation": "message",
+                    "retryOnFail": true,
+                    "alwaysOutputData": true,
+                    "waitBetweenTries": 5000
+                  },
+                  "purpose": "Send a message to an AI model and get response",
+                  "displayName": "chat with ai",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_2",
+                  "type": "nodes-base.postgres",
+                  "config": {
+                    "table": "",
+                    "columns": "",
+                    "onError": "stopWorkflow",
+                    "maxTries": 2,
+                    "operation": "insert",
+                    "retryOnFail": true,
+                    "returnFields": "*",
+                    "waitBetweenTries": 1000
+                  },
+                  "purpose": "Insert data into PostgreSQL table",
+                  "displayName": "insert postgres data",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "search_node_1",
+                  "type": "nodes-base.editImage",
+                  "purpose": "Resize images for web and mobile optimization"
+                },
+                {
+                  "id": "search_node_2",
+                  "type": "nodes-base.googleDrive",
+                  "purpose": "Monitor Google Drive folder for new image files"
+                },
+                {
+                  "id": "search_node_3",
+                  "type": "nodes-base.twitter",
+                  "purpose": "Post to social media with custom captions"
+                },
+                {
+                  "id": "search_node_4",
+                  "type": "nodes-base.s3",
+                  "purpose": "Upload resized images to AWS S3 storage"
+                }
+              ],
+              "selected": [
+                "task_node_1",
+                "task_node_2",
+                "search_node_1",
+                "search_node_2",
+                "search_node_3",
+                "search_node_4"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "nodes": [],
+                "settings": {},
+                "connections": {}
+              },
+              "buildPhases": [],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "task_node_1",
+                    "type": "nodes-base.openAi",
+                    "config": {
+                      "modelId": "gpt-3.5-turbo",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 3,
+                      "messages": {
+                        "values": [
+                          {
+                            "role": "user",
+                            "content": ""
+                          }
+                        ]
+                      },
+                      "resource": "chat",
+                      "operation": "message",
+                      "retryOnFail": true,
+                      "alwaysOutputData": true,
+                      "waitBetweenTries": 5000
+                    },
+                    "purpose": "Send a message to an AI model and get response",
+                    "displayName": "chat with ai",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_1",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_2",
+                    "type": "nodes-base.postgres",
+                    "config": {
+                      "table": "",
+                      "columns": "",
+                      "onError": "stopWorkflow",
+                      "maxTries": 2,
+                      "operation": "insert",
+                      "retryOnFail": true,
+                      "returnFields": "*",
+                      "waitBetweenTries": 1000
+                    },
+                    "purpose": "Insert data into PostgreSQL table",
+                    "displayName": "insert postgres data",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_2",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_1",
+                    "type": "nodes-base.editImage",
+                    "purpose": "Resize images for web and mobile optimization"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_1",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_2",
+                    "type": "nodes-base.googleDrive",
+                    "purpose": "Monitor Google Drive folder for new image files"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_2",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_3",
+                    "type": "nodes-base.twitter",
+                    "purpose": "Post to social media with custom captions"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_3",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_4",
+                    "type": "nodes-base.s3",
+                    "purpose": "Upload resized images to AWS S3 storage"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T16:47:16.570Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_4",
+                  "timestamp": "2025-08-11T16:47:16.570Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-11T16:47:16.570Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            },
+            "new": {
+              "phase": "configuration",
+              "userPrompt": "Create a workflow that monitors a Google Drive folder for new images, uses AI vision to analyze and tag them, generates SEO-optimized descriptions with GPT-4, automatically resizes images for web/mobile, uploads to AWS S3, updates a database with metadata, and posts to social media with custom captions based on the content detected.",
+              "discovered": [
+                {
+                  "id": "task_node_1",
+                  "type": "nodes-base.openAi",
+                  "config": {
+                    "modelId": "gpt-3.5-turbo",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 3,
+                    "messages": {
+                      "values": [
+                        {
+                          "role": "user",
+                          "content": ""
+                        }
+                      ]
+                    },
+                    "resource": "chat",
+                    "operation": "message",
+                    "retryOnFail": true,
+                    "alwaysOutputData": true,
+                    "waitBetweenTries": 5000
+                  },
+                  "purpose": "Send a message to an AI model and get response",
+                  "displayName": "chat with ai",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_2",
+                  "type": "nodes-base.postgres",
+                  "config": {
+                    "table": "",
+                    "columns": "",
+                    "onError": "stopWorkflow",
+                    "maxTries": 2,
+                    "operation": "insert",
+                    "retryOnFail": true,
+                    "returnFields": "*",
+                    "waitBetweenTries": 1000
+                  },
+                  "purpose": "Insert data into PostgreSQL table",
+                  "displayName": "insert postgres data",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "search_node_1",
+                  "type": "nodes-base.editImage",
+                  "purpose": "Resize images for web and mobile optimization"
+                },
+                {
+                  "id": "search_node_2",
+                  "type": "nodes-base.googleDrive",
+                  "purpose": "Monitor Google Drive folder for new image files"
+                },
+                {
+                  "id": "search_node_3",
+                  "type": "nodes-base.twitter",
+                  "purpose": "Post to social media with custom captions"
+                },
+                {
+                  "id": "search_node_4",
+                  "type": "nodes-base.s3",
+                  "purpose": "Upload resized images to AWS S3 storage"
+                }
+              ],
+              "selected": [
+                "task_node_1",
+                "task_node_2",
+                "search_node_1",
+                "search_node_2",
+                "search_node_3",
+                "search_node_4"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "nodes": [],
+                "settings": {},
+                "connections": {}
+              },
+              "buildPhases": [],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "task_node_1",
+                    "type": "nodes-base.openAi",
+                    "config": {
+                      "modelId": "gpt-3.5-turbo",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 3,
+                      "messages": {
+                        "values": [
+                          {
+                            "role": "user",
+                            "content": ""
+                          }
+                        ]
+                      },
+                      "resource": "chat",
+                      "operation": "message",
+                      "retryOnFail": true,
+                      "alwaysOutputData": true,
+                      "waitBetweenTries": 5000
+                    },
+                    "purpose": "Send a message to an AI model and get response",
+                    "displayName": "chat with ai",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_1",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_2",
+                    "type": "nodes-base.postgres",
+                    "config": {
+                      "table": "",
+                      "columns": "",
+                      "onError": "stopWorkflow",
+                      "maxTries": 2,
+                      "operation": "insert",
+                      "retryOnFail": true,
+                      "returnFields": "*",
+                      "waitBetweenTries": 1000
+                    },
+                    "purpose": "Insert data into PostgreSQL table",
+                    "displayName": "insert postgres data",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_2",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_1",
+                    "type": "nodes-base.editImage",
+                    "purpose": "Resize images for web and mobile optimization"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_1",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_2",
+                    "type": "nodes-base.googleDrive",
+                    "purpose": "Monitor Google Drive folder for new image files"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_2",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_3",
+                    "type": "nodes-base.twitter",
+                    "purpose": "Post to social media with custom captions"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_3",
+                  "timestamp": "2025-08-11T16:47:16.257Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_4",
+                    "type": "nodes-base.s3",
+                    "purpose": "Upload resized images to AWS S3 storage"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T16:47:16.570Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_4",
+                  "timestamp": "2025-08-11T16:47:16.570Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-11T16:47:16.570Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-11T16:47:35.722Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Generate SEO-optimized descriptions for images using GPT-4 based on AI vision analysis and detected content tags",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 3,
+                    "parameters": {
+                      "modelId": "gpt-4",
+                      "messages": {
+                        "values": [
+                          {
+                            "role": "system",
+                            "content": "You are an expert SEO content writer specializing in image descriptions for social media and web content. Create engaging, SEO-optimized descriptions that incorporate detected visual elements and tags."
+                          },
+                          {
+                            "role": "user",
+                            "content": "Based on this image analysis data: {{$json.visionAnalysis}} and detected tags: {{$json.detectedTags}}, create an SEO-optimized description for social media posting. The description should be engaging, include relevant hashtags, and be optimized for discovery. Keep it under 280 characters for Twitter compatibility but also provide a longer version for other platforms. Format as JSON with 'short' and 'long' versions."
+                          }
+                        ]
+                      },
+                      "resource": "chat",
+                      "operation": "message"
+                    },
+                    "retryOnFail": true,
+                    "typeVersion": 1,
+                    "alwaysOutputData": true,
+                    "waitBetweenTries": 5000
+                  },
+                  "nodeId": "task_node_1",
+                  "purpose": "Send a message to an AI model and get response",
+                  "nodeType": "nodes-base.openAi",
+                  "reasoning": "Upgraded model from gpt-3.5-turbo to gpt-4 as specifically requested by user for higher quality SEO content generation",
+                  "timestamp": "2025-08-11T16:47:36.037Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "task_node_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T16:47:36.353Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Insert processed image metadata into PostgreSQL database including AI analysis results, S3 URLs, and social media posting status",
+                    "onError": "stopWorkflow",
+                    "maxTries": 2,
+                    "parameters": {
+                      "table": "image_metadata",
+                      "columns": "filename, original_path, s3_url, file_size, dimensions, ai_tags, seo_description, upload_timestamp, content_analysis, social_media_posted",
+                      "operation": "insert",
+                      "returnFields": "*"
+                    },
+                    "retryOnFail": true,
+                    "waitBetweenTries": 1000
+                  },
+                  "nodeId": "task_node_2",
+                  "purpose": "Insert data into PostgreSQL table",
+                  "nodeType": "nodes-base.postgres",
+                  "reasoning": "Customized the table name to 'image_metadata' to store information about processed images from the Google Drive monitoring workflow",
+                  "timestamp": "2025-08-11T16:47:36.353Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "task_node_2",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T16:47:36.564Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Resizes images for web and mobile optimization with multiple output sizes",
+                    "parameters": {
+                      "operation": "multiStep",
+                      "operations": {
+                        "operations": [
+                          {
+                            "width": 1920,
+                            "format": "jpeg",
+                            "height": 1080,
+                            "quality": 85,
+                            "operation": "resize",
+                            "resizeOption": "maximumArea"
+                          },
+                          {
+                            "width": 800,
+                            "format": "jpeg",
+                            "height": 600,
+                            "quality": 80,
+                            "operation": "resize",
+                            "resizeOption": "maximumArea"
+                          },
+                          {
+                            "width": 400,
+                            "format": "jpeg",
+                            "height": 300,
+                            "quality": 75,
+                            "operation": "resize",
+                            "resizeOption": "maximumArea"
+                          }
+                        ]
+                      },
+                      "dataPropertyName": "data"
+                    },
+                    "typeVersion": "1"
+                  },
+                  "nodeId": "search_node_1",
+                  "purpose": "Resize images for web and mobile optimization",
+                  "nodeType": "nodes-base.editImage",
+                  "reasoning": "Uses multiStep operation to create multiple optimized image sizes in a single node execution",
+                  "timestamp": "2025-08-11T16:47:36.564Z",
+                  "operationIndex": 0
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "search_node_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T16:47:36.811Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Monitors Google Drive folder for new image files to trigger the automated image processing workflow",
+                    "parameters": {
+                      "limit": 50,
+                      "driveId": {
+                        "mode": "list",
+                        "value": "root"
+                      },
+                      "folderId": {
+                        "mode": "list",
+                        "value": ""
+                      },
+                      "resource": "fileFolder",
+                      "operation": "search",
+                      "returnAll": false,
+                      "queryFilters": {
+                        "name": "",
+                        "parents": "",
+                        "mimeType": "image/jpeg,image/png,image/gif,image/webp,image/bmp,image/tiff"
+                      }
+                    },
+                    "typeVersion": "3"
+                  },
+                  "nodeId": "search_node_2",
+                  "purpose": "Monitor Google Drive folder for new image files",
+                  "nodeType": "nodes-base.googleDrive",
+                  "reasoning": "Configured Google Drive node to search for files in a specific folder with image MIME types to monitor for new images",
+                  "timestamp": "2025-08-11T16:47:36.811Z",
+                  "operationIndex": 0
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "search_node_2",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T16:47:37.032Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Posts to X (Twitter) with custom captions generated from AI image analysis",
+                    "parameters": {
+                      "text": "={{ $json.seoDescription }}",
+                      "resource": "tweet",
+                      "operation": "create"
+                    },
+                    "typeVersion": "2"
+                  },
+                  "nodeId": "search_node_3",
+                  "purpose": "Post to social media with custom captions",
+                  "nodeType": "nodes-base.twitter",
+                  "reasoning": "Configured Twitter node to post tweets using the 'tweet' resource and 'create' operation",
+                  "timestamp": "2025-08-11T16:47:37.032Z",
+                  "operationIndex": 0
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "search_node_3",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T16:47:37.284Z"
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "search_node_4",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      {
+                        "nodeId": "search_node_4",
+                        "message": "Failed to generate configuration for nodes-base.s3",
+                        "severity": "error"
+                      }
+                    ]
+                  },
+                  "timestamp": "2025-08-11T16:47:37.284Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            }
+          }
+        },
+        "removed": [],
+        "unchanged": [
+          "sessionId",
+          "createdAt"
+        ]
+      },
+      "errors": [
+        {
+          "type": "validation",
+          "message": "1 nodes failed validation"
+        }
+      ]
+    },
+    "building": {
+      "name": "Building",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "validation": {
+      "name": "Validation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "documentation": {
+      "name": "Documentation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    }
+  },
+  "summary": {
+    "totalNodes": 0,
+    "totalConnections": 0,
+    "validationAttempts": 0,
+    "errorsFixed": 0,
+    "stickyNotesAdded": 0,
+    "performanceScore": 20,
+    "qualityScore": 100,
+    "completenessScore": 20
+  },
+  "optimizationSuggestions": [
+    "Consider optimizing discovery phase (took 21818ms)",
+    "Consider optimizing configuration phase (took 20361ms)"
+  ],
+  "errorPatterns": [
+    {
+      "pattern": "validation",
+      "frequency": 1,
+      "suggestedFix": "Review error details and adjust workflow accordingly"
+    }
+  ]
+}

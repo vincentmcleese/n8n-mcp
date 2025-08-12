@@ -1,0 +1,297 @@
+{
+  "name": "Support Ticket AI Categorization and Routing",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "support-ticket",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Support Ticket Webhook",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "model": "gpt-3.5-turbo",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a support ticket categorization assistant. Analyze the ticket description and categorize it as exactly one of: 'technical', 'billing', or 'general'. Respond with only the category name in lowercase."
+            },
+            {
+              "role": "user",
+              "content": "={{ `Ticket Description: ${$json.description}\nCustomer: ${$json.customer}\nPriority: ${$json.priority}` }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.1,
+          "maxTokens": 10
+        }
+      },
+      "name": "AI Ticket Categorizer",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "switch_1",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $('AI Ticket Categorizer').item.json.choices[0].message.content.toLowerCase().trim() }}",
+                    "operation": "equal",
+                    "value2": "technical"
+                  }
+                ]
+              },
+              "renameOutput": "Technical"
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $('AI Ticket Categorizer').item.json.choices[0].message.content.toLowerCase().trim() }}",
+                    "operation": "equal",
+                    "value2": "billing"
+                  }
+                ]
+              },
+              "renameOutput": "Billing"
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $('AI Ticket Categorizer').item.json.choices[0].message.content.toLowerCase().trim() }}",
+                    "operation": "equal",
+                    "value2": "general"
+                  }
+                ]
+              },
+              "renameOutput": "General"
+            }
+          ]
+        },
+        "fallbackOutput": "extra",
+        "options": {}
+      },
+      "name": "Category Router",
+      "typeVersion": 3.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1150,
+        200
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": "#technical-support",
+        "text": "={{ `🔧 **Technical Support Ticket**\n\n**Customer:** ${$('Support Ticket Webhook').item.json.customer}\n**Priority:** ${$('Support Ticket Webhook').item.json.priority}\n**Description:** ${$('Support Ticket Webhook').item.json.description}\n**Category:** ${$('AI Ticket Categorizer').item.json.choices[0].message.content}\n\n*Ticket ID: ${$('Support Ticket Webhook').item.json.ticketId || 'N/A'}*` }}",
+        "otherOptions": {}
+      },
+      "name": "Technical Support Channel",
+      "typeVersion": 2.3,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "id": "slack_2",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": "#billing-support",
+        "text": "={{ `💰 **Billing Support Ticket**\n\n**Customer:** ${$('Support Ticket Webhook').item.json.customer}\n**Priority:** ${$('Support Ticket Webhook').item.json.priority}\n**Description:** ${$('Support Ticket Webhook').item.json.description}\n**Category:** ${$('AI Ticket Categorizer').item.json.choices[0].message.content}\n\n*Ticket ID: ${$('Support Ticket Webhook').item.json.ticketId || 'N/A'}*` }}",
+        "otherOptions": {}
+      },
+      "name": "Billing Support Channel",
+      "typeVersion": 2.3,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "id": "slack_3",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1150,
+        400
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": "#general-support",
+        "text": "={{ `📋 **General Support Ticket**\n\n**Customer:** ${$('Support Ticket Webhook').item.json.customer}\n**Priority:** ${$('Support Ticket Webhook').item.json.priority}\n**Description:** ${$('Support Ticket Webhook').item.json.description}\n**Category:** ${$('AI Ticket Categorizer').item.json.choices[0].message.content}\n\n*Ticket ID: ${$('Support Ticket Webhook').item.json.ticketId || 'N/A'}*` }}",
+        "otherOptions": {}
+      },
+      "name": "General Support Channel",
+      "typeVersion": 2.3,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "id": "sticky_triggers_1754906184620",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook endpoint receives incoming support tickets from external systems with customer information, ticket description, and priority level.",
+        "height": 480,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_transforms_1754906184620",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nAI analyzes the ticket content and categorizes it into one of three categories: technical, billing, or general support.\n\nSwitch node routes the ticket to the appropriate path based on the AI categorization result.",
+        "height": 480,
+        "width": 530,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754906184620",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1110,
+        60
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSupport tickets are sent to the corresponding Slack channels based on their category for team assignment and resolution.",
+        "height": 480,
+        "width": 230,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Support Ticket Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Ticket Categorizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Ticket Categorizer": {
+      "main": [
+        [
+          {
+            "node": "Category Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Category Router": {
+      "main": [
+        [
+          {
+            "node": "Technical Support Channel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Billing Support Channel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "General Support Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-11T09:56:25.104Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Create a workflow that receives support tickets via webhook, uses AI to categorize them (technical, billing, general), and routes them to different Slack channels based on the category",
+    "testName": "Custom Test",
+    "generatedAt": "2025-08-11T09:56:25.105Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 2,
+    "stickyNotesAdded": 3
+  }
+}

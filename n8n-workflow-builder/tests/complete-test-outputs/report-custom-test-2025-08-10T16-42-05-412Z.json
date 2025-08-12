@@ -1,0 +1,128 @@
+{
+  "testName": "Custom Test",
+  "userPrompt": "Create a simple webhook to Slack workflow",
+  "sessionId": "complete_e2e_custom_test_1754844117068",
+  "timestamp": "2025-08-10T16:41:57.068Z",
+  "duration": 8343,
+  "success": false,
+  "phases": {
+    "discovery": {
+      "name": "Discovery",
+      "success": false,
+      "metrics": {
+        "startTime": 1754844117478,
+        "endTime": 0,
+        "duration": 0,
+        "memoryUsage": {
+          "heapUsed": 34414448,
+          "heapTotal": 55721984,
+          "external": 6434939
+        }
+      },
+      "logs": [],
+      "nodes": [
+        {
+          "id": "node_2",
+          "type": "nodes-base.slack",
+          "purpose": "Send a message to Slack channel"
+        },
+        {
+          "id": "node_1",
+          "type": "nodes-base.webhook",
+          "purpose": "Set up a webhook to receive data from external services"
+        }
+      ],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "configuration": {
+      "name": "Configuration",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "building": {
+      "name": "Building",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "validation": {
+      "name": "Validation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "documentation": {
+      "name": "Documentation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    }
+  },
+  "summary": {
+    "totalNodes": 0,
+    "totalConnections": 0,
+    "validationAttempts": 0,
+    "errorsFixed": 0,
+    "stickyNotesAdded": 0,
+    "performanceScore": 100,
+    "qualityScore": 115,
+    "completenessScore": 0
+  },
+  "optimizationSuggestions": [],
+  "errorPatterns": []
+}

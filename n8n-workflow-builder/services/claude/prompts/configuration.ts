@@ -392,8 +392,99 @@ Generate the fixed configuration:`;
   }, 'configuration');
 }
 
+/**
+ * Generate prompt for configuration fixes based on validation errors
+ * PRIORITIZES the validation's own fix suggestions and autofix objects
+ */
+export function getConfigurationFixesPrompt(
+  nodeId: string,
+  nodeType: string,
+  currentConfig: any,
+  validationResult: any
+): PromptParts {
+  const systemPrompt = `You are an n8n workflow configuration expert fixing validation errors.
+
+CRITICAL: The validation result contains SPECIFIC FIX INSTRUCTIONS that you MUST follow!
+
+Priority order for fixes:
+1. If "autofix" object exists → Apply those exact property values
+2. If error has "fix" field → Follow that instruction exactly
+3. If "suggestions" exist → Consider those improvements
+4. If "examples" exist → Use as reference for correct structure
+5. ONLY use MCP tools if the fix requires discovering new information
+
+The validation tells you EXACTLY what's wrong and how to fix it. Don't overthink it!
+
+Common fix patterns from validation:
+- "Invalid value for 'operation'. Must be one of: X" → Change operation to X
+- "Property 'X' is configured but won't be used" → Remove property X
+- "Missing required property 'X'" → Add property X with appropriate value
+- "Outdated typeVersion: X. Latest is Y" → Update typeVersion to Y
+
+Response format:
+{
+  "fixedConfig": {
+    // The complete CORRECTED configuration
+    // Apply ALL fixes from validation
+    // Include all original valid properties
+  },
+  "reasoning": [
+    "Applied autofix for onError property",
+    "Changed operation from 'message' to 'complete' as instructed",
+    "Removed unused modelId property as suggested",
+    "Updated typeVersion from 1 to 2"
+  ]
+}
+
+IMPORTANT:
+- Return the COMPLETE fixed configuration, not just changes
+- Each reasoning entry should explain which validation fix was applied
+- Trust the validation's fix suggestions - they are correct!`;
+
+  const userMessage = `Fix configuration for ${nodeType} (${nodeId})
+
+Current configuration:
+${JSON.stringify(currentConfig, null, 2)}
+
+Validation result with fix instructions:
+${JSON.stringify(validationResult, null, 2)}
+
+${validationResult.autofix ? `
+AUTOFIX PROVIDED - Apply these exact values:
+${JSON.stringify(validationResult.autofix, null, 2)}
+` : ''}
+
+${validationResult.errors?.length > 0 ? `
+ERRORS TO FIX (${validationResult.errors.length}):
+${validationResult.errors.map((e: any, i: number) => 
+  `${i + 1}. ${e.message}${e.fix ? `\n   FIX: ${e.fix}` : ''}`
+).join('\n')}
+` : ''}
+
+${validationResult.suggestions?.length > 0 ? `
+SUGGESTIONS TO CONSIDER:
+${validationResult.suggestions.map((s: any, i: number) => 
+  `${i + 1}. ${s.message || s}`
+).join('\n')}
+` : ''}
+
+${validationResult.examples?.length > 0 ? `
+WORKING EXAMPLES FOR REFERENCE:
+${JSON.stringify(validationResult.examples[0], null, 2)}
+` : ''}
+
+Apply ALL the fixes suggested by the validation and return the complete corrected configuration.`;
+
+  return addVersionMetadata({
+    system: systemPrompt,
+    user: userMessage,
+    prefill: '{"fixedConfig":'
+  }, 'configuration');
+}
+
 export const ConfigurationPrompts = {
   getConfigurationPrompt,
   getNodeRequirementsPrompt,
   getFixNodeConfigPrompt,
+  getConfigurationFixesPrompt,
 };

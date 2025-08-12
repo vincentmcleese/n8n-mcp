@@ -1,0 +1,2784 @@
+{
+  "testName": "User Test",
+  "userPrompt": "Build a workflow that monitors changes in a Google Sheets document, validates the data using custom logic, transforms it into different formats (JSON, XML), and simultaneously pushes updates to 3 different APIs (CRM, inventory system, and email marketing platform) with proper error handling for each endpoint",
+  "sessionId": "complete_e2e_user_test_1754894855726",
+  "timestamp": "2025-08-11T06:47:35.726Z",
+  "duration": 45189,
+  "success": false,
+  "phases": {
+    "discovery": {
+      "name": "Discovery",
+      "success": true,
+      "metrics": {
+        "startTime": 1754894856243,
+        "endTime": 1754894879666,
+        "duration": 23423,
+        "memoryUsage": {
+          "heapUsed": -4853056,
+          "heapTotal": 34013184,
+          "external": 6354605
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-11T06:47:36.243Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting discovery phase"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:36.244Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for discovery phase"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.319Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.319Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"transform_data\"}"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.319Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.319Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"api_call_with_retry\"}"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.319Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_for_task"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.319Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"task\":\"modern_error_handling_patterns\"}"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.461Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.481Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.500Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_for_task completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.501Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: search_nodes"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.501Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"query\":\"google\",\"limit\":20}"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.501Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: search_nodes"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.501Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"query\":\"xml\",\"limit\":20}"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.502Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: search_nodes"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.502Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"query\":\"split\",\"limit\":20}"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.502Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: search_nodes"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.502Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"query\":\"merge\",\"limit\":20}"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.614Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool search_nodes completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.619Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool search_nodes completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.644Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool search_nodes completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:51.645Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool search_nodes completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:59.558Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.httpRequest (Examples of modern error handling using onError property)"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:59.558Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.httpRequest (Resilient API call with automatic retry on failure)"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:59.558Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.code (Transform data structure using JavaScript)"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:59.558Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.xml (Convert data to XML format for transformation requirements)"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:59.558Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.splitInBatches (Enable parallel execution by splitting data into batches for simultaneous API calls)"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:59.558Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.merge (Merge results from parallel API calls and handle workflow convergence)"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:59.558Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.googleSheetsTrigger (Monitor changes in Google Sheets document to start the workflow)"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:59.666Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:59.666Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "task_node_3",
+          "type": "nodes-base.httpRequest",
+          "purpose": "Examples of modern error handling using onError property"
+        },
+        {
+          "id": "task_node_2",
+          "type": "nodes-base.httpRequest",
+          "purpose": "Resilient API call with automatic retry on failure"
+        },
+        {
+          "id": "task_node_1",
+          "type": "nodes-base.code",
+          "purpose": "Transform data structure using JavaScript"
+        },
+        {
+          "id": "search_node_1",
+          "type": "nodes-base.xml",
+          "purpose": "Convert data to XML format for transformation requirements"
+        },
+        {
+          "id": "search_node_2",
+          "type": "nodes-base.splitInBatches",
+          "purpose": "Enable parallel execution by splitting data into batches for simultaneous API calls"
+        },
+        {
+          "id": "search_node_3",
+          "type": "nodes-base.merge",
+          "purpose": "Merge results from parallel API calls and handle workflow convergence"
+        },
+        {
+          "id": "search_node_4",
+          "type": "nodes-base.googleSheetsTrigger",
+          "purpose": "Monitor changes in Google Sheets document to start the workflow"
+        }
+      ],
+      "sessionState": {
+        "sessionId": "complete_e2e_user_test_1754894855726",
+        "createdAt": "2025-08-11T06:47:36.186Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "Build a workflow that monitors changes in a Google Sheets document, validates the data using custom logic, transforms it into different formats (JSON, XML), and simultaneously pushes updates to 3 different APIs (CRM, inventory system, and email marketing platform) with proper error handling for each endpoint",
+          "discovered": [
+            {
+              "id": "task_node_3",
+              "type": "nodes-base.httpRequest",
+              "config": {
+                "url": "",
+                "method": "GET",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Examples of modern error handling using onError property",
+              "displayName": "modern error handling patterns",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_2",
+              "type": "nodes-base.httpRequest",
+              "config": {
+                "url": "",
+                "method": "GET",
+                "maxTries": 5,
+                "retryOnFail": true,
+                "sendHeaders": true,
+                "alwaysOutputData": true,
+                "headerParameters": {
+                  "parameters": [
+                    {
+                      "name": "X-Request-ID",
+                      "value": "={{ $workflow.id }}-{{ $itemIndex }}"
+                    }
+                  ]
+                },
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Resilient API call with automatic retry on failure",
+              "displayName": "api call with retry",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.code",
+              "config": {
+                "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                "language": "javaScript"
+              },
+              "purpose": "Transform data structure using JavaScript",
+              "displayName": "transform data",
+              "isPreConfigured": true
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.xml",
+              "purpose": "Convert data to XML format for transformation requirements"
+            },
+            {
+              "id": "search_node_2",
+              "type": "nodes-base.splitInBatches",
+              "purpose": "Enable parallel execution by splitting data into batches for simultaneous API calls"
+            },
+            {
+              "id": "search_node_3",
+              "type": "nodes-base.merge",
+              "purpose": "Merge results from parallel API calls and handle workflow convergence"
+            },
+            {
+              "id": "search_node_4",
+              "type": "nodes-base.googleSheetsTrigger",
+              "purpose": "Monitor changes in Google Sheets document to start the workflow"
+            }
+          ],
+          "selected": [
+            "task_node_3",
+            "task_node_2",
+            "task_node_1",
+            "search_node_1",
+            "search_node_2",
+            "search_node_3",
+            "search_node_4"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "task_node_3",
+                "type": "nodes-base.httpRequest",
+                "config": {
+                  "url": "",
+                  "method": "GET",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 3,
+                  "retryOnFail": true,
+                  "alwaysOutputData": true,
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Examples of modern error handling using onError property",
+                "displayName": "modern error handling patterns",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_3",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "node": {
+                "id": "task_node_2",
+                "type": "nodes-base.httpRequest",
+                "config": {
+                  "url": "",
+                  "method": "GET",
+                  "maxTries": 5,
+                  "retryOnFail": true,
+                  "sendHeaders": true,
+                  "alwaysOutputData": true,
+                  "headerParameters": {
+                    "parameters": [
+                      {
+                        "name": "X-Request-ID",
+                        "value": "={{ $workflow.id }}-{{ $itemIndex }}"
+                      }
+                    ]
+                  },
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Resilient API call with automatic retry on failure",
+                "displayName": "api call with retry",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_2",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "node": {
+                "id": "task_node_1",
+                "type": "nodes-base.code",
+                "config": {
+                  "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                  "language": "javaScript"
+                },
+                "purpose": "Transform data structure using JavaScript",
+                "displayName": "transform data",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_1",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "node": {
+                "id": "search_node_1",
+                "type": "nodes-base.xml",
+                "purpose": "Convert data to XML format for transformation requirements"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_1",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "node": {
+                "id": "search_node_2",
+                "type": "nodes-base.splitInBatches",
+                "purpose": "Enable parallel execution by splitting data into batches for simultaneous API calls"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_2",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "node": {
+                "id": "search_node_3",
+                "type": "nodes-base.merge",
+                "purpose": "Merge results from parallel API calls and handle workflow convergence"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T06:47:59.037Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_3",
+              "timestamp": "2025-08-11T06:47:59.037Z"
+            },
+            {
+              "node": {
+                "id": "search_node_4",
+                "type": "nodes-base.googleSheetsTrigger",
+                "purpose": "Monitor changes in Google Sheets document to start the workflow"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T06:47:59.037Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_4",
+              "timestamp": "2025-08-11T06:47:59.037Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-11T06:47:59.037Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "prompt": "Build a workflow that monitors changes in a Google Sheets document, validates the data using custom logic, transforms it into different formats (JSON, XML), and simultaneously pushes updates to 3 different APIs (CRM, inventory system, and email marketing platform) with proper error handling for each endpoint"
+        },
+        "output": {
+          "nodes": [
+            {
+              "id": "task_node_3",
+              "type": "nodes-base.httpRequest",
+              "displayName": "modern error handling patterns",
+              "purpose": "Examples of modern error handling using onError property",
+              "isPreConfigured": true,
+              "config": {
+                "method": "GET",
+                "url": "",
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 3,
+                "waitBetweenTries": 2000,
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "task_node_2",
+              "type": "nodes-base.httpRequest",
+              "displayName": "api call with retry",
+              "purpose": "Resilient API call with automatic retry on failure",
+              "isPreConfigured": true,
+              "config": {
+                "method": "GET",
+                "url": "",
+                "retryOnFail": true,
+                "maxTries": 5,
+                "waitBetweenTries": 2000,
+                "alwaysOutputData": true,
+                "sendHeaders": true,
+                "headerParameters": {
+                  "parameters": [
+                    {
+                      "name": "X-Request-ID",
+                      "value": "={{ $workflow.id }}-{{ $itemIndex }}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.code",
+              "displayName": "transform data",
+              "purpose": "Transform data structure using JavaScript",
+              "isPreConfigured": true,
+              "config": {
+                "language": "javaScript",
+                "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;"
+              }
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.xml",
+              "displayName": "nodes-base.xml",
+              "purpose": "Convert data to XML format for transformation requirements",
+              "needsConfiguration": true
+            },
+            {
+              "id": "search_node_2",
+              "type": "nodes-base.splitInBatches",
+              "displayName": "nodes-base.splitInBatches",
+              "purpose": "Enable parallel execution by splitting data into batches for simultaneous API calls",
+              "needsConfiguration": true
+            },
+            {
+              "id": "search_node_3",
+              "type": "nodes-base.merge",
+              "displayName": "nodes-base.merge",
+              "purpose": "Merge results from parallel API calls and handle workflow convergence",
+              "needsConfiguration": true
+            },
+            {
+              "id": "search_node_4",
+              "type": "nodes-base.googleSheetsTrigger",
+              "displayName": "nodes-base.googleSheetsTrigger",
+              "purpose": "Monitor changes in Google Sheets document to start the workflow",
+              "needsConfiguration": true
+            }
+          ]
+        },
+        "transformations": [
+          "Intent Analysis",
+          "Node Discovery",
+          "Selection"
+        ]
+      }
+    },
+    "configuration": {
+      "name": "Configuration",
+      "success": false,
+      "metrics": {
+        "startTime": 1754894879666,
+        "endTime": 1754894900915,
+        "duration": 21249,
+        "memoryUsage": {
+          "heapUsed": 3462760,
+          "heapTotal": 35061760,
+          "external": 7227287
+        }
+      },
+      "logs": [
+        {
+          "timestamp": "2025-08-11T06:47:59.666Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Starting configuration phase"
+        },
+        {
+          "timestamp": "2025-08-11T06:47:59.666Z",
+          "level": "DEBUG",
+          "source": "Claude",
+          "message": "Sending request for configuration phase"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:08.562Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:08.562Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.httpRequest\",\"config\":{\"url\":\"https://api.crm-system.com/v1/contacts\",\"method\":\"POST\",\"sendHeaders\":true,\"headerParameters\":{\"parameters\":[{\"name\":\"Content-Type\",\"value\":\"application/json\"},{\"name\":\"Authorization\",\"value\":\"Bearer {{$credentials.crmApi.token}}\"}]},\"sendBody\":true,\"bodyParameters\":{\"parameters\":[{\"name\":\"contact_id\",\"value\":\"{{$json.contact_id}}\"},{\"name\":\"name\",\"value\":\"{{$json.name}}\"},{\"name\":\"email\",\"value\":\"{{$json.email}}\"},{\"name\":\"phone\",\"value\":\"{{$json.phone}}\"},{\"name\":\"company\",\"value\":\"{{$json.company}}\"},{\"name\":\"last_updated\",\"value\":\"{{$now}}\"}]},\"options\":{\"timeout\":10000,\"response\":{\"response\":{\"responseFormat\":\"json\"}}}},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:08.745Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:08.746Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_essentials"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:08.746Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.xml\"}"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:08.892Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_essentials completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:10.731Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:10.731Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.code\",\"config\":{\"jsCode\":\"// Transform Google Sheets data into JSON and XML formats\\nconst results = [];\\n\\nfor (const item of items) {\\n  try {\\n    // Extract and validate data from Google Sheets\\n    const rowData = item.json;\\n    \\n    // Basic validation\\n    if (!rowData.id || !rowData.name) {\\n      throw new Error(`Missing required fields in row: ${JSON.stringify(rowData)}`);\\n    }\\n    \\n    // Create JSON format for APIs\\n    const jsonFormat = {\\n      id: rowData.id,\\n      name: rowData.name,\\n      email: rowData.email || '',\\n      phone: rowData.phone || '',\\n      company: rowData.company || '',\\n      status: rowData.status || 'active',\\n      lastModified: new Date().toISOString(),\\n      source: 'google_sheets'\\n    };\\n    \\n    // Create XML format\\n    const xmlFormat = `<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?>\\n<record>\\n  <id>${rowData.id}</id>\\n  <name><![CDATA[${rowData.name}]]></name>\\n  <email>${rowData.email || ''}</email>\\n  <phone>${rowData.phone || ''}</phone>\\n  <company><![CDATA[${rowData.company || ''}]]></company>\\n  <status>${rowData.status || 'active'}</status>\\n  <lastModified>${new Date().toISOString()}</lastModified>\\n  <source>google_sheets</source>\\n</record>`;\\n    \\n    // Return both formats for downstream processing\\n    results.push({\\n      json: {\\n        originalData: rowData,\\n        jsonFormat: jsonFormat,\\n        xmlFormat: xmlFormat,\\n        processedAt: new Date().toISOString(),\\n        validationStatus: 'passed'\\n      }\\n    });\\n    \\n  } catch (error) {\\n    // Handle validation errors\\n    results.push({\\n      json: {\\n        originalData: item.json,\\n        error: error.message,\\n        processedAt: new Date().toISOString(),\\n        validationStatus: 'failed'\\n      }\\n    });\\n  }\\n}\\n\\nreturn results;\",\"language\":\"javaScript\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:10.841Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:10.841Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_essentials"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:10.841Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.splitInBatches\"}"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:10.984Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_essentials completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:11.785Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:11.785Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.httpRequest\",\"config\":{\"url\":\"={{ $json.api_endpoint }}\",\"method\":\"POST\",\"sendHeaders\":true,\"headerParameters\":{\"parameters\":[{\"name\":\"X-Request-ID\",\"value\":\"={{ $workflow.id }}-{{ $itemIndex }}\"},{\"name\":\"Content-Type\",\"value\":\"application/json\"},{\"name\":\"Authorization\",\"value\":\"={{ $json.auth_header }}\"}]},\"sendBody\":true,\"bodyParameters\":{\"parameters\":[]},\"jsonBody\":\"={{ $json.transformed_data }}\",\"options\":{\"timeout\":30000,\"response\":{\"response\":{\"responseFormat\":\"json\"}}},\"onError\":\"continueErrorOutput\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:11.900Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:11.901Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:11.902Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.httpRequest\",\"config\":{\"url\":\"={{ $json.api_endpoint }}\",\"method\":\"POST\",\"sendHeaders\":true,\"headerParameters\":{\"parameters\":[{\"name\":\"X-Request-ID\",\"value\":\"={{ $workflow.id }}-{{ $itemIndex }}\"},{\"name\":\"Content-Type\",\"value\":\"application/json\"},{\"name\":\"Authorization\",\"value\":\"={{ $json.auth_header }}\"}]},\"sendBody\":true,\"bodyParameters\":{\"parameters\":[]},\"jsonBody\":\"={{ $json.transformed_data }}\",\"options\":{\"timeout\":30000,\"response\":{\"response\":{\"responseFormat\":\"json\"}}},\"onError\":\"continueErrorOutput\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:12.026Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:12.027Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_essentials"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:12.027Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.merge\"}"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:12.141Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_essentials completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:13.684Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:13.684Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.xml\",\"config\":{\"mode\":\"jsonToxml\",\"dataPropertyName\":\"xmlData\",\"options\":{\"rootName\":\"record\"}},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:13.790Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:13.790Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: get_node_essentials"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:13.790Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.googleSheetsTrigger\"}"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:13.907Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool get_node_essentials completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:14.588Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:14.588Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.splitInBatches\",\"config\":{\"batchSize\":10,\"options\":{\"reset\":false}},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:14.700Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:16.589Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:16.589Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.merge\",\"config\":{\"mode\":\"append\",\"outputDataFrom\":\"both\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:16.701Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:19.051Z",
+          "level": "INFO",
+          "source": "MCP",
+          "message": "Calling tool: validate_node_operation"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:19.052Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Parameters: {\"nodeType\":\"nodes-base.googleSheetsTrigger\",\"config\":{\"documentId\":\"\",\"sheetName\":\"\",\"event\":\"anyUpdate\",\"authentication\":\"triggerOAuth2\"},\"profile\":\"ai-friendly\"}"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:19.450Z",
+          "level": "DEBUG",
+          "source": "MCP",
+          "message": "Tool validate_node_operation completed successfully"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:20.851Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.httpRequest (Examples of modern error handling using onError property)"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:20.851Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.httpRequest (Resilient API call with automatic retry on failure)"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:20.852Z",
+          "level": "WARN",
+          "source": "Orchestrator",
+          "message": "Node task_node_2: URL must start with http:// or https://"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:20.852Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.code (Transform data structure using JavaScript)"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:20.852Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.xml (Convert data to XML format for transformation requirements)"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:20.852Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.splitInBatches (Enable parallel execution by splitting data into batches for simultaneous API calls)"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:20.852Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.merge (Merge results from parallel API calls and handle workflow convergence)"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:20.852Z",
+          "level": "INFO",
+          "source": "Tools",
+          "message": "Added node: nodes-base.googleSheetsTrigger (Monitor changes in Google Sheets document to start the workflow)"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:20.914Z",
+          "level": "DEBUG",
+          "source": "Orchestrator",
+          "message": "Session state updated"
+        },
+        {
+          "timestamp": "2025-08-11T06:48:20.915Z",
+          "level": "INFO",
+          "source": "Orchestrator",
+          "message": "Data flow captured: 3 transformations"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "task_node_3",
+          "type": "nodes-base.httpRequest",
+          "purpose": "Examples of modern error handling using onError property",
+          "configuration": {
+            "onError": "continueRegularOutput",
+            "maxTries": 3,
+            "retryOnFail": true,
+            "alwaysOutputData": true,
+            "waitBetweenTries": 2000,
+            "typeVersion": 1,
+            "notes": "HTTP Request node configured for pushing data to CRM API with robust error handling. Part of a multi-API workflow that processes Google Sheets changes and distributes updates to CRM, inventory, and email marketing systems.",
+            "parameters": {
+              "url": "https://api.crm-system.com/v1/contacts",
+              "method": "POST",
+              "sendHeaders": true,
+              "headerParameters": {
+                "parameters": [
+                  {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "name": "Authorization",
+                    "value": "Bearer {{$credentials.crmApi.token}}"
+                  }
+                ]
+              },
+              "sendBody": true,
+              "bodyParameters": {
+                "parameters": [
+                  {
+                    "name": "contact_id",
+                    "value": "{{$json.contact_id}}"
+                  },
+                  {
+                    "name": "name",
+                    "value": "{{$json.name}}"
+                  },
+                  {
+                    "name": "email",
+                    "value": "{{$json.email}}"
+                  },
+                  {
+                    "name": "phone",
+                    "value": "{{$json.phone}}"
+                  },
+                  {
+                    "name": "company",
+                    "value": "{{$json.company}}"
+                  },
+                  {
+                    "name": "last_updated",
+                    "value": "{{$now}}"
+                  }
+                ]
+              },
+              "options": {
+                "timeout": 10000,
+                "response": {
+                  "response": {
+                    "responseFormat": "json"
+                  }
+                }
+              }
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "task_node_2",
+          "type": "nodes-base.httpRequest",
+          "purpose": "Resilient API call with automatic retry on failure",
+          "configuration": {
+            "maxTries": 5,
+            "retryOnFail": true,
+            "alwaysOutputData": true,
+            "waitBetweenTries": 2000,
+            "typeVersion": 1,
+            "notes": "HTTP Request node configured for resilient API calls to CRM, inventory system, and email marketing platform with automatic retry on failure and proper error handling",
+            "parameters": {
+              "url": "={{ $json.api_endpoint }}",
+              "method": "POST",
+              "sendHeaders": true,
+              "headerParameters": {
+                "parameters": [
+                  {
+                    "name": "X-Request-ID",
+                    "value": "={{ $workflow.id }}-{{ $itemIndex }}"
+                  },
+                  {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "name": "Authorization",
+                    "value": "={{ $json.auth_header }}"
+                  }
+                ]
+              },
+              "sendBody": true,
+              "bodyParameters": {
+                "parameters": []
+              },
+              "jsonBody": "={{ $json.transformed_data }}",
+              "options": {
+                "timeout": 30000,
+                "response": {
+                  "response": {
+                    "responseFormat": "json"
+                  }
+                }
+              },
+              "onError": "continueErrorOutput"
+            }
+          },
+          "validationStatus": "invalid",
+          "validationErrors": [
+            "URL must start with http:// or https://"
+          ]
+        },
+        {
+          "id": "task_node_1",
+          "type": "nodes-base.code",
+          "purpose": "Transform data structure using JavaScript",
+          "configuration": {
+            "typeVersion": 1,
+            "notes": "Transform Google Sheets data into JSON and XML formats for multi-API distribution",
+            "parameters": {
+              "jsCode": "// Transform Google Sheets data into JSON and XML formats\nconst results = [];\n\nfor (const item of items) {\n  try {\n    // Extract and validate data from Google Sheets\n    const rowData = item.json;\n    \n    // Basic validation\n    if (!rowData.id || !rowData.name) {\n      throw new Error(`Missing required fields in row: ${JSON.stringify(rowData)}`);\n    }\n    \n    // Create JSON format for APIs\n    const jsonFormat = {\n      id: rowData.id,\n      name: rowData.name,\n      email: rowData.email || '',\n      phone: rowData.phone || '',\n      company: rowData.company || '',\n      status: rowData.status || 'active',\n      lastModified: new Date().toISOString(),\n      source: 'google_sheets'\n    };\n    \n    // Create XML format\n    const xmlFormat = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<record>\n  <id>${rowData.id}</id>\n  <name><![CDATA[${rowData.name}]]></name>\n  <email>${rowData.email || ''}</email>\n  <phone>${rowData.phone || ''}</phone>\n  <company><![CDATA[${rowData.company || ''}]]></company>\n  <status>${rowData.status || 'active'}</status>\n  <lastModified>${new Date().toISOString()}</lastModified>\n  <source>google_sheets</source>\n</record>`;\n    \n    // Return both formats for downstream processing\n    results.push({\n      json: {\n        originalData: rowData,\n        jsonFormat: jsonFormat,\n        xmlFormat: xmlFormat,\n        processedAt: new Date().toISOString(),\n        validationStatus: 'passed'\n      }\n    });\n    \n  } catch (error) {\n    // Handle validation errors\n    results.push({\n      json: {\n        originalData: item.json,\n        error: error.message,\n        processedAt: new Date().toISOString(),\n        validationStatus: 'failed'\n      }\n    });\n  }\n}\n\nreturn results;",
+              "language": "javaScript"
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "search_node_1",
+          "type": "nodes-base.xml",
+          "purpose": "Convert data to XML format for transformation requirements",
+          "configuration": {
+            "typeVersion": 1,
+            "notes": "Converts JSON data from Google Sheets to XML format for API endpoints that require XML input",
+            "parameters": {
+              "mode": "jsonToxml",
+              "dataPropertyName": "xmlData",
+              "options": {
+                "rootName": "record"
+              }
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "search_node_2",
+          "type": "nodes-base.splitInBatches",
+          "purpose": "Enable parallel execution by splitting data into batches for simultaneous API calls",
+          "configuration": {
+            "typeVersion": "3",
+            "notes": "Splits Google Sheets data into batches to enable parallel processing for simultaneous API calls to CRM, inventory, and email marketing systems",
+            "parameters": {
+              "batchSize": 10,
+              "options": {
+                "reset": false
+              }
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "search_node_3",
+          "type": "nodes-base.merge",
+          "purpose": "Merge results from parallel API calls and handle workflow convergence",
+          "configuration": {
+            "typeVersion": "3.2",
+            "notes": "Merges results from parallel API calls to CRM, inventory system, and email marketing platform",
+            "parameters": {
+              "mode": "append",
+              "outputDataFrom": "both"
+            }
+          },
+          "validationStatus": "valid"
+        },
+        {
+          "id": "search_node_4",
+          "type": "nodes-base.googleSheetsTrigger",
+          "purpose": "Monitor changes in Google Sheets document to start the workflow",
+          "configuration": {
+            "typeVersion": 1,
+            "notes": "Monitors Google Sheets for row additions or updates to trigger the data validation and API synchronization workflow",
+            "parameters": {
+              "documentId": "",
+              "sheetName": "",
+              "event": "anyUpdate",
+              "authentication": "triggerOAuth2"
+            }
+          },
+          "validationStatus": "valid"
+        }
+      ],
+      "sessionState": {
+        "sessionId": "complete_e2e_user_test_1754894855726",
+        "createdAt": "2025-08-11T06:47:36.186Z",
+        "state": {
+          "phase": "configuration",
+          "userPrompt": "Build a workflow that monitors changes in a Google Sheets document, validates the data using custom logic, transforms it into different formats (JSON, XML), and simultaneously pushes updates to 3 different APIs (CRM, inventory system, and email marketing platform) with proper error handling for each endpoint",
+          "discovered": [
+            {
+              "id": "task_node_3",
+              "type": "nodes-base.httpRequest",
+              "config": {
+                "url": "",
+                "method": "GET",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Examples of modern error handling using onError property",
+              "displayName": "modern error handling patterns",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_2",
+              "type": "nodes-base.httpRequest",
+              "config": {
+                "url": "",
+                "method": "GET",
+                "maxTries": 5,
+                "retryOnFail": true,
+                "sendHeaders": true,
+                "alwaysOutputData": true,
+                "headerParameters": {
+                  "parameters": [
+                    {
+                      "name": "X-Request-ID",
+                      "value": "={{ $workflow.id }}-{{ $itemIndex }}"
+                    }
+                  ]
+                },
+                "waitBetweenTries": 2000
+              },
+              "purpose": "Resilient API call with automatic retry on failure",
+              "displayName": "api call with retry",
+              "isPreConfigured": true
+            },
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.code",
+              "config": {
+                "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                "language": "javaScript"
+              },
+              "purpose": "Transform data structure using JavaScript",
+              "displayName": "transform data",
+              "isPreConfigured": true
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.xml",
+              "purpose": "Convert data to XML format for transformation requirements"
+            },
+            {
+              "id": "search_node_2",
+              "type": "nodes-base.splitInBatches",
+              "purpose": "Enable parallel execution by splitting data into batches for simultaneous API calls"
+            },
+            {
+              "id": "search_node_3",
+              "type": "nodes-base.merge",
+              "purpose": "Merge results from parallel API calls and handle workflow convergence"
+            },
+            {
+              "id": "search_node_4",
+              "type": "nodes-base.googleSheetsTrigger",
+              "purpose": "Monitor changes in Google Sheets document to start the workflow"
+            }
+          ],
+          "selected": [
+            "task_node_3",
+            "task_node_2",
+            "task_node_1",
+            "search_node_1",
+            "search_node_2",
+            "search_node_3",
+            "search_node_4"
+          ],
+          "configured": {},
+          "validated": {},
+          "workflow": {
+            "nodes": [],
+            "settings": {},
+            "connections": {}
+          },
+          "buildPhases": [],
+          "operationHistory": [
+            {
+              "node": {
+                "id": "task_node_3",
+                "type": "nodes-base.httpRequest",
+                "config": {
+                  "url": "",
+                  "method": "GET",
+                  "onError": "continueRegularOutput",
+                  "maxTries": 3,
+                  "retryOnFail": true,
+                  "alwaysOutputData": true,
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Examples of modern error handling using onError property",
+                "displayName": "modern error handling patterns",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_3",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "node": {
+                "id": "task_node_2",
+                "type": "nodes-base.httpRequest",
+                "config": {
+                  "url": "",
+                  "method": "GET",
+                  "maxTries": 5,
+                  "retryOnFail": true,
+                  "sendHeaders": true,
+                  "alwaysOutputData": true,
+                  "headerParameters": {
+                    "parameters": [
+                      {
+                        "name": "X-Request-ID",
+                        "value": "={{ $workflow.id }}-{{ $itemIndex }}"
+                      }
+                    ]
+                  },
+                  "waitBetweenTries": 2000
+                },
+                "purpose": "Resilient API call with automatic retry on failure",
+                "displayName": "api call with retry",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_2",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "node": {
+                "id": "task_node_1",
+                "type": "nodes-base.code",
+                "config": {
+                  "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                  "language": "javaScript"
+                },
+                "purpose": "Transform data structure using JavaScript",
+                "displayName": "transform data",
+                "isPreConfigured": true
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "task_node_1",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "node": {
+                "id": "search_node_1",
+                "type": "nodes-base.xml",
+                "purpose": "Convert data to XML format for transformation requirements"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_1",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "node": {
+                "id": "search_node_2",
+                "type": "nodes-base.splitInBatches",
+                "purpose": "Enable parallel execution by splitting data into batches for simultaneous API calls"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_2",
+              "timestamp": "2025-08-11T06:47:58.790Z"
+            },
+            {
+              "node": {
+                "id": "search_node_3",
+                "type": "nodes-base.merge",
+                "purpose": "Merge results from parallel API calls and handle workflow convergence"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T06:47:59.037Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_3",
+              "timestamp": "2025-08-11T06:47:59.037Z"
+            },
+            {
+              "node": {
+                "id": "search_node_4",
+                "type": "nodes-base.googleSheetsTrigger",
+                "purpose": "Monitor changes in Google Sheets document to start the workflow"
+              },
+              "type": "discoverNode",
+              "timestamp": "2025-08-11T06:47:59.037Z"
+            },
+            {
+              "type": "selectNode",
+              "nodeId": "search_node_4",
+              "timestamp": "2025-08-11T06:47:59.037Z"
+            },
+            {
+              "type": "completePhase",
+              "phase": "discovery",
+              "timestamp": "2025-08-11T06:47:59.037Z"
+            },
+            {
+              "type": "setPhase",
+              "phase": "configuration",
+              "timestamp": "2025-08-11T06:48:19.452Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "HTTP Request node configured for pushing data to CRM API with robust error handling. Part of a multi-API workflow that processes Google Sheets changes and distributes updates to CRM, inventory, and email marketing systems.",
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "parameters": {
+                  "url": "https://api.crm-system.com/v1/contacts",
+                  "method": "POST",
+                  "options": {
+                    "timeout": 10000,
+                    "response": {
+                      "response": {
+                        "responseFormat": "json"
+                      }
+                    }
+                  },
+                  "sendBody": true,
+                  "sendHeaders": true,
+                  "bodyParameters": {
+                    "parameters": [
+                      {
+                        "name": "contact_id",
+                        "value": "{{$json.contact_id}}"
+                      },
+                      {
+                        "name": "name",
+                        "value": "{{$json.name}}"
+                      },
+                      {
+                        "name": "email",
+                        "value": "{{$json.email}}"
+                      },
+                      {
+                        "name": "phone",
+                        "value": "{{$json.phone}}"
+                      },
+                      {
+                        "name": "company",
+                        "value": "{{$json.company}}"
+                      },
+                      {
+                        "name": "last_updated",
+                        "value": "{{$now}}"
+                      }
+                    ]
+                  },
+                  "headerParameters": {
+                    "parameters": [
+                      {
+                        "name": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "name": "Authorization",
+                        "value": "Bearer {{$credentials.crmApi.token}}"
+                      }
+                    ]
+                  }
+                },
+                "retryOnFail": true,
+                "typeVersion": 1,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 2000
+              },
+              "nodeId": "task_node_3",
+              "purpose": "Examples of modern error handling using onError property",
+              "nodeType": "nodes-base.httpRequest",
+              "reasoning": "Customized the template for CRM API integration by changing method from GET to POST since we're pushing data updates",
+              "timestamp": "2025-08-11T06:48:19.591Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "task_node_3",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T06:48:19.739Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "HTTP Request node configured for resilient API calls to CRM, inventory system, and email marketing platform with automatic retry on failure and proper error handling",
+                "maxTries": 5,
+                "parameters": {
+                  "url": "={{ $json.api_endpoint }}",
+                  "method": "POST",
+                  "onError": "continueErrorOutput",
+                  "options": {
+                    "timeout": 30000,
+                    "response": {
+                      "response": {
+                        "responseFormat": "json"
+                      }
+                    }
+                  },
+                  "jsonBody": "={{ $json.transformed_data }}",
+                  "sendBody": true,
+                  "sendHeaders": true,
+                  "bodyParameters": {
+                    "parameters": []
+                  },
+                  "headerParameters": {
+                    "parameters": [
+                      {
+                        "name": "X-Request-ID",
+                        "value": "={{ $workflow.id }}-{{ $itemIndex }}"
+                      },
+                      {
+                        "name": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "name": "Authorization",
+                        "value": "={{ $json.auth_header }}"
+                      }
+                    ]
+                  }
+                },
+                "retryOnFail": true,
+                "typeVersion": 1,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 2000
+              },
+              "nodeId": "task_node_2",
+              "purpose": "Resilient API call with automatic retry on failure",
+              "nodeType": "nodes-base.httpRequest",
+              "reasoning": "Customized the template for multi-API integration scenario by changing method from GET to POST since we're pushing data updates",
+              "timestamp": "2025-08-11T06:48:19.739Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "task_node_2",
+              "result": {
+                "valid": false,
+                "errors": [
+                  {
+                    "nodeId": "task_node_2",
+                    "message": "URL must start with http:// or https://",
+                    "severity": "error"
+                  }
+                ]
+              },
+              "timestamp": "2025-08-11T06:48:19.946Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Transform Google Sheets data into JSON and XML formats for multi-API distribution",
+                "parameters": {
+                  "jsCode": "// Transform Google Sheets data into JSON and XML formats\nconst results = [];\n\nfor (const item of items) {\n  try {\n    // Extract and validate data from Google Sheets\n    const rowData = item.json;\n    \n    // Basic validation\n    if (!rowData.id || !rowData.name) {\n      throw new Error(`Missing required fields in row: ${JSON.stringify(rowData)}`);\n    }\n    \n    // Create JSON format for APIs\n    const jsonFormat = {\n      id: rowData.id,\n      name: rowData.name,\n      email: rowData.email || '',\n      phone: rowData.phone || '',\n      company: rowData.company || '',\n      status: rowData.status || 'active',\n      lastModified: new Date().toISOString(),\n      source: 'google_sheets'\n    };\n    \n    // Create XML format\n    const xmlFormat = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<record>\n  <id>${rowData.id}</id>\n  <name><![CDATA[${rowData.name}]]></name>\n  <email>${rowData.email || ''}</email>\n  <phone>${rowData.phone || ''}</phone>\n  <company><![CDATA[${rowData.company || ''}]]></company>\n  <status>${rowData.status || 'active'}</status>\n  <lastModified>${new Date().toISOString()}</lastModified>\n  <source>google_sheets</source>\n</record>`;\n    \n    // Return both formats for downstream processing\n    results.push({\n      json: {\n        originalData: rowData,\n        jsonFormat: jsonFormat,\n        xmlFormat: xmlFormat,\n        processedAt: new Date().toISOString(),\n        validationStatus: 'passed'\n      }\n    });\n    \n  } catch (error) {\n    // Handle validation errors\n    results.push({\n      json: {\n        originalData: item.json,\n        error: error.message,\n        processedAt: new Date().toISOString(),\n        validationStatus: 'failed'\n      }\n    });\n  }\n}\n\nreturn results;",
+                  "language": "javaScript"
+                },
+                "typeVersion": 1
+              },
+              "nodeId": "task_node_1",
+              "purpose": "Transform data structure using JavaScript",
+              "nodeType": "nodes-base.code",
+              "reasoning": "Customized the template's generic data transformation to specifically handle Google Sheets data validation and multi-format conversion",
+              "timestamp": "2025-08-11T06:48:19.946Z",
+              "operationIndex": 0,
+              "customizedFromTemplate": true
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "task_node_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T06:48:20.103Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Converts JSON data from Google Sheets to XML format for API endpoints that require XML input",
+                "parameters": {
+                  "mode": "jsonToxml",
+                  "options": {
+                    "rootName": "record"
+                  },
+                  "dataPropertyName": "xmlData"
+                },
+                "typeVersion": 1
+              },
+              "nodeId": "search_node_1",
+              "purpose": "Convert data to XML format for transformation requirements",
+              "nodeType": "nodes-base.xml",
+              "reasoning": "Configured XML node to convert JSON data to XML format as required for the transformation workflow",
+              "timestamp": "2025-08-11T06:48:20.103Z",
+              "operationIndex": 0
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "search_node_1",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T06:48:20.315Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Splits Google Sheets data into batches to enable parallel processing for simultaneous API calls to CRM, inventory, and email marketing systems",
+                "parameters": {
+                  "options": {
+                    "reset": false
+                  },
+                  "batchSize": 10
+                },
+                "typeVersion": "3"
+              },
+              "nodeId": "search_node_2",
+              "purpose": "Enable parallel execution by splitting data into batches for simultaneous API calls",
+              "nodeType": "nodes-base.splitInBatches",
+              "reasoning": "Configured batch size of 10 to balance parallel processing efficiency with API rate limits across 3 different endpoints",
+              "timestamp": "2025-08-11T06:48:20.315Z",
+              "operationIndex": 0
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "search_node_2",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T06:48:20.477Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Merges results from parallel API calls to CRM, inventory system, and email marketing platform",
+                "parameters": {
+                  "mode": "append",
+                  "outputDataFrom": "both"
+                },
+                "typeVersion": "3.2"
+              },
+              "nodeId": "search_node_3",
+              "purpose": "Merge results from parallel API calls and handle workflow convergence",
+              "nodeType": "nodes-base.merge",
+              "reasoning": "Using 'append' mode to combine all results from the three parallel API calls (CRM, inventory system, email marketing platform) into a single output stream",
+              "timestamp": "2025-08-11T06:48:20.477Z",
+              "operationIndex": 0
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "search_node_3",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T06:48:20.602Z"
+            },
+            {
+              "type": "configureNode",
+              "config": {
+                "notes": "Monitors Google Sheets for row additions or updates to trigger the data validation and API synchronization workflow",
+                "parameters": {
+                  "event": "anyUpdate",
+                  "sheetName": "",
+                  "documentId": "",
+                  "authentication": "triggerOAuth2"
+                },
+                "typeVersion": 1
+              },
+              "nodeId": "search_node_4",
+              "purpose": "Monitor changes in Google Sheets document to start the workflow",
+              "nodeType": "nodes-base.googleSheetsTrigger",
+              "reasoning": "This configuration sets up the Google Sheets trigger to monitor any row additions or updates, which is essential for starting the workflow when data changes occur",
+              "timestamp": "2025-08-11T06:48:20.602Z",
+              "operationIndex": 0
+            },
+            {
+              "type": "validateNode",
+              "nodeId": "search_node_4",
+              "result": {
+                "valid": true,
+                "errors": []
+              },
+              "timestamp": "2025-08-11T06:48:20.725Z"
+            }
+          ],
+          "pendingClarifications": [],
+          "clarificationHistory": []
+        }
+      },
+      "stateChanges": {},
+      "dataFlow": {
+        "input": {
+          "discoveredNodes": [
+            {
+              "id": "task_node_3",
+              "type": "nodes-base.httpRequest",
+              "displayName": "modern error handling patterns",
+              "purpose": "Examples of modern error handling using onError property",
+              "isPreConfigured": true,
+              "config": {
+                "method": "GET",
+                "url": "",
+                "onError": "continueRegularOutput",
+                "retryOnFail": true,
+                "maxTries": 3,
+                "waitBetweenTries": 2000,
+                "alwaysOutputData": true
+              }
+            },
+            {
+              "id": "task_node_2",
+              "type": "nodes-base.httpRequest",
+              "displayName": "api call with retry",
+              "purpose": "Resilient API call with automatic retry on failure",
+              "isPreConfigured": true,
+              "config": {
+                "method": "GET",
+                "url": "",
+                "retryOnFail": true,
+                "maxTries": 5,
+                "waitBetweenTries": 2000,
+                "alwaysOutputData": true,
+                "sendHeaders": true,
+                "headerParameters": {
+                  "parameters": [
+                    {
+                      "name": "X-Request-ID",
+                      "value": "={{ $workflow.id }}-{{ $itemIndex }}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.code",
+              "displayName": "transform data",
+              "purpose": "Transform data structure using JavaScript",
+              "isPreConfigured": true,
+              "config": {
+                "language": "javaScript",
+                "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;"
+              }
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.xml",
+              "displayName": "nodes-base.xml",
+              "purpose": "Convert data to XML format for transformation requirements",
+              "needsConfiguration": true
+            },
+            {
+              "id": "search_node_2",
+              "type": "nodes-base.splitInBatches",
+              "displayName": "nodes-base.splitInBatches",
+              "purpose": "Enable parallel execution by splitting data into batches for simultaneous API calls",
+              "needsConfiguration": true
+            },
+            {
+              "id": "search_node_3",
+              "type": "nodes-base.merge",
+              "displayName": "nodes-base.merge",
+              "purpose": "Merge results from parallel API calls and handle workflow convergence",
+              "needsConfiguration": true
+            },
+            {
+              "id": "search_node_4",
+              "type": "nodes-base.googleSheetsTrigger",
+              "displayName": "nodes-base.googleSheetsTrigger",
+              "purpose": "Monitor changes in Google Sheets document to start the workflow",
+              "needsConfiguration": true
+            }
+          ]
+        },
+        "output": {
+          "configuredNodes": [
+            {
+              "id": "task_node_3",
+              "type": "nodes-base.httpRequest",
+              "purpose": "Examples of modern error handling using onError property",
+              "config": {
+                "onError": "continueRegularOutput",
+                "maxTries": 3,
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 2000,
+                "typeVersion": 1,
+                "notes": "HTTP Request node configured for pushing data to CRM API with robust error handling. Part of a multi-API workflow that processes Google Sheets changes and distributes updates to CRM, inventory, and email marketing systems.",
+                "parameters": {
+                  "url": "https://api.crm-system.com/v1/contacts",
+                  "method": "POST",
+                  "sendHeaders": true,
+                  "headerParameters": {
+                    "parameters": [
+                      {
+                        "name": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "name": "Authorization",
+                        "value": "Bearer {{$credentials.crmApi.token}}"
+                      }
+                    ]
+                  },
+                  "sendBody": true,
+                  "bodyParameters": {
+                    "parameters": [
+                      {
+                        "name": "contact_id",
+                        "value": "{{$json.contact_id}}"
+                      },
+                      {
+                        "name": "name",
+                        "value": "{{$json.name}}"
+                      },
+                      {
+                        "name": "email",
+                        "value": "{{$json.email}}"
+                      },
+                      {
+                        "name": "phone",
+                        "value": "{{$json.phone}}"
+                      },
+                      {
+                        "name": "company",
+                        "value": "{{$json.company}}"
+                      },
+                      {
+                        "name": "last_updated",
+                        "value": "{{$now}}"
+                      }
+                    ]
+                  },
+                  "options": {
+                    "timeout": 10000,
+                    "response": {
+                      "response": {
+                        "responseFormat": "json"
+                      }
+                    }
+                  }
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "task_node_2",
+              "type": "nodes-base.httpRequest",
+              "purpose": "Resilient API call with automatic retry on failure",
+              "config": {
+                "maxTries": 5,
+                "retryOnFail": true,
+                "alwaysOutputData": true,
+                "waitBetweenTries": 2000,
+                "typeVersion": 1,
+                "notes": "HTTP Request node configured for resilient API calls to CRM, inventory system, and email marketing platform with automatic retry on failure and proper error handling",
+                "parameters": {
+                  "url": "={{ $json.api_endpoint }}",
+                  "method": "POST",
+                  "sendHeaders": true,
+                  "headerParameters": {
+                    "parameters": [
+                      {
+                        "name": "X-Request-ID",
+                        "value": "={{ $workflow.id }}-{{ $itemIndex }}"
+                      },
+                      {
+                        "name": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "name": "Authorization",
+                        "value": "={{ $json.auth_header }}"
+                      }
+                    ]
+                  },
+                  "sendBody": true,
+                  "bodyParameters": {
+                    "parameters": []
+                  },
+                  "jsonBody": "={{ $json.transformed_data }}",
+                  "options": {
+                    "timeout": 30000,
+                    "response": {
+                      "response": {
+                        "responseFormat": "json"
+                      }
+                    }
+                  },
+                  "onError": "continueErrorOutput"
+                }
+              },
+              "validated": false,
+              "validationErrors": [
+                "URL must start with http:// or https://"
+              ]
+            },
+            {
+              "id": "task_node_1",
+              "type": "nodes-base.code",
+              "purpose": "Transform data structure using JavaScript",
+              "config": {
+                "typeVersion": 1,
+                "notes": "Transform Google Sheets data into JSON and XML formats for multi-API distribution",
+                "parameters": {
+                  "jsCode": "// Transform Google Sheets data into JSON and XML formats\nconst results = [];\n\nfor (const item of items) {\n  try {\n    // Extract and validate data from Google Sheets\n    const rowData = item.json;\n    \n    // Basic validation\n    if (!rowData.id || !rowData.name) {\n      throw new Error(`Missing required fields in row: ${JSON.stringify(rowData)}`);\n    }\n    \n    // Create JSON format for APIs\n    const jsonFormat = {\n      id: rowData.id,\n      name: rowData.name,\n      email: rowData.email || '',\n      phone: rowData.phone || '',\n      company: rowData.company || '',\n      status: rowData.status || 'active',\n      lastModified: new Date().toISOString(),\n      source: 'google_sheets'\n    };\n    \n    // Create XML format\n    const xmlFormat = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<record>\n  <id>${rowData.id}</id>\n  <name><![CDATA[${rowData.name}]]></name>\n  <email>${rowData.email || ''}</email>\n  <phone>${rowData.phone || ''}</phone>\n  <company><![CDATA[${rowData.company || ''}]]></company>\n  <status>${rowData.status || 'active'}</status>\n  <lastModified>${new Date().toISOString()}</lastModified>\n  <source>google_sheets</source>\n</record>`;\n    \n    // Return both formats for downstream processing\n    results.push({\n      json: {\n        originalData: rowData,\n        jsonFormat: jsonFormat,\n        xmlFormat: xmlFormat,\n        processedAt: new Date().toISOString(),\n        validationStatus: 'passed'\n      }\n    });\n    \n  } catch (error) {\n    // Handle validation errors\n    results.push({\n      json: {\n        originalData: item.json,\n        error: error.message,\n        processedAt: new Date().toISOString(),\n        validationStatus: 'failed'\n      }\n    });\n  }\n}\n\nreturn results;",
+                  "language": "javaScript"
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "search_node_1",
+              "type": "nodes-base.xml",
+              "purpose": "Convert data to XML format for transformation requirements",
+              "config": {
+                "typeVersion": 1,
+                "notes": "Converts JSON data from Google Sheets to XML format for API endpoints that require XML input",
+                "parameters": {
+                  "mode": "jsonToxml",
+                  "dataPropertyName": "xmlData",
+                  "options": {
+                    "rootName": "record"
+                  }
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "search_node_2",
+              "type": "nodes-base.splitInBatches",
+              "purpose": "Enable parallel execution by splitting data into batches for simultaneous API calls",
+              "config": {
+                "typeVersion": "3",
+                "notes": "Splits Google Sheets data into batches to enable parallel processing for simultaneous API calls to CRM, inventory, and email marketing systems",
+                "parameters": {
+                  "batchSize": 10,
+                  "options": {
+                    "reset": false
+                  }
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "search_node_3",
+              "type": "nodes-base.merge",
+              "purpose": "Merge results from parallel API calls and handle workflow convergence",
+              "config": {
+                "typeVersion": "3.2",
+                "notes": "Merges results from parallel API calls to CRM, inventory system, and email marketing platform",
+                "parameters": {
+                  "mode": "append",
+                  "outputDataFrom": "both"
+                }
+              },
+              "validated": true
+            },
+            {
+              "id": "search_node_4",
+              "type": "nodes-base.googleSheetsTrigger",
+              "purpose": "Monitor changes in Google Sheets document to start the workflow",
+              "config": {
+                "typeVersion": 1,
+                "notes": "Monitors Google Sheets for row additions or updates to trigger the data validation and API synchronization workflow",
+                "parameters": {
+                  "documentId": "",
+                  "sheetName": "",
+                  "event": "anyUpdate",
+                  "authentication": "triggerOAuth2"
+                }
+              },
+              "validated": true
+            }
+          ]
+        },
+        "transformations": [
+          "Parameter Configuration",
+          "Validation",
+          "Type Checking"
+        ]
+      },
+      "warnings": [
+        "Node task_node_2: URL must start with http:// or https://"
+      ],
+      "stateDelta": {
+        "added": {},
+        "modified": {
+          "state": {
+            "old": {
+              "phase": "configuration",
+              "userPrompt": "Build a workflow that monitors changes in a Google Sheets document, validates the data using custom logic, transforms it into different formats (JSON, XML), and simultaneously pushes updates to 3 different APIs (CRM, inventory system, and email marketing platform) with proper error handling for each endpoint",
+              "discovered": [
+                {
+                  "id": "task_node_3",
+                  "type": "nodes-base.httpRequest",
+                  "config": {
+                    "url": "",
+                    "method": "GET",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 3,
+                    "retryOnFail": true,
+                    "alwaysOutputData": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Examples of modern error handling using onError property",
+                  "displayName": "modern error handling patterns",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_2",
+                  "type": "nodes-base.httpRequest",
+                  "config": {
+                    "url": "",
+                    "method": "GET",
+                    "maxTries": 5,
+                    "retryOnFail": true,
+                    "sendHeaders": true,
+                    "alwaysOutputData": true,
+                    "headerParameters": {
+                      "parameters": [
+                        {
+                          "name": "X-Request-ID",
+                          "value": "={{ $workflow.id }}-{{ $itemIndex }}"
+                        }
+                      ]
+                    },
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Resilient API call with automatic retry on failure",
+                  "displayName": "api call with retry",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_1",
+                  "type": "nodes-base.code",
+                  "config": {
+                    "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                    "language": "javaScript"
+                  },
+                  "purpose": "Transform data structure using JavaScript",
+                  "displayName": "transform data",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "search_node_1",
+                  "type": "nodes-base.xml",
+                  "purpose": "Convert data to XML format for transformation requirements"
+                },
+                {
+                  "id": "search_node_2",
+                  "type": "nodes-base.splitInBatches",
+                  "purpose": "Enable parallel execution by splitting data into batches for simultaneous API calls"
+                },
+                {
+                  "id": "search_node_3",
+                  "type": "nodes-base.merge",
+                  "purpose": "Merge results from parallel API calls and handle workflow convergence"
+                },
+                {
+                  "id": "search_node_4",
+                  "type": "nodes-base.googleSheetsTrigger",
+                  "purpose": "Monitor changes in Google Sheets document to start the workflow"
+                }
+              ],
+              "selected": [
+                "task_node_3",
+                "task_node_2",
+                "task_node_1",
+                "search_node_1",
+                "search_node_2",
+                "search_node_3",
+                "search_node_4"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "nodes": [],
+                "settings": {},
+                "connections": {}
+              },
+              "buildPhases": [],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "task_node_3",
+                    "type": "nodes-base.httpRequest",
+                    "config": {
+                      "url": "",
+                      "method": "GET",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 3,
+                      "retryOnFail": true,
+                      "alwaysOutputData": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Examples of modern error handling using onError property",
+                    "displayName": "modern error handling patterns",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_3",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_2",
+                    "type": "nodes-base.httpRequest",
+                    "config": {
+                      "url": "",
+                      "method": "GET",
+                      "maxTries": 5,
+                      "retryOnFail": true,
+                      "sendHeaders": true,
+                      "alwaysOutputData": true,
+                      "headerParameters": {
+                        "parameters": [
+                          {
+                            "name": "X-Request-ID",
+                            "value": "={{ $workflow.id }}-{{ $itemIndex }}"
+                          }
+                        ]
+                      },
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Resilient API call with automatic retry on failure",
+                    "displayName": "api call with retry",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_2",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_1",
+                    "type": "nodes-base.code",
+                    "config": {
+                      "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                      "language": "javaScript"
+                    },
+                    "purpose": "Transform data structure using JavaScript",
+                    "displayName": "transform data",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_1",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_1",
+                    "type": "nodes-base.xml",
+                    "purpose": "Convert data to XML format for transformation requirements"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_1",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_2",
+                    "type": "nodes-base.splitInBatches",
+                    "purpose": "Enable parallel execution by splitting data into batches for simultaneous API calls"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_2",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_3",
+                    "type": "nodes-base.merge",
+                    "purpose": "Merge results from parallel API calls and handle workflow convergence"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T06:47:59.037Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_3",
+                  "timestamp": "2025-08-11T06:47:59.037Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_4",
+                    "type": "nodes-base.googleSheetsTrigger",
+                    "purpose": "Monitor changes in Google Sheets document to start the workflow"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T06:47:59.037Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_4",
+                  "timestamp": "2025-08-11T06:47:59.037Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-11T06:47:59.037Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            },
+            "new": {
+              "phase": "configuration",
+              "userPrompt": "Build a workflow that monitors changes in a Google Sheets document, validates the data using custom logic, transforms it into different formats (JSON, XML), and simultaneously pushes updates to 3 different APIs (CRM, inventory system, and email marketing platform) with proper error handling for each endpoint",
+              "discovered": [
+                {
+                  "id": "task_node_3",
+                  "type": "nodes-base.httpRequest",
+                  "config": {
+                    "url": "",
+                    "method": "GET",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 3,
+                    "retryOnFail": true,
+                    "alwaysOutputData": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Examples of modern error handling using onError property",
+                  "displayName": "modern error handling patterns",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_2",
+                  "type": "nodes-base.httpRequest",
+                  "config": {
+                    "url": "",
+                    "method": "GET",
+                    "maxTries": 5,
+                    "retryOnFail": true,
+                    "sendHeaders": true,
+                    "alwaysOutputData": true,
+                    "headerParameters": {
+                      "parameters": [
+                        {
+                          "name": "X-Request-ID",
+                          "value": "={{ $workflow.id }}-{{ $itemIndex }}"
+                        }
+                      ]
+                    },
+                    "waitBetweenTries": 2000
+                  },
+                  "purpose": "Resilient API call with automatic retry on failure",
+                  "displayName": "api call with retry",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "task_node_1",
+                  "type": "nodes-base.code",
+                  "config": {
+                    "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                    "language": "javaScript"
+                  },
+                  "purpose": "Transform data structure using JavaScript",
+                  "displayName": "transform data",
+                  "isPreConfigured": true
+                },
+                {
+                  "id": "search_node_1",
+                  "type": "nodes-base.xml",
+                  "purpose": "Convert data to XML format for transformation requirements"
+                },
+                {
+                  "id": "search_node_2",
+                  "type": "nodes-base.splitInBatches",
+                  "purpose": "Enable parallel execution by splitting data into batches for simultaneous API calls"
+                },
+                {
+                  "id": "search_node_3",
+                  "type": "nodes-base.merge",
+                  "purpose": "Merge results from parallel API calls and handle workflow convergence"
+                },
+                {
+                  "id": "search_node_4",
+                  "type": "nodes-base.googleSheetsTrigger",
+                  "purpose": "Monitor changes in Google Sheets document to start the workflow"
+                }
+              ],
+              "selected": [
+                "task_node_3",
+                "task_node_2",
+                "task_node_1",
+                "search_node_1",
+                "search_node_2",
+                "search_node_3",
+                "search_node_4"
+              ],
+              "configured": {},
+              "validated": {},
+              "workflow": {
+                "nodes": [],
+                "settings": {},
+                "connections": {}
+              },
+              "buildPhases": [],
+              "operationHistory": [
+                {
+                  "node": {
+                    "id": "task_node_3",
+                    "type": "nodes-base.httpRequest",
+                    "config": {
+                      "url": "",
+                      "method": "GET",
+                      "onError": "continueRegularOutput",
+                      "maxTries": 3,
+                      "retryOnFail": true,
+                      "alwaysOutputData": true,
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Examples of modern error handling using onError property",
+                    "displayName": "modern error handling patterns",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_3",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_2",
+                    "type": "nodes-base.httpRequest",
+                    "config": {
+                      "url": "",
+                      "method": "GET",
+                      "maxTries": 5,
+                      "retryOnFail": true,
+                      "sendHeaders": true,
+                      "alwaysOutputData": true,
+                      "headerParameters": {
+                        "parameters": [
+                          {
+                            "name": "X-Request-ID",
+                            "value": "={{ $workflow.id }}-{{ $itemIndex }}"
+                          }
+                        ]
+                      },
+                      "waitBetweenTries": 2000
+                    },
+                    "purpose": "Resilient API call with automatic retry on failure",
+                    "displayName": "api call with retry",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_2",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "node": {
+                    "id": "task_node_1",
+                    "type": "nodes-base.code",
+                    "config": {
+                      "jsCode": "// Transform each item\nconst results = [];\n\nfor (const item of items) {\n  results.push({\n    json: {\n      // Transform your data here\n      id: item.json.id,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;",
+                      "language": "javaScript"
+                    },
+                    "purpose": "Transform data structure using JavaScript",
+                    "displayName": "transform data",
+                    "isPreConfigured": true
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "task_node_1",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_1",
+                    "type": "nodes-base.xml",
+                    "purpose": "Convert data to XML format for transformation requirements"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_1",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_2",
+                    "type": "nodes-base.splitInBatches",
+                    "purpose": "Enable parallel execution by splitting data into batches for simultaneous API calls"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_2",
+                  "timestamp": "2025-08-11T06:47:58.790Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_3",
+                    "type": "nodes-base.merge",
+                    "purpose": "Merge results from parallel API calls and handle workflow convergence"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T06:47:59.037Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_3",
+                  "timestamp": "2025-08-11T06:47:59.037Z"
+                },
+                {
+                  "node": {
+                    "id": "search_node_4",
+                    "type": "nodes-base.googleSheetsTrigger",
+                    "purpose": "Monitor changes in Google Sheets document to start the workflow"
+                  },
+                  "type": "discoverNode",
+                  "timestamp": "2025-08-11T06:47:59.037Z"
+                },
+                {
+                  "type": "selectNode",
+                  "nodeId": "search_node_4",
+                  "timestamp": "2025-08-11T06:47:59.037Z"
+                },
+                {
+                  "type": "completePhase",
+                  "phase": "discovery",
+                  "timestamp": "2025-08-11T06:47:59.037Z"
+                },
+                {
+                  "type": "setPhase",
+                  "phase": "configuration",
+                  "timestamp": "2025-08-11T06:48:19.452Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "HTTP Request node configured for pushing data to CRM API with robust error handling. Part of a multi-API workflow that processes Google Sheets changes and distributes updates to CRM, inventory, and email marketing systems.",
+                    "onError": "continueRegularOutput",
+                    "maxTries": 3,
+                    "parameters": {
+                      "url": "https://api.crm-system.com/v1/contacts",
+                      "method": "POST",
+                      "options": {
+                        "timeout": 10000,
+                        "response": {
+                          "response": {
+                            "responseFormat": "json"
+                          }
+                        }
+                      },
+                      "sendBody": true,
+                      "sendHeaders": true,
+                      "bodyParameters": {
+                        "parameters": [
+                          {
+                            "name": "contact_id",
+                            "value": "{{$json.contact_id}}"
+                          },
+                          {
+                            "name": "name",
+                            "value": "{{$json.name}}"
+                          },
+                          {
+                            "name": "email",
+                            "value": "{{$json.email}}"
+                          },
+                          {
+                            "name": "phone",
+                            "value": "{{$json.phone}}"
+                          },
+                          {
+                            "name": "company",
+                            "value": "{{$json.company}}"
+                          },
+                          {
+                            "name": "last_updated",
+                            "value": "{{$now}}"
+                          }
+                        ]
+                      },
+                      "headerParameters": {
+                        "parameters": [
+                          {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                          },
+                          {
+                            "name": "Authorization",
+                            "value": "Bearer {{$credentials.crmApi.token}}"
+                          }
+                        ]
+                      }
+                    },
+                    "retryOnFail": true,
+                    "typeVersion": 1,
+                    "alwaysOutputData": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "nodeId": "task_node_3",
+                  "purpose": "Examples of modern error handling using onError property",
+                  "nodeType": "nodes-base.httpRequest",
+                  "reasoning": "Customized the template for CRM API integration by changing method from GET to POST since we're pushing data updates",
+                  "timestamp": "2025-08-11T06:48:19.591Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "task_node_3",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T06:48:19.739Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "HTTP Request node configured for resilient API calls to CRM, inventory system, and email marketing platform with automatic retry on failure and proper error handling",
+                    "maxTries": 5,
+                    "parameters": {
+                      "url": "={{ $json.api_endpoint }}",
+                      "method": "POST",
+                      "onError": "continueErrorOutput",
+                      "options": {
+                        "timeout": 30000,
+                        "response": {
+                          "response": {
+                            "responseFormat": "json"
+                          }
+                        }
+                      },
+                      "jsonBody": "={{ $json.transformed_data }}",
+                      "sendBody": true,
+                      "sendHeaders": true,
+                      "bodyParameters": {
+                        "parameters": []
+                      },
+                      "headerParameters": {
+                        "parameters": [
+                          {
+                            "name": "X-Request-ID",
+                            "value": "={{ $workflow.id }}-{{ $itemIndex }}"
+                          },
+                          {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                          },
+                          {
+                            "name": "Authorization",
+                            "value": "={{ $json.auth_header }}"
+                          }
+                        ]
+                      }
+                    },
+                    "retryOnFail": true,
+                    "typeVersion": 1,
+                    "alwaysOutputData": true,
+                    "waitBetweenTries": 2000
+                  },
+                  "nodeId": "task_node_2",
+                  "purpose": "Resilient API call with automatic retry on failure",
+                  "nodeType": "nodes-base.httpRequest",
+                  "reasoning": "Customized the template for multi-API integration scenario by changing method from GET to POST since we're pushing data updates",
+                  "timestamp": "2025-08-11T06:48:19.739Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "task_node_2",
+                  "result": {
+                    "valid": false,
+                    "errors": [
+                      {
+                        "nodeId": "task_node_2",
+                        "message": "URL must start with http:// or https://",
+                        "severity": "error"
+                      }
+                    ]
+                  },
+                  "timestamp": "2025-08-11T06:48:19.946Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Transform Google Sheets data into JSON and XML formats for multi-API distribution",
+                    "parameters": {
+                      "jsCode": "// Transform Google Sheets data into JSON and XML formats\nconst results = [];\n\nfor (const item of items) {\n  try {\n    // Extract and validate data from Google Sheets\n    const rowData = item.json;\n    \n    // Basic validation\n    if (!rowData.id || !rowData.name) {\n      throw new Error(`Missing required fields in row: ${JSON.stringify(rowData)}`);\n    }\n    \n    // Create JSON format for APIs\n    const jsonFormat = {\n      id: rowData.id,\n      name: rowData.name,\n      email: rowData.email || '',\n      phone: rowData.phone || '',\n      company: rowData.company || '',\n      status: rowData.status || 'active',\n      lastModified: new Date().toISOString(),\n      source: 'google_sheets'\n    };\n    \n    // Create XML format\n    const xmlFormat = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<record>\n  <id>${rowData.id}</id>\n  <name><![CDATA[${rowData.name}]]></name>\n  <email>${rowData.email || ''}</email>\n  <phone>${rowData.phone || ''}</phone>\n  <company><![CDATA[${rowData.company || ''}]]></company>\n  <status>${rowData.status || 'active'}</status>\n  <lastModified>${new Date().toISOString()}</lastModified>\n  <source>google_sheets</source>\n</record>`;\n    \n    // Return both formats for downstream processing\n    results.push({\n      json: {\n        originalData: rowData,\n        jsonFormat: jsonFormat,\n        xmlFormat: xmlFormat,\n        processedAt: new Date().toISOString(),\n        validationStatus: 'passed'\n      }\n    });\n    \n  } catch (error) {\n    // Handle validation errors\n    results.push({\n      json: {\n        originalData: item.json,\n        error: error.message,\n        processedAt: new Date().toISOString(),\n        validationStatus: 'failed'\n      }\n    });\n  }\n}\n\nreturn results;",
+                      "language": "javaScript"
+                    },
+                    "typeVersion": 1
+                  },
+                  "nodeId": "task_node_1",
+                  "purpose": "Transform data structure using JavaScript",
+                  "nodeType": "nodes-base.code",
+                  "reasoning": "Customized the template's generic data transformation to specifically handle Google Sheets data validation and multi-format conversion",
+                  "timestamp": "2025-08-11T06:48:19.946Z",
+                  "operationIndex": 0,
+                  "customizedFromTemplate": true
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "task_node_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T06:48:20.103Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Converts JSON data from Google Sheets to XML format for API endpoints that require XML input",
+                    "parameters": {
+                      "mode": "jsonToxml",
+                      "options": {
+                        "rootName": "record"
+                      },
+                      "dataPropertyName": "xmlData"
+                    },
+                    "typeVersion": 1
+                  },
+                  "nodeId": "search_node_1",
+                  "purpose": "Convert data to XML format for transformation requirements",
+                  "nodeType": "nodes-base.xml",
+                  "reasoning": "Configured XML node to convert JSON data to XML format as required for the transformation workflow",
+                  "timestamp": "2025-08-11T06:48:20.103Z",
+                  "operationIndex": 0
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "search_node_1",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T06:48:20.315Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Splits Google Sheets data into batches to enable parallel processing for simultaneous API calls to CRM, inventory, and email marketing systems",
+                    "parameters": {
+                      "options": {
+                        "reset": false
+                      },
+                      "batchSize": 10
+                    },
+                    "typeVersion": "3"
+                  },
+                  "nodeId": "search_node_2",
+                  "purpose": "Enable parallel execution by splitting data into batches for simultaneous API calls",
+                  "nodeType": "nodes-base.splitInBatches",
+                  "reasoning": "Configured batch size of 10 to balance parallel processing efficiency with API rate limits across 3 different endpoints",
+                  "timestamp": "2025-08-11T06:48:20.315Z",
+                  "operationIndex": 0
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "search_node_2",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T06:48:20.477Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Merges results from parallel API calls to CRM, inventory system, and email marketing platform",
+                    "parameters": {
+                      "mode": "append",
+                      "outputDataFrom": "both"
+                    },
+                    "typeVersion": "3.2"
+                  },
+                  "nodeId": "search_node_3",
+                  "purpose": "Merge results from parallel API calls and handle workflow convergence",
+                  "nodeType": "nodes-base.merge",
+                  "reasoning": "Using 'append' mode to combine all results from the three parallel API calls (CRM, inventory system, email marketing platform) into a single output stream",
+                  "timestamp": "2025-08-11T06:48:20.477Z",
+                  "operationIndex": 0
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "search_node_3",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T06:48:20.602Z"
+                },
+                {
+                  "type": "configureNode",
+                  "config": {
+                    "notes": "Monitors Google Sheets for row additions or updates to trigger the data validation and API synchronization workflow",
+                    "parameters": {
+                      "event": "anyUpdate",
+                      "sheetName": "",
+                      "documentId": "",
+                      "authentication": "triggerOAuth2"
+                    },
+                    "typeVersion": 1
+                  },
+                  "nodeId": "search_node_4",
+                  "purpose": "Monitor changes in Google Sheets document to start the workflow",
+                  "nodeType": "nodes-base.googleSheetsTrigger",
+                  "reasoning": "This configuration sets up the Google Sheets trigger to monitor any row additions or updates, which is essential for starting the workflow when data changes occur",
+                  "timestamp": "2025-08-11T06:48:20.602Z",
+                  "operationIndex": 0
+                },
+                {
+                  "type": "validateNode",
+                  "nodeId": "search_node_4",
+                  "result": {
+                    "valid": true,
+                    "errors": []
+                  },
+                  "timestamp": "2025-08-11T06:48:20.725Z"
+                }
+              ],
+              "pendingClarifications": [],
+              "clarificationHistory": []
+            }
+          }
+        },
+        "removed": [],
+        "unchanged": [
+          "sessionId",
+          "createdAt"
+        ]
+      },
+      "errors": [
+        {
+          "type": "validation",
+          "message": "1 nodes failed validation"
+        }
+      ]
+    },
+    "building": {
+      "name": "Building",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "validation": {
+      "name": "Validation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    },
+    "documentation": {
+      "name": "Documentation",
+      "success": false,
+      "metrics": {
+        "startTime": 0,
+        "endTime": 0,
+        "duration": 0
+      },
+      "logs": [],
+      "nodes": [],
+      "sessionState": {},
+      "stateChanges": {},
+      "dataFlow": {
+        "input": null,
+        "output": null,
+        "transformations": []
+      }
+    }
+  },
+  "summary": {
+    "totalNodes": 0,
+    "totalConnections": 0,
+    "validationAttempts": 0,
+    "errorsFixed": 0,
+    "stickyNotesAdded": 0,
+    "performanceScore": 20,
+    "qualityScore": 100,
+    "completenessScore": 20
+  },
+  "optimizationSuggestions": [
+    "Consider optimizing discovery phase (took 23423ms)",
+    "Consider optimizing configuration phase (took 21249ms)"
+  ],
+  "errorPatterns": [
+    {
+      "pattern": "validation",
+      "frequency": 1,
+      "suggestedFix": "Review error details and adjust workflow accordingly"
+    }
+  ]
+}

@@ -18,6 +18,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import chalk from 'chalk';
 import * as readline from 'readline';
+import { TestReporter } from '@/lib/test-reporter';
+import { patchOrchestratorWithReporter } from '@/lib/test-reporter-hooks';
 
 // Load env first
 dotenv.config({ path: path.join(process.cwd(), '.env.local') });
@@ -31,7 +33,7 @@ const args = process.argv.slice(2);
 const isVerbose = args.includes('--verbose') || args.includes('-v');
 const skipPrompts = args.includes('--no-prompt') || args.includes('-n');
 const testPrompt = args.find(a => a.startsWith('--prompt='))?.split('=')[1];
-const shouldDeploy = args.includes('--deploy') || args.includes('-d');
+const shouldDeploy = true; // Always deploy - we can change this logic later if needed
 
 if (isVerbose) {
   process.env.LOG_LEVEL = 'debug';
@@ -171,6 +173,13 @@ async function runCompleteWorkflow(orchestrator: any, name: string, prompt: stri
   const sessionId = `complete_e2e_${name.replace(/\s+/g, '_').toLowerCase()}_${Date.now()}`;
   const startTime = Date.now();
   const phaseResults: any = {};
+  let reportPath: string | undefined;
+  
+  // Initialize reporter
+  const reporter = new TestReporter(name, prompt, sessionId);
+  
+  // Patch orchestrator with reporter hooks for detailed tracking
+  patchOrchestratorWithReporter(orchestrator, reporter);
   
   console.log(chalk.blue(`\n📋 Running Complete E2E Test: ${name}`));
   console.log(chalk.gray('─'.repeat(60)));
@@ -184,10 +193,36 @@ async function runCompleteWorkflow(orchestrator: any, name: string, prompt: stri
     
     // === PHASE 1: DISCOVERY ===
     console.log(chalk.blue('🔍 Phase 1: Discovery'));
+    reporter.startPhase('discovery');
+    
     const discoveryResult = await orchestrator.runDiscoveryPhase(sessionId, prompt);
     phaseResults.discovery = discoveryResult;
     
+    // Track discovered nodes
+    if (discoveryResult.discoveredNodes) {
+      discoveryResult.discoveredNodes.forEach((node: any) => {
+        reporter.addNode('discovery', {
+          id: node.id,
+          type: node.type,
+          purpose: node.purpose || 'Unknown',
+          confidence: node.confidence,
+        });
+      });
+    }
+    
+    // Capture session state and data flow
+    const discoverySessionState = await orchestrator.sessionRepo.load(sessionId);
+    reporter.updateSessionState('discovery', discoverySessionState);
+    reporter.captureDataFlow('discovery', 
+      { prompt }, 
+      { intent: discoveryResult.intent, nodes: discoveryResult.discoveredNodes },
+      ['Intent Analysis', 'Node Discovery', 'Selection']
+    );
+    
+    reporter.endPhase(discoveryResult.success, discoveryResult);
+    
     if (!discoveryResult.success) {
+      reporter.addError('discovery', discoveryResult.error);
       throw new Error(`Discovery failed: ${discoveryResult.error?.message}`);
     }
     console.log(chalk.green(`   ✅ Discovery completed`));
@@ -198,23 +233,92 @@ async function runCompleteWorkflow(orchestrator: any, name: string, prompt: stri
     
     // === PHASE 2: CONFIGURATION ===
     console.log(chalk.blue('\n⚙️ Phase 2: Configuration'));
+    reporter.startPhase('configuration');
+    
     const configurationResult = await orchestrator.runConfigurationPhase(sessionId);
     phaseResults.configuration = configurationResult;
     
+    // Track configured nodes
+    const configured = configurationResult.configured || [];
+    configured.forEach((node: any) => {
+      reporter.addNode('configuration', {
+        id: node.id,
+        type: node.type,
+        purpose: node.purpose || 'Configured',
+        configuration: node.config,
+        validationStatus: node.validated ? 'valid' : 'invalid',
+        validationErrors: node.validationErrors,
+      });
+      
+      // Add warnings for validation issues
+      if (node.validationErrors && node.validationErrors.length > 0) {
+        node.validationErrors.forEach((error: string) => {
+          reporter.addWarning('configuration', `Node ${node.id}: ${error}`);
+        });
+      }
+    });
+    
+    // Capture session state and data flow
+    const configSessionState = await orchestrator.sessionRepo.load(sessionId);
+    reporter.updateSessionState('configuration', configSessionState);
+    reporter.captureDataFlow('configuration',
+      { discoveredNodes: discoveryResult.discoveredNodes },
+      { configuredNodes: configured },
+      ['Parameter Configuration', 'Validation', 'Type Checking']
+    );
+    
+    reporter.endPhase(configurationResult.success, configurationResult);
+    
     if (!configurationResult.success) {
+      reporter.addError('configuration', configurationResult.error);
       throw new Error(`Configuration failed: ${configurationResult.error?.message}`);
     }
-    const configured = configurationResult.configured || [];
     const valid = configured.filter((n: any) => n.validated).length;
     console.log(chalk.green(`   ✅ Configuration completed`));
     console.log(chalk.gray(`      Configured: ${configured.length} nodes (${valid} valid)`));
     
     // === PHASE 3: BUILDING ===
     console.log(chalk.blue('\n🔨 Phase 3: Building'));
+    reporter.startPhase('building');
+    
     const buildingResult = await orchestrator.runBuildingPhase(sessionId);
     phaseResults.building = buildingResult;
     
+    // Track built workflow structure
+    if (buildingResult.workflow?.nodes) {
+      buildingResult.workflow.nodes.forEach((node: any) => {
+        reporter.addNode('building', {
+          id: node.id,
+          type: node.type,
+          purpose: node.name || 'Built node',
+        });
+      });
+    }
+    
+    // Log phase information
+    reporter.log('INFO', 'Orchestrator', `Created ${buildingResult.workflow?.nodes?.length || 0} nodes`);
+    reporter.log('INFO', 'Orchestrator', `Created ${Object.keys(buildingResult.workflow?.connections || {}).length} connection groups`);
+    
+    // Capture session state and data flow
+    const buildingSessionState = await orchestrator.sessionRepo.load(sessionId);
+    reporter.updateSessionState('building', buildingSessionState);
+    reporter.captureDataFlow('building',
+      { configuredNodes: configured },
+      { workflow: buildingResult.workflow, raw: buildingResult.error?.raw },
+      ['Workflow Generation', 'Connection Building', 'Settings Configuration']
+    );
+    
+    reporter.endPhase(buildingResult.success, buildingResult);
+    
     if (!buildingResult.success) {
+      reporter.addError('building', buildingResult.error);
+      
+      // Log raw response if available for debugging
+      if (buildingResult.error?.raw) {
+        console.log(chalk.yellow('\n   ⚠️ Raw workflow attempt (failed validation):'));
+        console.log(chalk.gray(JSON.stringify(buildingResult.error.raw, null, 2)));
+      }
+      
       throw new Error(`Building failed: ${buildingResult.error?.message}`);
     }
     const nodeCount = buildingResult.workflow?.nodes?.length || 0;
@@ -224,8 +328,39 @@ async function runCompleteWorkflow(orchestrator: any, name: string, prompt: stri
     
     // === PHASE 4: VALIDATION ===
     console.log(chalk.blue('\n✔️ Phase 4: Validation'));
+    reporter.startPhase('validation');
+    
     const validationResult = await orchestrator.runValidationPhase(sessionId, buildingResult);
     phaseResults.validation = validationResult;
+    
+    // Track validation errors and fixes
+    if (validationResult.validationReport?.fixesApplied) {
+      validationResult.validationReport.fixesApplied.forEach((fix: any, index: number) => {
+        reporter.addError('validation', {
+          type: 'ValidationError',
+          message: fix.error || `Error ${index + 1}`,
+          resolution: fix.fix || 'Applied automatic fix',
+          attemptNumber: fix.attempt || 1,
+        });
+      });
+    }
+    
+    // Log validation summary
+    const attempts = validationResult.validationReport?.attempts || 0;
+    const fixesApplied = validationResult.validationReport?.fixesApplied || [];
+    reporter.log('INFO', 'Orchestrator', `Validation completed in ${attempts} attempts`);
+    reporter.log('INFO', 'Tools', `Applied ${fixesApplied.length} fixes`);
+    
+    // Capture session state and data flow
+    const validationSessionState = await orchestrator.sessionRepo.load(sessionId);
+    reporter.updateSessionState('validation', validationSessionState);
+    reporter.captureDataFlow('validation',
+      { workflow: buildingResult.workflow },
+      { validatedWorkflow: validationResult.workflow, report: validationResult.validationReport },
+      ['Validation Check', 'Error Detection', 'Automatic Fixes']
+    );
+    
+    reporter.endPhase(validationResult.success, validationResult);
     
     if (!validationResult.success) {
       console.log(chalk.yellow(`   ⚠️ Validation completed with warnings`));
@@ -233,8 +368,6 @@ async function runCompleteWorkflow(orchestrator: any, name: string, prompt: stri
       console.log(chalk.green(`   ✅ Validation completed`));
     }
     
-    const attempts = validationResult.validationReport?.attempts || 0;
-    const fixesApplied = validationResult.validationReport?.fixesApplied || [];
     const isValid = validationResult.workflow?.valid || false;
     
     console.log(chalk.gray(`      Attempts: ${attempts}`));
@@ -243,10 +376,28 @@ async function runCompleteWorkflow(orchestrator: any, name: string, prompt: stri
     
     // === PHASE 5: DOCUMENTATION ===
     console.log(chalk.blue('\n📝 Phase 5: Documentation'));
+    reporter.startPhase('documentation');
+    
     const documentationResult = await orchestrator.runDocumentationPhase(sessionId, validationResult);
     phaseResults.documentation = documentationResult;
     
+    // Track documentation additions
+    const stickyNotesAdded = documentationResult.stickyNotesAdded || 0;
+    reporter.log('INFO', 'Orchestrator', `Added ${stickyNotesAdded} sticky notes for documentation`);
+    
+    // Capture session state and data flow
+    const docSessionState = await orchestrator.sessionRepo.load(sessionId);
+    reporter.updateSessionState('documentation', docSessionState);
+    reporter.captureDataFlow('documentation',
+      { validatedWorkflow: validationResult.workflow },
+      { documentedWorkflow: documentationResult.workflow, stickyNotesAdded },
+      ['Documentation Generation', 'Sticky Note Placement', 'Workflow Finalization']
+    );
+    
+    reporter.endPhase(documentationResult.success, documentationResult);
+    
     if (!documentationResult.success) {
+      reporter.addError('documentation', documentationResult.error);
       console.log(chalk.yellow(`   ⚠️ Documentation failed: ${documentationResult.error?.message}`));
       console.log(chalk.yellow(`      Using validated workflow without documentation`));
     } else {
@@ -268,6 +419,12 @@ async function runCompleteWorkflow(orchestrator: any, name: string, prompt: stri
       phaseResults
     );
     console.log(chalk.green(`   ✅ Saved to: ${path.basename(outputPath)}`));
+    
+    // Generate and save report
+    reporter.generateSummary(finalWorkflow, validationResult.validationReport);
+    reporter.finalize(true, Date.now() - startTime);
+    reportPath = reporter.saveReport(outputDir);
+    console.log(chalk.green(`   ✅ Report saved to: ${path.basename(reportPath)}`));
     
     // === PHASE 6: DEPLOYMENT (if configured) ===
     if (shouldDeploy && !finalWorkflow) {
@@ -319,6 +476,7 @@ async function runCompleteWorkflow(orchestrator: any, name: string, prompt: stri
       outputPath,
       workflow: finalWorkflow,
       phaseResults,
+      reportPath,
     };
     
   } catch (error) {
@@ -338,11 +496,21 @@ async function runCompleteWorkflow(orchestrator: any, name: string, prompt: stri
       console.log(chalk.yellow(`   ⚠️ Partial output saved to: ${path.basename(outputPath)}`));
     }
     
+    // Generate failure report
+    reporter.generateSummary(
+      phaseResults.validation?.workflow || phaseResults.building?.workflow || {},
+      phaseResults.validation?.validationReport || {}
+    );
+    reporter.finalize(false, duration);
+    reportPath = reporter.saveReport(outputDir);
+    console.log(chalk.yellow(`   ⚠️ Failure report saved to: ${path.basename(reportPath)}`));
+    
     return {
       success: false,
       duration,
       error,
       phaseResults,
+      reportPath,
     };
   }
 }

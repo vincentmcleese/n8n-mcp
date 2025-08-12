@@ -39,8 +39,11 @@ export interface PhaseResult<T = any> {
     promptTokens: number;
     completionTokens: number;
     totalTokens: number;
+    wasTruncated?: boolean;
+    usagePercentage?: number;
   };
   reasoning?: string[];
+  raw?: any; // Raw response for debugging
 }
 
 // ==========================================
@@ -102,6 +105,9 @@ export abstract class BasePhaseService<TInput = any, TOutput = any> {
       // Log the phase and method
       this.logger.debug(`[${this.phaseName}] ${methodName || 'Calling Claude'}`);
       
+      // Set context in client for enhanced logging
+      this.client.setContext(this.phaseName, methodName);
+      
       // Make the completion request
       const completionParams: CompletionParams = {
         systemPrompt: prompt.system,
@@ -113,6 +119,11 @@ export abstract class BasePhaseService<TInput = any, TOutput = any> {
       };
       
       const completion = await this.client.completeJSON(completionParams);
+      
+      // Check if response was truncated
+      if (completion.usage?.wasTruncated) {
+        this.logger.warn(`[${this.phaseName}] Response was truncated for ${methodName} - recovery may be needed`);
+      }
       
       // Parse the response
       const parseResult = this.parseResponse<T>(
@@ -134,6 +145,7 @@ export abstract class BasePhaseService<TInput = any, TOutput = any> {
           success: false,
           error: new Error(parseResult.error?.message || 'Failed to parse response'),
           usage: completion.usage,
+          raw: parseResult.raw, // Include raw response for debugging
         };
       }
       

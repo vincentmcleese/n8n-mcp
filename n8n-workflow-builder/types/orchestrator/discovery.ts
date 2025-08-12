@@ -45,4 +45,5 @@ export interface DiscoveryRunnerDeps {
   nodeContextService: any;
   sessionRepo: any;
   loggers: any;
+  mcpClient?: any; // Optional MCP client
 }

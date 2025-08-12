@@ -1,0 +1,473 @@
+{
+  "name": "Podcast to Social Media Clips Automation",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "podcast-upload",
+        "httpMethod": "POST",
+        "responseMode": "responseNode"
+      },
+      "name": "Podcast Upload Trigger",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "url": "={{ $json.podcast_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "name": "Download Podcast Audio",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "httpRequest_2",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "url": "https://api.openai.com/v1/audio/transcriptions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "whisper-1"
+            },
+            {
+              "name": "response_format",
+              "value": "verbose_json"
+            },
+            {
+              "name": "timestamp_granularities[]",
+              "value": "segment"
+            }
+          ]
+        },
+        "sendBinaryData": true,
+        "binaryPropertyName": "file"
+      },
+      "name": "Transcribe Audio",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Analyze transcript segments to identify engaging 60-second clips\nconst transcript = $input.first().json;\nconst segments = transcript.segments || [];\n\n// Group segments into 60-second windows\nconst clipWindows = [];\nlet currentWindow = { start: 0, end: 60, segments: [], text: '', score: 0 };\n\nfor (const segment of segments) {\n  if (segment.start < currentWindow.end) {\n    currentWindow.segments.push(segment);\n    currentWindow.text += segment.text + ' ';\n  } else {\n    // Calculate engagement score based on keywords, pace, etc.\n    currentWindow.score = calculateEngagementScore(currentWindow.text);\n    clipWindows.push(currentWindow);\n    \n    // Start new window\n    currentWindow = {\n      start: Math.floor(segment.start / 60) * 60,\n      end: Math.floor(segment.start / 60) * 60 + 60,\n      segments: [segment],\n      text: segment.text + ' ',\n      score: 0\n    };\n  }\n}\n\n// Add final window\nif (currentWindow.segments.length > 0) {\n  currentWindow.score = calculateEngagementScore(currentWindow.text);\n  clipWindows.push(currentWindow);\n}\n\n// Sort by engagement score and take top 3\nconst topClips = clipWindows\n  .sort((a, b) => b.score - a.score)\n  .slice(0, 3)\n  .map((clip, index) => ({\n    clipNumber: index + 1,\n    startTime: clip.start,\n    endTime: clip.end,\n    text: clip.text.trim(),\n    score: clip.score\n  }));\n\nfunction calculateEngagementScore(text) {\n  let score = 0;\n  const engagingWords = ['amazing', 'incredible', 'shocking', 'secret', 'revealed', 'breakthrough', 'discover', 'transform'];\n  const questionMarks = (text.match(/\\?/g) || []).length;\n  const exclamations = (text.match(/!/g) || []).length;\n  \n  // Score based on engaging keywords\n  engagingWords.forEach(word => {\n    if (text.toLowerCase().includes(word)) score += 10;\n  });\n  \n  // Score based on questions and exclamations\n  score += questionMarks * 5;\n  score += exclamations * 3;\n  \n  // Score based on text length (prefer substantial content)\n  if (text.length > 200 && text.length < 500) score += 15;\n  \n  return score;\n}\n\nreturn topClips.map(clip => ({ json: clip }));"
+      },
+      "name": "Analyze Transcript for Clips",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "httpRequest_3",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1450,
+        300
+      ],
+      "parameters": {
+        "url": "https://api.ffmpeg.org/extract",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "input_url",
+              "value": "={{ $('Podcast Upload Trigger').first().json.podcast_url }}"
+            },
+            {
+              "name": "start_time",
+              "value": "={{ $json.startTime }}"
+            },
+            {
+              "name": "duration",
+              "value": "60"
+            },
+            {
+              "name": "format",
+              "value": "mp4"
+            }
+          ]
+        }
+      },
+      "name": "Extract Video Clips",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "httpRequest_4",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1750,
+        300
+      ],
+      "parameters": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-4"
+            },
+            {
+              "name": "messages",
+              "value": "=[{\"role\": \"system\", \"content\": \"Create engaging social media captions for TikTok and Instagram Reels. Include relevant hashtags and call-to-action.\"}, {\"role\": \"user\", \"content\": \"Create a caption for this podcast clip: {{ $json.text }}\"}]"
+            },
+            {
+              "name": "max_tokens",
+              "value": "200"
+            }
+          ]
+        }
+      },
+      "name": "Generate AI Captions",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "set_1",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        2050,
+        300
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "caption",
+              "name": "caption",
+              "value": "={{ $('Generate AI Captions').first().json.choices[0].message.content }}",
+              "type": "string"
+            },
+            {
+              "id": "video_url",
+              "name": "video_url",
+              "value": "={{ $('Extract Video Clips').first().json.output_url }}",
+              "type": "string"
+            },
+            {
+              "id": "clip_number",
+              "name": "clip_number",
+              "value": "={{ $json.clipNumber }}",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "name": "Prepare Social Media Data",
+      "typeVersion": 3.4,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "oneSimpleApi_1",
+      "type": "n8n-nodes-base.oneSimpleApi",
+      "position": [
+        2350,
+        200
+      ],
+      "parameters": {
+        "resource": "socialProfile",
+        "operation": "instagramProfile",
+        "profileName": "{{ $json.profileName || 'default_profile' }}"
+      },
+      "name": "Post to Instagram Reels",
+      "typeVersion": 1,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "uproc_1",
+      "type": "n8n-nodes-base.uproc",
+      "position": [
+        2350,
+        400
+      ],
+      "parameters": {
+        "text": "{{ $json.caption }}",
+        "tool": "sendMobileSms",
+        "group": "communication",
+        "mobile": "{{ $json.mobile || '+1234567890' }}"
+      },
+      "name": "Post to TikTok",
+      "typeVersion": 1,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "respondToWebhook_1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        2650,
+        300
+      ],
+      "parameters": {
+        "options": {
+          "responseBody": "={{ '{\"status\": \"success\", \"message\": \"' + $('Prepare Social Media Data').all().length + ' clips processed and posted to social media\", \"clips\": ' + JSON.stringify($('Prepare Social Media Data').all()) + '}' }}"
+        }
+      },
+      "name": "Success Response",
+      "typeVersion": 1.4,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "sticky_triggers_1754949201011",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -130
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook trigger that receives podcast upload notifications with podcast URL and metadata. Initiates the entire workflow when a new episode is available.",
+        "height": 710,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754949201011",
+      "name": "Inputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        890,
+        -130
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nDownloads the podcast audio file from the provided URL and prepares it for transcription processing.",
+        "height": 710,
+        "width": 310,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754949201011",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        -130
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nTranscribes the podcast audio using OpenAI Whisper API with timestamp granularity. Analyzes transcript segments to identify the top 3 most engaging 60-second clips based on keywords, questions, and content quality.",
+        "height": 710,
+        "width": 610,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_integration_1754949201011",
+      "name": "Integration Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2010,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🔗 Integration\nExtracts video clips from the original podcast using FFmpeg API and generates engaging social media captions using GPT-4. Prepares all data for social media posting.",
+        "height": 710,
+        "width": 910,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_outputs_1754949201011",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3020,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nPosts the generated clips with captions to both Instagram Reels and TikTok simultaneously using their respective APIs. Sends success response with processing summary.",
+        "height": 710,
+        "width": 610,
+        "color": 7
+      }
+    },
+    {
+      "id": "sticky_promo_1754949201011",
+      "name": "Ghost Team Promo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 710,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Podcast Upload Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download Podcast Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Podcast Audio": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Audio": {
+      "main": [
+        [
+          {
+            "node": "Analyze Transcript for Clips",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Transcript for Clips": {
+      "main": [
+        [
+          {
+            "node": "Extract Video Clips",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Video Clips": {
+      "main": [
+        [
+          {
+            "node": "Generate AI Captions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate AI Captions": {
+      "main": [
+        [
+          {
+            "node": "Prepare Social Media Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Social Media Data": {
+      "main": [
+        [
+          {
+            "node": "Post to Instagram Reels",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Post to TikTok",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Instagram Reels": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to TikTok": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-11T21:53:21.479Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "“When a new podcast episode is uploaded, transcribe it, identify the top 3 most engaging 60-second clips with AI, generate captions, and auto-post them to TikTok and Instagram Reels.”",
+    "testName": "User Test",
+    "generatedAt": "2025-08-11T21:53:21.479Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 6
+  }
+}

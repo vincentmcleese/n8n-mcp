@@ -128,7 +128,13 @@ Configure this node based on:
 2. The node essentials (required and common properties)
 3. The category-specific rules
 
-Return ONLY a JSON object with the configuration.`;
+CRITICAL OUTPUT REQUIREMENT:
+The response has been prefilled with {"operations":[
+- Continue directly with the configuration object
+- Do NOT add any text, greetings, or explanations
+- Do NOT start a new JSON structure
+- Your response should continue with: {"type":"configureNode",...}],"reasoning":[...]}
+- Ensure the JSON is valid and complete`;
   }
   
   /**
@@ -159,6 +165,12 @@ Customize this pre-configured template based on:
 
 Adapt and customize the parameters while maintaining the core structure.
 
-Return ONLY a JSON object with the customized configuration.`;
+CRITICAL OUTPUT REQUIREMENT:
+The response has been prefilled with {"operations":[
+- Continue directly with the configuration object
+- Do NOT add any text, greetings, or explanations
+- Do NOT start a new JSON structure
+- Your response should continue with: {"type":"configureNode",...}],"reasoning":[...]}
+- Ensure the JSON is valid and complete`;
   }
 }

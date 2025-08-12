@@ -199,12 +199,41 @@ export class OperationLogger {
     onTokenUsage: (tokens: number) => void;
   } {
     let accumulatedTokens = 0;
+    // Generate thresholds every 10K up to 200K
+    const thresholds = Array.from({ length: 20 }, (_, i) => (i + 1) * 10000);
+    let nextThresholdIndex = 0;
 
-    const onTokenUsage = (tokens: number) => {
+    const onTokenUsage = async (tokens: number) => {
       accumulatedTokens += tokens;
-      loggers.orchestrator.debug(
-        `Token usage: ${tokens} (total: ${accumulatedTokens})`
+      
+      // Log at INFO level for better visibility
+      loggers.orchestrator.info(
+        `Session token usage: +${tokens} (total: ${accumulatedTokens.toLocaleString()})`
       );
+      
+      // Store token usage data in session
+      try {
+        await orchestratorHooks.updateTokenUsage(this.sessionId, tokens, this.phase);
+      } catch (error) {
+        loggers.orchestrator.error('Failed to update token usage in session:', error);
+      }
+      
+      // Check for threshold warnings
+      while (nextThresholdIndex < thresholds.length && 
+             accumulatedTokens >= thresholds[nextThresholdIndex]) {
+        const threshold = thresholds[nextThresholdIndex];
+        loggers.orchestrator.warn(
+          `⚠️ Session token usage has exceeded ${threshold.toLocaleString()} tokens (current: ${accumulatedTokens.toLocaleString()})`
+        );
+        nextThresholdIndex++;
+      }
+      
+      // Extra warning for very high usage
+      if (accumulatedTokens > 200000) {
+        loggers.orchestrator.error(
+          `🚨 VERY HIGH SESSION TOKEN USAGE: ${accumulatedTokens.toLocaleString()} tokens`
+        );
+      }
     };
 
     // Return the same logger instance with the callback

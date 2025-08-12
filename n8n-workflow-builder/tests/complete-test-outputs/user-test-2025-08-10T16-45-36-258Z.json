@@ -1,0 +1,186 @@
+{
+  "name": "Email Alert to SMS Workflow",
+  "nodes": [
+    {
+      "id": "emailReadImap_1",
+      "type": "n8n-nodes-base.emailReadImap",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "format": "simple",
+        "mailbox": "INBOX",
+        "postProcessAction": "read",
+        "downloadAttachments": false,
+        "options": {
+          "allowUnauthorizedCerts": false,
+          "forceReconnect": true
+        }
+      },
+      "name": "Email Trigger",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "if_1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.from.address }}",
+              "operation": "equal",
+              "value2": "jim@google.com"
+            }
+          ]
+        }
+      },
+      "name": "Check Sender",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/{{ $credentials.twilioApi.accountSid }}/Messages.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "twilioApi",
+        "sendBody": true,
+        "specifyBody": "form",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "{{ $vars.myPhoneNumber }}"
+            },
+            {
+              "name": "From",
+              "value": "{{ $credentials.twilioApi.phoneNumber }}"
+            },
+            {
+              "name": "Body",
+              "value": "HELP!"
+            }
+          ]
+        },
+        "options": {
+          "retry": {
+            "enabled": true,
+            "maxTries": 3
+          }
+        }
+      },
+      "name": "Send SMS",
+      "typeVersion": 4,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "sticky_triggers_1754844335450",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nMonitors INBOX for new emails and triggers the workflow when any email is received. Uses IMAP to connect to email server and marks processed emails as read.",
+        "height": 300,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_transforms_1754844335450",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nValidates that the incoming email is specifically from jim@google.com by checking the sender's email address. Only emails from this specific sender will proceed to the next step.",
+        "height": 300,
+        "width": 230,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754844335450",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        810,
+        160
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends an SMS message with the text 'HELP!' using Twilio API. Includes retry logic to ensure message delivery and proper error handling for failed attempts.",
+        "height": 300,
+        "width": 230,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Email Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check Sender",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Sender": {
+      "main": [
+        [
+          {
+            "node": "Send SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-10T16:45:36.258Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "when i get an email from jim@google.com, send me a sms with \"HELP!\"",
+    "testName": "User Test",
+    "generatedAt": "2025-08-10T16:45:36.258Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 1,
+    "stickyNotesAdded": 3
+  }
+}

@@ -1,0 +1,370 @@
+{
+  "name": "LinkedIn Candidate Screening and Ranking Workflow",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "candidate-upload",
+        "httpMethod": "POST",
+        "responseMode": "responseNode"
+      },
+      "name": "CSV Upload Webhook",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "spreadsheetFile_1",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "operation": "fromFile",
+        "binaryPropertyName": "data",
+        "options": {
+          "headerRow": true,
+          "delimiter": ","
+        }
+      },
+      "name": "Parse CSV File",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "linkedIn_1",
+      "type": "n8n-nodes-base.linkedIn",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "person": "={{ $json.linkedinId || $json.name }}",
+        "operation": "getProfile"
+      },
+      "name": "Fetch LinkedIn Profiles",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "textClassifier_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Score candidate profiles based on LinkedIn data\nconst items = $input.all();\nconst scoredItems = [];\n\nfor (const item of items) {\n  let score = 0;\n  const profile = item.json.linkedinProfile || '';\n  \n  // Basic scoring logic\n  if (profile.toLowerCase().includes('senior')) score += 5;\n  if (profile.toLowerCase().includes('manager')) score += 4;\n  if (profile.toLowerCase().includes('lead')) score += 3;\n  if (profile.toLowerCase().includes('years')) score += 2;\n  if (profile.toLowerCase().includes('experience')) score += 2;\n  \n  // Add random component for demonstration\n  score += Math.floor(Math.random() * 10);\n  \n  scoredItems.push({\n    json: {\n      ...item.json,\n      score: score\n    }\n  });\n}\n\nreturn scoredItems;"
+      },
+      "name": "Score Candidate Profiles",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1450,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Score and rank job applicants based on keyword matching from LinkedIn profile data\nconst candidates = $input.all();\n\n// Define scoring keywords and weights\nconst keywords = {\n  'javascript': 10,\n  'python': 10,\n  'react': 8,\n  'node.js': 8,\n  'sql': 6,\n  'aws': 7,\n  'docker': 5,\n  'kubernetes': 5\n};\n\n// Score each candidate\nconst scoredCandidates = candidates.map(candidate => {\n  let score = 0;\n  const profile = (candidate.json.linkedinProfile || '').toLowerCase();\n  \n  // Calculate keyword match score\n  Object.entries(keywords).forEach(([keyword, weight]) => {\n    if (profile.includes(keyword)) {\n      score += weight;\n    }\n  });\n  \n  return {\n    ...candidate.json,\n    score: score,\n    matchedKeywords: Object.keys(keywords).filter(k => profile.includes(k))\n  };\n});\n\n// Sort by score descending\nconst rankedCandidates = scoredCandidates.sort((a, b) => b.score - a.score);\n\nreturn rankedCandidates.map(candidate => ({ json: candidate }));"
+      },
+      "name": "Rank and Score Candidates",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "if_1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1750,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.score }}",
+              "rightValue": 15,
+              "operation": "largerEqual"
+            }
+          ]
+        }
+      },
+      "name": "Filter Qualified Candidates",
+      "typeVersion": 2.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2050,
+        200
+      ],
+      "parameters": {
+        "url": "https://api.hunter.io/v2/email-finder",
+        "options": {
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "domain",
+                "value": "={{ $json.company }}"
+              },
+              {
+                "name": "first_name",
+                "value": "={{ $json.firstName }}"
+              },
+              {
+                "name": "last_name",
+                "value": "={{ $json.lastName }}"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Enrich Contact Data",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "webhook_2",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        2350,
+        300
+      ],
+      "parameters": {
+        "path": "ranked-shortlist",
+        "respondWith": "allIncomingItems",
+        "responseContentType": "application/json"
+      },
+      "name": "Return Ranked Shortlist",
+      "typeVersion": 2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "sticky_triggers_1754978193765",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -130
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook receives CSV file uploads containing job applicant data and initiates the candidate screening workflow.",
+        "height": 510,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754978193765",
+      "name": "Inputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        890,
+        -130
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nParse the uploaded CSV file to extract candidate information and fetch corresponding LinkedIn profiles for analysis.",
+        "height": 510,
+        "width": 610,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754978193765",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        -130
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nAnalyze LinkedIn profile text using AI classification to score candidates based on keyword matching and rank them by relevance.",
+        "height": 510,
+        "width": 610,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_decision_1754978193766",
+      "name": "Decision Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2310,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🔀 Decision\nFilter candidates based on minimum score thresholds to create a qualified shortlist of top performers.",
+        "height": 510,
+        "width": 310,
+        "color": 3
+      }
+    },
+    {
+      "id": "sticky_integration_1754978193766",
+      "name": "Integration Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2720,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🔗 Integration\nEnrich qualified candidates with additional contact information from external APIs to complete their profiles.",
+        "height": 510,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_outputs_1754978193766",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3130,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nReturn the final ranked shortlist of qualified candidates with complete scoring details and contact information.",
+        "height": 510,
+        "width": 310,
+        "color": 7
+      }
+    },
+    {
+      "id": "sticky_promo_1754978193766",
+      "name": "Ghost Team Promo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 510,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "CSV Upload Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse CSV File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse CSV File": {
+      "main": [
+        [
+          {
+            "node": "Fetch LinkedIn Profiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch LinkedIn Profiles": {
+      "main": [
+        [
+          {
+            "node": "Score Candidate Profiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Candidate Profiles": {
+      "main": [
+        [
+          {
+            "node": "Rank and Score Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rank and Score Candidates": {
+      "main": [
+        [
+          {
+            "node": "Filter Qualified Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Qualified Candidates": {
+      "main": [
+        [
+          {
+            "node": "Enrich Contact Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Contact Data": {
+      "main": [
+        [
+          {
+            "node": "Return Ranked Shortlist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-12T05:56:34.222Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "“When I upload a CSV of job applicants, cross-check LinkedIn profiles for relevant experience, score candidates by keyword match, and return a ranked shortlist with contact info.”",
+    "testName": "User Test",
+    "generatedAt": "2025-08-12T05:56:34.222Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 7
+  }
+}

@@ -1,0 +1,505 @@
+{
+  "name": "Competitive Pricing System with AI Analysis",
+  "nodes": [
+    {
+      "id": "scheduleTrigger_1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "name": "Hourly Pricing Trigger",
+      "typeVersion": 1.2,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "url": "https://competitor-website.com/products",
+        "method": "GET",
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "name": "Scrape Competitor Website",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "htmlExtract_1",
+      "type": "n8n-nodes-base.htmlExtract",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "sourceData": "json",
+        "dataPropertyName": "html",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "productName",
+              "cssSelector": ".product-title",
+              "returnValue": "text"
+            },
+            {
+              "key": "price",
+              "cssSelector": ".price",
+              "returnValue": "text"
+            },
+            {
+              "key": "availability",
+              "cssSelector": ".stock-status",
+              "returnValue": "text"
+            }
+          ]
+        }
+      },
+      "name": "Extract Product Data",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "openAi_1",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "model": "gpt-4",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a pricing analyst. Extract and structure product pricing data from the provided content. Return JSON with productName, cleanPrice (numeric), availability (boolean), and any promotional details."
+            },
+            {
+              "role": "user",
+              "content": "=Analyze this product data: {{ $json }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.1,
+          "maxTokens": 500
+        }
+      },
+      "name": "AI Price Analysis",
+      "typeVersion": 1.1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "code_1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1450,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Transform scraped competitor data into standardized format for pricing analysis\nconst items = $input.all();\nconst transformedData = [];\n\nfor (const item of items) {\n  try {\n    const aiResponse = JSON.parse(item.json.choices[0].message.content);\n    \n    // Calculate competitive pricing recommendations\n    const competitorPrice = parseFloat(aiResponse.cleanPrice);\n    const ourCostBasis = competitorPrice * 0.7; // Assume 30% margin\n    const recommendedPrice = competitorPrice * 0.95; // Price 5% below competitor\n    const profitMargin = ((recommendedPrice - ourCostBasis) / recommendedPrice) * 100;\n    \n    transformedData.push({\n      productName: aiResponse.productName,\n      competitorPrice: competitorPrice,\n      recommendedPrice: recommendedPrice,\n      profitMargin: profitMargin,\n      availability: aiResponse.availability,\n      priceChange: competitorPrice < (item.json.previousPrice || competitorPrice) ? 'decrease' : 'stable',\n      timestamp: new Date().toISOString(),\n      needsAlert: profitMargin < 15 || (item.json.previousPrice && competitorPrice < item.json.previousPrice * 0.9)\n    });\n  } catch (error) {\n    console.error('Error processing item:', error);\n  }\n}\n\nreturn transformedData.map(data => ({ json: data }));"
+      },
+      "name": "Transform Pricing Data",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "if_1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1750,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "1",
+              "operator": {
+                "operation": "gte"
+              },
+              "leftValue": "={{ $json.profitMargin }}",
+              "rightValue": 15
+            }
+          ]
+        }
+      },
+      "name": "Pricing Decision Router",
+      "typeVersion": 2.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "httpRequest_2",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2050,
+        200
+      ],
+      "parameters": {
+        "url": "https://api.inventory-system.com/pricing/update",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $vars.INVENTORY_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "productName",
+              "value": "={{ $json.productName }}"
+            },
+            {
+              "name": "newPrice",
+              "value": "={{ $json.recommendedPrice }}"
+            },
+            {
+              "name": "reason",
+              "value": "competitive_adjustment"
+            }
+          ]
+        }
+      },
+      "name": "Update Inventory Pricing",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "postgres_1",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        2350,
+        300
+      ],
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "competitive_pricing",
+        "columns": "product_name, competitor_price, recommended_price, profit_margin, availability, price_change, timestamp, needs_alert",
+        "additionalFields": {
+          "mode": "independently"
+        }
+      },
+      "name": "Store Pricing Data",
+      "typeVersion": 2.6,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        2050,
+        400
+      ],
+      "parameters": {
+        "channel": "#pricing-alerts",
+        "text": "{{ `🚨 *Pricing Alert*\n\nProduct: ${$json.productName}\nCompetitor Price: $${$json.competitorPrice}\nProfit Margin: ${$json.profitMargin}%\n\n${$json.needsAlert ? '⚠️ Action Required: Low margin or significant price drop detected!' : '✅ Price adjustment completed successfully'}` }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": true
+        }
+      },
+      "name": "Send Pricing Alerts",
+      "typeVersion": 2.3,
+      "onError": "continueRegularOutput",
+      "maxTries": 2
+    },
+    {
+      "id": "emailSend_1",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        2650,
+        300
+      ],
+      "parameters": {
+        "fromEmail": "pricing-system@company.com",
+        "toEmail": "management@company.com",
+        "subject": "{{ 'Daily Competitive Pricing Report - ' + new Date().toLocaleDateString() }}",
+        "message": "{{ 'Daily Competitive Pricing Analysis Report\\n\\nSummary:\\n- Products Analyzed: ' + $json.totalProducts + '\\n- Price Adjustments Made: ' + $json.adjustmentsMade + '\\n- Average Profit Margin: ' + $json.avgProfitMargin + '%\\n- Alerts Generated: ' + $json.alertsCount + '\\n\\nRecommendations:\\n' + $json.recommendations + '\\n\\nDetailed analysis available in the pricing dashboard.' }}",
+        "options": {
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "name": "Email Daily Report",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput",
+      "maxTries": 3
+    },
+    {
+      "id": "sticky_triggers_1754940549820",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -130
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nInitiates the competitive pricing workflow on an hourly schedule to ensure regular market monitoring and price adjustments.",
+        "height": 610,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_inputs_1754940549820",
+      "name": "Inputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        890,
+        -130
+      ],
+      "parameters": {
+        "content": "## 📊 Inputs\nScrapes competitor websites and extracts product pricing and availability data using HTTP requests and HTML parsing techniques.",
+        "height": 610,
+        "width": 610,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky_transforms_1754940549820",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        -130
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nUses AI to analyze scraped content and transforms raw data into structured pricing information with competitive analysis and recommendations.",
+        "height": 610,
+        "width": 610,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_decision_1754940549820",
+      "name": "Decision Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2310,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🔀 Decision\nRoutes pricing decisions based on profit margin thresholds and competitive conditions to determine appropriate actions.",
+        "height": 610,
+        "width": 310,
+        "color": 3
+      }
+    },
+    {
+      "id": "sticky_integration_1754940549820",
+      "name": "Integration Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2720,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🔗 Integration\nUpdates inventory system with new pricing based on competitive analysis and profit margin calculations.",
+        "height": 610,
+        "width": 310,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_outputs_1754940549820",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3130,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSends real-time alerts via Slack for significant price changes and generates comprehensive daily email reports with recommendations.",
+        "height": 610,
+        "width": 910,
+        "color": 7
+      }
+    },
+    {
+      "id": "sticky_promo_1754940549820",
+      "name": "Ghost Team Promo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -130
+      ],
+      "parameters": {
+        "content": "## 🚀 Grow your AI business\n\nNeed help in implementing this workflow for your business? Join the Ghost Team community.\n\nThis workflow is made with 💚 by Ghost Team.",
+        "height": 610,
+        "width": 280,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Hourly Pricing Trigger": {
+      "main": [
+        [
+          {
+            "node": "Scrape Competitor Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Competitor Website": {
+      "main": [
+        [
+          {
+            "node": "Extract Product Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Product Data": {
+      "main": [
+        [
+          {
+            "node": "AI Price Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Price Analysis": {
+      "main": [
+        [
+          {
+            "node": "Transform Pricing Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Pricing Data": {
+      "main": [
+        [
+          {
+            "node": "Pricing Decision Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pricing Decision Router": {
+      "main": [
+        [
+          {
+            "node": "Update Inventory Pricing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Pricing Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Inventory Pricing": {
+      "main": [
+        [
+          {
+            "node": "Store Pricing Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Pricing Alerts": {
+      "main": [
+        [
+          {
+            "node": "Store Pricing Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Pricing Data": {
+      "main": [
+        [
+          {
+            "node": "Email Daily Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-11T19:29:10.387Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Build a competitive pricing system that scrapes competitor websites hourly, uses AI to extract product prices and availability, compares against our inventory API, automatically adjusts pricing based on market conditions and profit margins, sends alerts for significant price drops, and generates daily pricing reports with recommendations.",
+    "testName": "User Test",
+    "generatedAt": "2025-08-11T19:29:10.387Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 3,
+    "stickyNotesAdded": 7
+  }
+}

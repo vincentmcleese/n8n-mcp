@@ -1,0 +1,25 @@
+{
+  "name": "User Test-FAILED",
+  "nodes": [],
+  "connections": {},
+  "settings": {},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-11T05:36:11.772Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Create an n8n workflow that receives customer support tickets via webhook, uses an AI agent to categorize the urgency and sentiment, automatically assigns tickets to the right team based on keywords, and sends Slack notifications with different priority levels. Include retry logic and error handling",
+    "testName": "User Test-FAILED",
+    "generatedAt": "2025-08-11T05:36:11.772Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": false,
+      "validation": false,
+      "documentation": false
+    },
+    "validationAttempts": 0,
+    "stickyNotesAdded": 0
+  }
+}

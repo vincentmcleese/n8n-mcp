@@ -93,6 +93,17 @@ export interface WorkflowSession {
     operationHistory: WorkflowOperation[];
     pendingClarifications: ClarificationRequest[];
     clarificationHistory: ClarificationResponse[];
+    nodeEssentials?: Map<string, any>; // Cache of node essentials by nodeType
+    tokenUsage?: {
+      byPhase: Record<string, number>;
+      byCalls: Array<{
+        phase: string;
+        method: string;
+        tokens: number;
+        timestamp: string;
+      }>;
+      total: number;
+    };
   };
 }
 
@@ -176,7 +187,15 @@ export type SessionOperation =
       workflow: { nodes: any[]; connections: any; settings: any };
     }
   | { type: "setPhase"; phase: WorkflowPhase }
-  | { type: "completePhase"; phase: WorkflowPhase };
+  | { type: "completePhase"; phase: WorkflowPhase }
+  | { 
+      type: "setBuildPhases"; 
+      phases: Array<{
+        type: string;
+        description: string;
+        nodeIds: string[];
+      }>;
+    };
 
 /**
  * Workflow operation with metadata

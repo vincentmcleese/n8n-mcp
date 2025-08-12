@@ -1,0 +1,362 @@
+{
+  "name": "AI-Powered Customer Support Ticket Routing",
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "notes": "Webhook endpoint for receiving customer support tickets. Configured with error handling to gracefully process incoming tickets and continue workflow execution even if downstream processing fails",
+        "httpMethod": "POST",
+        "path": "support-tickets",
+        "responseMode": "responseNode",
+        "options": {
+          "noResponseBody": false
+        }
+      },
+      "name": "Support Ticket Webhook",
+      "typeVersion": 1,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "httpRequest_1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "notes": "AI-powered ticket categorization API call with automatic retry logic for customer support workflow",
+        "maxTries": 5,
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-3.5-turbo"
+            },
+            {
+              "name": "messages",
+              "value": "=[{\"role\": \"system\", \"content\": \"You are a customer support ticket analyzer. Analyze the ticket and return ONLY a JSON object with urgency (low/medium/high/critical) and sentiment (positive/neutral/negative). Example: {\\\"urgency\\\": \\\"high\\\", \\\"sentiment\\\": \\\"negative\\\"}\"}, {\"role\": \"user\", \"content\": \"Ticket: \" + $json.subject + \"\\n\\nDescription: \" + $json.description}]"
+            },
+            {
+              "name": "max_tokens",
+              "value": 100
+            },
+            {
+              "name": "temperature",
+              "value": 0.1
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "retry": {
+            "enabled": true,
+            "maxTries": 5,
+            "waitBetween": 1000
+          }
+        }
+      },
+      "name": "AI Ticket Categorization",
+      "typeVersion": 4,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true
+    },
+    {
+      "id": "agent_1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "notes": "AI agent that analyzes customer support tickets to categorize urgency (low/medium/high/critical) and sentiment (positive/neutral/negative) for automated routing and prioritization",
+        "agent": "conversationalAgent",
+        "promptType": "auto",
+        "text": "=Analyze this support ticket and extract key information:\n\nTicket ID: {{ $('Support Ticket Webhook').item.json.id }}\nSubject: {{ $('Support Ticket Webhook').item.json.subject }}\nDescription: {{ $('Support Ticket Webhook').item.json.description }}\nCustomer: {{ $('Support Ticket Webhook').item.json.customer_email }}\n\nAI Analysis: {{ $('AI Ticket Categorization').item.json.choices[0].message.content }}\n\nProvide a summary with team assignment recommendation based on keywords and urgency level.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert customer support agent analyzer. Your job is to process support tickets and provide clear recommendations for team assignment and priority handling."
+        }
+      },
+      "name": "AI Support Agent",
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "switch_1",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "notes": "Routes support tickets to appropriate teams based on AI categorization and keywords",
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Support Ticket Webhook').item.json.subject.toLowerCase() }}",
+                    "rightValue": "billing|payment|invoice|refund|charge",
+                    "operator": {
+                      "type": "string",
+                      "operation": "regex"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "billing_team"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Support Ticket Webhook').item.json.subject.toLowerCase() }}",
+                    "rightValue": "technical|bug|error|api|integration|login",
+                    "operator": {
+                      "type": "string",
+                      "operation": "regex"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "technical_team"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ JSON.parse($('AI Ticket Categorization').item.json.choices[0].message.content).urgency }}",
+                    "rightValue": "critical",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "escalation_team"
+            }
+          ]
+        },
+        "fallbackOutput": "general_support"
+      },
+      "name": "Team Assignment Router",
+      "typeVersion": 3,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "slack_1",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1450,
+        300
+      ],
+      "parameters": {
+        "notes": "Send Slack notifications for customer support tickets with different priority levels based on urgency and sentiment analysis",
+        "onError": "continueRegularOutput",
+        "maxTries": 2,
+        "resource": "message",
+        "operation": "post",
+        "channel": "={% set urgency = JSON.parse($('AI Ticket Categorization').item.json.choices[0].message.content).urgency %}{% if urgency == 'critical' %}#support-critical{% elif urgency == 'high' %}#support-urgent{% else %}#support-general{% endif %}",
+        "text": "=🎫 **New Support Ticket**\n\n**Ticket ID:** {{ $('Support Ticket Webhook').item.json.id }}\n**Customer:** {{ $('Support Ticket Webhook').item.json.customer_email }}\n**Subject:** {{ $('Support Ticket Webhook').item.json.subject }}\n\n**AI Analysis:**\n• **Urgency:** {{ JSON.parse($('AI Ticket Categorization').item.json.choices[0].message.content).urgency.toUpperCase() }}\n• **Sentiment:** {{ JSON.parse($('AI Ticket Categorization').item.json.choices[0].message.content).sentiment }}\n• **Assigned Team:** {{ $runIndex == 0 ? 'Billing Team' : $runIndex == 1 ? 'Technical Team' : $runIndex == 2 ? 'Escalation Team' : 'General Support' }}\n\n**Description:** {{ $('Support Ticket Webhook').item.json.description.substring(0, 200) }}{{ $('Support Ticket Webhook').item.json.description.length > 200 ? '...' : '' }}",
+        "otherOptions": {
+          "mrkdwn": true,
+          "reply_broadcast": false
+        },
+        "attachments": [],
+        "blocksUi": {
+          "blocksValues": []
+        }
+      },
+      "name": "Priority Slack Notification",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true
+    },
+    {
+      "id": "sticky_triggers_1754900445255",
+      "name": "Triggers Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        160
+      ],
+      "parameters": {
+        "content": "## 📥 Triggers\nWebhook endpoint receives incoming customer support tickets via HTTP POST requests. Configured with error handling to gracefully process tickets and continue workflow execution.",
+        "height": 300,
+        "width": 230,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky_transforms_1754900445255",
+      "name": "Transform Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        510,
+        160
+      ],
+      "parameters": {
+        "content": "## ⚙️ Transform\nAI-powered ticket analysis using OpenAI API to categorize urgency levels and sentiment analysis. Includes automatic retry logic with up to 5 attempts for resilient processing.",
+        "height": 300,
+        "width": 530,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky_outputs_1754900445255",
+      "name": "Outputs Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1110,
+        160
+      ],
+      "parameters": {
+        "content": "## 🚀 Outputs\nSmart routing system that assigns tickets to appropriate teams based on keywords and AI categorization results. Routes to billing, technical, escalation, or general support teams.\n\nPriority-based Slack notifications sent to different channels based on urgency levels. Critical tickets go to #support-critical, high urgency to #support-urgent, others to #support-general.",
+        "height": 300,
+        "width": 530,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Support Ticket Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Ticket Categorization",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Ticket Categorization": {
+      "main": [
+        [
+          {
+            "node": "AI Support Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Support Agent": {
+      "main": [
+        [
+          {
+            "node": "Team Assignment Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Team Assignment Router": {
+      "main": [
+        [
+          {
+            "node": "Priority Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Priority Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Priority Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Priority Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-08-11T08:20:45.891Z",
+  "versionId": null,
+  "__metadata": {
+    "prompt": "Create an n8n workflow that receives customer support tickets via webhook, uses an AI agent to categorize the urgency and sentiment, automatically assigns tickets to the right team based on keywords, and sends Slack notifications with different priority levels. Include retry logic and error handling",
+    "testName": "User Test",
+    "generatedAt": "2025-08-11T08:20:45.891Z",
+    "phases": {
+      "discovery": true,
+      "configuration": true,
+      "building": true,
+      "validation": true,
+      "documentation": true
+    },
+    "validationAttempts": 1,
+    "stickyNotesAdded": 3
+  }
+}

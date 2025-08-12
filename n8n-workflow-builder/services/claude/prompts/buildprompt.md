@@ -17,7 +17,7 @@ Build workflow JSON from validated nodes that achieves: "[USER_INTENT]"
   - Add underscore and number suffix starting from 1
   - If multiple nodes of same type, increment the number
 - **Node Names**: Use descriptive names that reflect purpose
-- **TypeVersion**: Include typeVersion field (usually 1 or 2)
+- **TypeVersion**: Keep exact typeVersion from input (can be decimal like 2.1)
 
 ### 2. Connections
 - **CRITICAL**: Connection keys MUST use node NAMES, not IDs!
@@ -89,7 +89,7 @@ Return ONLY a JSON object with this structure:
   },
   "phases": [
     {
-      "type": "trigger|data_collection|data_processing|notification|storage|integration|error_handling",
+      "type": "trigger|data_collection|data_processing|decision|aggregation|notification|storage|integration|error_handling",
       "description": "2-3 sentences about what this group of nodes does",
       "nodeIds": ["webhook_1", "code_1"]
     }
@@ -103,9 +103,11 @@ Return ONLY a JSON object with this structure:
 ```
 
 ### Phases Instructions:
-- **Group connected nodes** by function: trigger (start), data_collection (fetch/read), data_processing (transform/filter), notification (send/alert), storage (save/update), integration (sync/update external), error_handling (catch/retry errors)
+- **Group connected nodes** by function: trigger (start), data_collection (fetch/read), data_processing (transform/filter), decision (if/switch/router), aggregation (merge/combine), notification (send/alert), storage (save/update), integration (sync/update external), error_handling (catch/retry errors)
 - **Order chronologically** from workflow start to finish - phases array should follow execution order
 - **Every node ID must appear** in exactly one phase - group 1-5 related nodes per phase
+- **Decision nodes** (if, switch, router) go in decision phase
+- **Merge/combine nodes** that aggregate data go in aggregation phase
 
 ## Important Notes
 
