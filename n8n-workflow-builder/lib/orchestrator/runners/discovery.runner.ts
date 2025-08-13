@@ -362,6 +362,38 @@ export class DiscoveryRunner
         );
       }
 
+      // Generate SEO metadata if discovery is complete (no pending clarifications)
+      if (!intentAnalysis.clarification && allDiscoveredNodes.length > 0) {
+        try {
+          // Lazy import to avoid circular dependencies
+          const { getSEOGenerator } = await import('@/lib/services/seo-generator.service');
+          const seoGenerator = getSEOGenerator();
+          
+          const seoMetadata = await seoGenerator.generateSEO(
+            allDiscoveredNodes,
+            selectedNodeIds,
+            prompt,
+            sessionId
+          );
+          
+          // Add SEO operation to persist it
+          allOperations.push({
+            type: "setSEOMetadata" as const,
+            seo: seoMetadata
+          });
+          
+          this.deps.loggers.orchestrator.info(
+            `SEO metadata generated: ${seoMetadata.slug}`
+          );
+        } catch (error) {
+          // SEO generation failure should not block discovery
+          this.deps.loggers.orchestrator.error(
+            'Failed to generate SEO metadata',
+            { error: error instanceof Error ? error.message : 'Unknown error' }
+          );
+        }
+      }
+
       return {
         success: true,
         operations: allOperations,

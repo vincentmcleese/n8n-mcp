@@ -65,3 +65,76 @@
     background: var(--background);
   }
 }
+
+/* Continuous animated gradient for progress bar */
+@layer utilities {
+  .progress-gradient {
+    /* Seamless tiling band with soft grey flanks and emerald/blue core */
+    background: linear-gradient(
+      90deg,
+      #e5e7eb 0%,
+      #e5e7eb 35%,
+      #10b981 45%,
+      #3b82f6 55%,
+      #10b981 65%,
+      #e5e7eb 75%,
+      #e5e7eb 100%
+    );
+    background-size: 180px 100%;
+    background-repeat: repeat-x;
+    animation: progressSweepLTR 3s linear infinite;
+  }
+  .progress-indeterminate {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(16, 185, 129, 0.65) 20%,
+      rgba(59, 130, 246, 0.65) 50%,
+      rgba(16, 185, 129, 0.65) 80%,
+      transparent 100%
+    );
+    animation: indeterminateSweep 2.2s linear infinite;
+  }
+}
+
+@keyframes progressSweepLTR {
+  0% {
+    background-position-x: 0px;
+  }
+  100% {
+    background-position-x: 180px; /* left-to-right sweep */
+  }
+}
+
+@keyframes indeterminateSweep {
+  0% {
+    transform: translateX(-60%);
+    width: 28%;
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateX(110%);
+    width: 32%;
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(280%);
+    width: 28%;
+    opacity: 0.7;
+  }
+}
+
+/* Simple enter animation for bottom sheet */
+@keyframes slideUp {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.animate-slide-up {
+  animation: slideUp 0.25s ease-out both;
+}

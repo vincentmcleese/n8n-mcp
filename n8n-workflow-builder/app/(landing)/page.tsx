@@ -58,24 +58,8 @@ const outcomes: { label: string; prompt: string }[] = [
   },
 ];
 
-function hashString(input: string): number {
-  let hash = 0;
-  for (let i = 0; i < input.length; i++) {
-    hash = (hash << 5) - hash + input.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
-function getSizeClass(label: string): string {
-  const variants = [
-    "text-[10px] sm:text-[10px] px-1.5 py-0.5",
-    "text-[10px] sm:text-[11px] px-2 py-0.5",
-    "text-[11px] sm:text-xs px-2 py-1",
-  ];
-  const idx = hashString(label) % variants.length;
-  return variants[idx];
-}
+// All landing page body text uses a single paragraph size
+const PARAGRAPH_TEXT_CLASS = "text-base";
 
 export default function Home() {
   const router = useRouter();
@@ -127,7 +111,7 @@ export default function Home() {
               <h1 className="mt-4 text-3xl sm:text-4xl font-semibold tracking-tight text-neutral-900">
                 Build your workflow
               </h1>
-              <p className="mt-2 text-sm sm:text-base text-neutral-700">
+              <p className={`mt-2 ${PARAGRAPH_TEXT_CLASS} text-neutral-700`}>
                 Describe what you want to automate — we’ll find nodes, configure
                 them, and assemble a workflow for you.
               </p>
@@ -139,7 +123,7 @@ export default function Home() {
                     value={hoverPrompt ?? prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     onKeyDown={onKeyDown}
-                    className="min-h-[112px] w-full resize-none bg-transparent border-0 focus:outline-none focus:ring-0 text-base sm:text-lg leading-relaxed placeholder-neutral-400"
+                    className={`min-h-[112px] w-full resize-none bg-transparent border-0 focus:outline-none focus:ring-0 ${PARAGRAPH_TEXT_CLASS} leading-relaxed placeholder-neutral-400`}
                   />
                 </div>
                 <div className="mt-4 flex justify-center">
@@ -161,7 +145,9 @@ export default function Home() {
             </div>
           </div>
           <div className="max-w-screen-md mx-auto container-padding">
-            <div className="mt-6 mb-1 text-center text-xs font-medium tracking-wide text-white/90">
+            <div
+              className={`mt-6 mb-1 text-center ${PARAGRAPH_TEXT_CLASS} font-medium tracking-wide text-white/90`}
+            >
               Need an idea?{" "}
               <span className="opacity-90">I&apos;d like to…</span>
             </div>
@@ -172,9 +158,7 @@ export default function Home() {
                   onClick={() => onUseExample(ex.prompt)}
                   onMouseEnter={() => setHoverPrompt(ex.prompt)}
                   onMouseLeave={() => setHoverPrompt(null)}
-                  className={`inline-flex items-center gap-1 rounded-full border border-emerald-600 bg-emerald-600 text-white transition-all hover:bg-emerald-500 hover:-translate-y-0.5 shadow-[0_2px_8px_rgba(27,200,140,0.25)] hover:shadow-[0_4px_12px_rgba(27,200,140,0.35)] ${getSizeClass(
-                    ex.label
-                  )}`}
+                  className={`inline-flex items-center gap-1 rounded-full border border-emerald-600 bg-emerald-600 text-white transition-all hover:bg-emerald-500 hover:-translate-y-0.5 shadow-[0_2px_8px_rgba(27,200,140,0.25)] hover:shadow-[0_4px_12px_rgba(27,200,140,0.35)] px-2.5 py-1 ${PARAGRAPH_TEXT_CLASS}`}
                   type="button"
                   aria-label={`Use example: ${ex.label}`}
                 >

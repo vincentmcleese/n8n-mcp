@@ -1,11 +1,19 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, CheckCircle, XCircle, Download } from "lucide-react";
+import {
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Download,
+  HelpCircle,
+  Wand2,
+} from "lucide-react";
 import { ProgressChips } from "@/components/ProgressChips";
 import { NodeGrid } from "@/components/NodeGrid";
 import type { NodeCardProps } from "@/components/NodeCard";
+import { Toast } from "@/components/Toast";
 
 /**
  * Workflow Status Page
@@ -44,9 +52,14 @@ export default function WorkflowStatusPage() {
     questionId: string;
     question: string;
   } | null>(null);
-  const [clarificationResponse, setClarificationResponse] = useState("");
-  const [clarificationSubmitted, setClarificationSubmitted] = useState(false);
-  const [submittingClarification, setSubmittingClarification] = useState(false);
+  const [clarifications, setClarifications] = useState<string[]>([]);
+  const [clarifyResponseById, setClarifyResponseById] = useState<
+    Record<string, string>
+  >({});
+  const [submittedClarifyIds, setSubmittedClarifyIds] = useState<string[]>([]);
+  const [submittingClarifyIds, setSubmittingClarifyIds] = useState<string[]>(
+    []
+  );
 
   type SelectedNode = {
     id: string;
@@ -56,13 +69,34 @@ export default function WorkflowStatusPage() {
 
   const [selectedNodes, setSelectedNodes] = useState<SelectedNode[]>([]);
   const [visibleCount, setVisibleCount] = useState(0);
+  const [toastMessage, setToastMessage] = useState("");
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const revealTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const initialRevealDelayRef = useRef<NodeJS.Timeout | null>(null);
+  const lastToastNodeIdRef = useRef<string | null>(null);
+  const polishTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const polishQueueRef = useRef<string[]>([]);
+  const [polishedIds, setPolishedIds] = useState<Set<string>>(new Set());
+  const seoSlugRef = useRef<string | null>(null);
 
   const fetchStatus = useCallback(async () => {
     try {
       let url = `/api/workflow/${sessionId}/state`;
-      if (typeof window !== "undefined" && window.location?.search) {
-        // Pass through ?phase=...&clarify=1 from page URL to the API in mock mode
-        url += window.location.search;
+      if (typeof window !== "undefined") {
+        const incoming = new URLSearchParams(window.location.search);
+        const normalized = new URLSearchParams();
+        const rawPhase = incoming.get("phase");
+        if (rawPhase) {
+          // In case of malformed URLs like ?phase=discovery?clarify=1
+          normalized.set("phase", rawPhase.split("?")[0]);
+        }
+        const clarifyParam =
+          incoming.get("clarify") ?? incoming.get("clarification");
+        if (clarifyParam === "1" || clarifyParam === "true") {
+          normalized.set("clarify", "1");
+        }
+        const qs = normalized.toString();
+        if (qs) url += `?${qs}`;
       }
       const response = await fetch(url);
 
@@ -84,11 +118,12 @@ export default function WorkflowStatusPage() {
       setPendingClarification(data.pendingClarification);
       setSelectedNodes(data.selectedNodes || []);
       setLoading(false);
+      if (data.seoSlug) seoSlugRef.current = data.seoSlug as string;
       setError("");
 
       // Stop polling if complete
-      if (data.complete) {
-        console.log("Workflow complete!");
+      if (data.complete && seoSlugRef.current) {
+        router.push(`/w/${seoSlugRef.current}`);
       }
     } catch (err) {
       console.error("Failed to fetch status:", err);
@@ -117,26 +152,122 @@ export default function WorkflowStatusPage() {
     return () => clearInterval(interval);
   }, [sessionId, complete, fetchStatus]);
 
-  // Stage node reveal for discovery-like feel
+  // Stage node reveal for discovery-like feel (with initial delay)
   useEffect(() => {
-    // Only stage reveal during discovery
+    // Cleanup any existing timers on effect re-run
+    if (revealTimerRef.current) {
+      clearInterval(revealTimerRef.current);
+      revealTimerRef.current = null;
+    }
+    if (initialRevealDelayRef.current) {
+      clearTimeout(initialRevealDelayRef.current);
+      initialRevealDelayRef.current = null;
+    }
+
     if (phase !== "discovery") {
       setVisibleCount(selectedNodes.length);
       return;
     }
+
     setVisibleCount((prev) => Math.min(prev, selectedNodes.length));
     if (selectedNodes.length === 0) return;
-    const timer = setInterval(() => {
-      setVisibleCount((prev) => {
-        if (prev >= selectedNodes.length) {
-          clearInterval(timer);
-          return prev;
+
+    const startInterval = () => {
+      revealTimerRef.current = setInterval(() => {
+        setVisibleCount((prev) => {
+          if (prev >= selectedNodes.length) {
+            if (revealTimerRef.current) clearInterval(revealTimerRef.current);
+            revealTimerRef.current = null;
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 700);
+    };
+
+    if (visibleCount === 0) {
+      initialRevealDelayRef.current = setTimeout(() => {
+        startInterval();
+      }, 3000);
+    } else {
+      startInterval();
+    }
+
+    return () => {
+      if (revealTimerRef.current) clearInterval(revealTimerRef.current);
+      if (initialRevealDelayRef.current)
+        clearTimeout(initialRevealDelayRef.current);
+    };
+  }, [selectedNodes.length, phase, visibleCount]);
+
+  // Toast on new discovery reveal
+  useEffect(() => {
+    if (phase !== "discovery") return;
+    if (visibleCount <= 0) return;
+    const idx = Math.min(visibleCount - 1, selectedNodes.length - 1);
+    const node = selectedNodes[idx];
+    if (!node) return;
+    if (lastToastNodeIdRef.current === node.id) return;
+    lastToastNodeIdRef.current = node.id;
+    setToastMessage(`Discovered ${node.name}`);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToastMessage(""), 1800);
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, [visibleCount, phase, selectedNodes]);
+
+  // Polishing animation: random order with random delay (1–5s) between validations
+  useEffect(() => {
+    const isPolishing = phase !== "discovery" && phase !== "configuration";
+
+    // Cleanup any existing timeout and reset state when switching modes or IDs
+    if (polishTimeoutRef.current) {
+      clearTimeout(polishTimeoutRef.current);
+      polishTimeoutRef.current = null;
+    }
+    polishQueueRef.current = [];
+    setPolishedIds(new Set());
+
+    if (!isPolishing) return;
+
+    const ids = selectedNodes.map((n) => n.id).filter(Boolean) as string[];
+    if (ids.length === 0) return;
+
+    // Shuffle IDs (Fisher–Yates)
+    for (let i = ids.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [ids[i], ids[j]] = [ids[j], ids[i]];
+    }
+    polishQueueRef.current = ids;
+
+    const scheduleNext = () => {
+      if (polishQueueRef.current.length === 0) {
+        polishTimeoutRef.current = null;
+        return;
+      }
+      const delay = 1000 + Math.floor(Math.random() * 4000); // 1–5s
+      polishTimeoutRef.current = setTimeout(() => {
+        const nextId = polishQueueRef.current.shift();
+        if (nextId) {
+          setPolishedIds((prev) => {
+            const next = new Set(prev);
+            next.add(nextId);
+            return next;
+          });
         }
-        return prev + 1;
-      });
-    }, 700);
-    return () => clearInterval(timer);
-  }, [selectedNodes.length, phase]);
+        scheduleNext();
+      }, delay);
+    };
+
+    scheduleNext();
+
+    return () => {
+      if (polishTimeoutRef.current) clearTimeout(polishTimeoutRef.current);
+      polishTimeoutRef.current = null;
+      polishQueueRef.current = [];
+    };
+  }, [phase, selectedNodes.map((n) => n.id).join("|")]);
 
   // Phase mapping for chips
   const progressStep: "discovering" | "configuring" | "polishing" =
@@ -153,67 +284,52 @@ export default function WorkflowStatusPage() {
   };
 
   const stagedNodes: NodeCardProps[] = selectedNodes
-    .slice(0, Math.max(visibleCount, 1))
-    .map(
-      (n): NodeCardProps => ({
+    .slice(0, phase === "discovery" ? visibleCount : selectedNodes.length)
+    .map((n, i): NodeCardProps => {
+      const isPolishing = phase !== "discovery" && phase !== "configuration";
+      let state: NodeCardProps["state"];
+      if (phase === "discovery") state = "discovered";
+      else if (phase === "configuration") state = "configuring";
+      else if (isPolishing)
+        state = polishedIds.has(n.id) ? "validated" : "configuring";
+      else state = "selected";
+      return {
         id: n.id,
         iconName: simplifyIconName(n.nodeType),
         name: n.name,
         purpose: "", // not provided by state API
-        state:
-          phase === "discovery"
-            ? "discovered"
-            : phase === "configuration"
-            ? "configuring"
-            : phase === "validation"
-            ? "validated"
-            : "selected",
-      })
-    ) as NodeCardProps[];
+        state,
+        polishing: isPolishing,
+      };
+    }) as NodeCardProps[];
 
   // Icons are rendered via NodeIcon in NodeCard
 
-  const handleClarificationSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!clarificationResponse.trim() || !pendingClarification) {
-      return;
-    }
-
-    setSubmittingClarification(true);
-
+  const handleClarificationSubmit = async (questionId: string) => {
+    const responseText = clarifyResponseById[questionId]?.trim();
+    if (!responseText) return;
+    setSubmittingClarifyIds((prev) => [...prev, questionId]);
     try {
       const response = await fetch(`/api/workflow/${sessionId}/clarify`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          questionId: pendingClarification.questionId,
-          response: clarificationResponse,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ questionId, response: responseText }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to submit clarification");
-      }
-
-      const data = await response.json();
-
-      // Show thank you message
-      setClarificationSubmitted(true);
-      setClarificationResponse("");
-
-      // Clear clarification state after a moment
-      setTimeout(() => {
-        setPendingClarification(data.pendingClarification || null);
-        setClarificationSubmitted(false);
-      }, 2000);
+      if (!response.ok) throw new Error("Failed to submit clarification");
+      await response.json();
+      setSubmittedClarifyIds((prev) => [...prev, questionId]);
+      setClarifyResponseById((prev) => ({ ...prev, [questionId]: "" }));
+      setClarifications((prev) => [...prev, responseText]);
+      // Hide the sheet quickly and show a toast
+      setPendingClarification(null);
+      setToastMessage("Thanks!");
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = setTimeout(() => setToastMessage(""), 1600);
     } catch (err) {
       console.error("Failed to submit clarification:", err);
       alert("Failed to submit clarification. Please try again.");
     } finally {
-      setSubmittingClarification(false);
+      setSubmittingClarifyIds((prev) => prev.filter((id) => id !== questionId));
     }
   };
 
@@ -283,80 +399,122 @@ export default function WorkflowStatusPage() {
       {/* Header is global; keep page top minimal and let progress chips lead */}
 
       <div className="py-4">
-        <ProgressChips current={progressStep} />
+        <ProgressChips current={progressStep} done={complete} />
       </div>
 
       <div className="max-w-screen-lg mx-auto px-4 py-6">
         {loading ? (
-          <div className="text-center py-16">
-            <Loader2 className="w-12 h-12 text-emerald-600 animate-spin mx-auto mb-4" />
-            <p className="text-neutral-600">Loading workflow status...</p>
-          </div>
+          <div className="py-6" />
         ) : (
           <>
-            <div className="flex items-center justify-center mb-4">
-              {getPhaseIcon(phase)}
-              <h2 className="text-xl font-semibold text-neutral-900 ml-3">
-                {PHASE_NAMES[phase as keyof typeof PHASE_NAMES] || phase}
-              </h2>
+            <div className="mb-6">
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 mt-0.5">
+                    <Wand2 className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm text-neutral-800 whitespace-pre-line">
+                      {prompt}
+                    </div>
+                    {clarifications.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {clarifications.map((c, i) => (
+                          <div key={i} className="text-sm text-neutral-800">
+                            <span className="text-emerald-700 font-medium">
+                              Clarification:
+                            </span>{" "}
+                            {c}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-            <p className="text-center text-neutral-600 mb-6">
-              {PHASE_DESCRIPTIONS[phase as keyof typeof PHASE_DESCRIPTIONS] ||
-                "Processing..."}
-            </p>
 
             {/* Discovery Node Grid */}
             {stagedNodes.length > 0 && (
               <div className="mb-6">
-                <p className="text-center text-neutral-600 mb-3">
-                  Workflow Preview
-                </p>
                 <NodeGrid nodes={stagedNodes} />
               </div>
             )}
 
             {/* Clarification Section */}
-            {pendingClarification && !clarificationSubmitted && (
-              <div className="mb-8">
-                {/* Minimal sheet inline to avoid extra imports. Keep existing handler. */}
-                <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-screen-sm rounded-t-2xl border border-neutral-200 bg-white p-4 shadow-2xl">
-                  <div className="text-base font-medium text-neutral-900 mb-1">
-                    Quick question
+            {(() => {
+              const baseItems = Array.isArray(pendingClarification)
+                ? pendingClarification
+                : pendingClarification
+                ? [pendingClarification]
+                : [];
+              const items = baseItems.filter(
+                (pc) => !submittedClarifyIds.includes(pc.questionId)
+              );
+              if (items.length === 0) return null;
+              return (
+                <div className="mb-8">
+                  <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-screen-sm rounded-t-2xl border border-neutral-200 bg-white p-4 shadow-2xl animate-slide-up">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                        <HelpCircle className="h-4 w-4" />
+                      </div>
+                      <div className="text-base font-semibold text-neutral-900">
+                        Quick clarification
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {items.map((pc) => {
+                        const submitting = submittingClarifyIds.includes(
+                          pc.questionId
+                        );
+                        const val = clarifyResponseById[pc.questionId] ?? "";
+                        return (
+                          <div
+                            key={pc.questionId}
+                            className="rounded-lg border border-neutral-200 p-3"
+                          >
+                            <div className="text-sm text-neutral-700 mb-2">
+                              {pc.question}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <input
+                                value={val}
+                                onChange={(e) =>
+                                  setClarifyResponseById((prev) => ({
+                                    ...prev,
+                                    [pc.questionId]: e.target.value,
+                                  }))
+                                }
+                                placeholder="Your answer…"
+                                className="flex-1 border border-neutral-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                              />
+                              <button
+                                onClick={() =>
+                                  handleClarificationSubmit(pc.questionId)
+                                }
+                                disabled={submitting || !val.trim()}
+                                className="inline-flex items-center justify-center rounded-md bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:bg-emerald-700 disabled:bg-neutral-400"
+                              >
+                                {submitting ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Sending
+                                  </>
+                                ) : (
+                                  "Send"
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="text-sm text-neutral-600 mb-3">
-                    {pendingClarification.question}
-                  </div>
-                  <form
-                    onSubmit={handleClarificationSubmit}
-                    className="flex items-center gap-2"
-                  >
-                    <input
-                      value={clarificationResponse}
-                      onChange={(e) => setClarificationResponse(e.target.value)}
-                      placeholder="Your answer…"
-                      className="flex-1 border border-neutral-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      autoFocus
-                    />
-                    <button
-                      type="submit"
-                      disabled={
-                        submittingClarification || !clarificationResponse.trim()
-                      }
-                      className="inline-flex items-center justify-center rounded-md bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:bg-emerald-700 disabled:bg-neutral-400"
-                    >
-                      {submittingClarification ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Sending
-                        </>
-                      ) : (
-                        "Continue"
-                      )}
-                    </button>
-                  </form>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Actions */}
             {complete && (
@@ -381,14 +539,11 @@ export default function WorkflowStatusPage() {
               </div>
             )}
 
-            <div className="mt-6 pt-6 border-t border-neutral-200">
-              <p className="text-xs text-neutral-500 text-center">
-                Session ID: {sessionId}
-              </p>
-            </div>
+            {/* Footer removed per request */}
           </>
         )}
       </div>
+      <Toast message={toastMessage} />
     </div>
   );
 }

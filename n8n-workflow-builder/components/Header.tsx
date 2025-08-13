@@ -22,7 +22,8 @@ export function Header({ variant }: { variant?: HeaderVariant }) {
 
   const base = "sticky top-0 z-40 transition-colors";
   const landingTop = "bg-transparent text-white";
-  const defaultTop = "bg-transparent text-neutral-900";
+  // Non-landing pages: use solid header immediately to match light backgrounds
+  const defaultTop = "bg-white text-neutral-900 border-b border-neutral-200";
   const scrolled = "bg-white text-neutral-900 border-b border-neutral-200";
 
   const headerClass = cn(

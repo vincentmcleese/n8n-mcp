@@ -34,6 +34,7 @@ interface SupabaseSessionState {
     connections: any;
     settings: any;
   };
+  seo?: import("../../types/seo").WorkflowSEOMetadata;
   buildPhases?: Array<{
     type: string;
     description: string;
@@ -211,6 +212,18 @@ export class SessionManager {
       // Keep operations in queue for retry
       throw error;
     }
+  }
+
+  /**
+   * Public helper to immediately apply and persist a list of operations
+   * Used by API routes that need synchronous state updates (e.g., SEO)
+   */
+  async applyOperations(
+    sessionId: string,
+    operations: WorkflowOperation[]
+  ): Promise<void> {
+    // Bypass batching: apply and persist now
+    await this.updateSession(sessionId, operations);
   }
 
   /**
@@ -614,6 +627,13 @@ export class SessionManager {
           );
           break;
 
+        case "setSEOMetadata":
+          updatedState.seo = op.seo;
+          this.logger.info(
+            `🔍 SESSION: Saving SEO metadata with slug: ${op.seo.slug}`
+          );
+          break;
+
         // Add more operation types as needed
       }
     }
@@ -647,6 +667,7 @@ export class SessionManager {
         configured: this.recordToMap(state.configured),
         validated: this.recordToMap(state.validated),
         workflow: state.workflow,
+        seo: state.seo,
         buildPhases: state.buildPhases, // Include build phases from session state
         operationHistory: state.operationHistory,
         pendingClarifications: state.pendingClarifications,

@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "n8n-artifactbuilder",
+			"path": "../../.."
+		},
+		{
+			"name": "node-icons",
+			"path": "../../../../get-n8n-svg-node-icons/node-icons"
+		}
+	],
+	"settings": {}
+}

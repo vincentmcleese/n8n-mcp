@@ -213,7 +213,8 @@ export const loggers = {
   building: createLogger('Building'),
   validation: createLogger('Validation'),
   documentation: createLogger('Documentation'),
-  session: createLogger('Session')
+  session: createLogger('Session'),
+  seo: createLogger('SEO')
 };
 
 

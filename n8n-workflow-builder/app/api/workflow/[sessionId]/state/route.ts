@@ -45,6 +45,7 @@ export async function GET(
       sessionId,
       phase: session.state.phase,
       complete: session.state.phase === "complete",
+      seoSlug: (session.state as any).seo?.slug ?? null,
       stats: {
         discovered: session.state.discovered.length,
         selected: selectedNodes.length,

@@ -16,6 +16,7 @@ export interface NodeCardProps {
   name?: string;
   purpose?: string;
   state: NodeState;
+  polishing?: boolean;
 }
 
 export function NodeCard({
@@ -24,18 +25,23 @@ export function NodeCard({
   name,
   purpose,
   state,
+  polishing = false,
 }: NodeCardProps) {
   const isPlaceholder = state === "placeholder";
   const isSelected = state === "selected";
   const isConfiguring = state === "configuring";
   const isValidated = state === "validated";
 
-  return (
+  const card = (
     <div
       className={
         "group relative rounded-xl border bg-white/70 backdrop-blur-sm p-4 transition-colors " +
         (isSelected
-          ? "border-indigo-500 shadow-[0_0_0_3px_rgba(99,102,241,0.15)]"
+          ? polishing
+            ? "border-transparent shadow-[0_0_0_3px_rgba(27,200,140,0.12)]"
+            : "border-indigo-500 shadow-[0_0_0_3px_rgba(99,102,241,0.15)]"
+          : polishing && isValidated
+          ? "border-transparent"
           : "border-neutral-200 hover:border-neutral-300")
       }
       role="button"
@@ -108,7 +114,12 @@ export function NodeCard({
         </div>
         {isSelected && (
           <div className="shrink-0 self-center">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-white">
+            <span
+              className={
+                "inline-flex h-6 w-6 items-center justify-center rounded-full text-white " +
+                (polishing ? "bg-emerald-600" : "bg-indigo-600")
+              }
+            >
               <CheckIcon className="h-4 w-4" />
             </span>
           </div>
@@ -116,6 +127,16 @@ export function NodeCard({
       </div>
     </div>
   );
+
+  if (polishing && (isSelected || isValidated)) {
+    return (
+      <div className="rounded-xl p-[1px] bg-[linear-gradient(90deg,#00c878,#00b3bd,#78d4e4)]">
+        {card}
+      </div>
+    );
+  }
+
+  return card;
 }
 
 function CheckIcon(props: React.SVGProps<SVGSVGElement>) {

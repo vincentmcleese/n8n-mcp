@@ -1,5 +1,6 @@
 // types/workflow.ts
 
+import type { WorkflowSEOMetadata } from './seo';
 import type {
   DiscoverNodeOperation,
   SelectNodeOperation,
@@ -97,6 +98,7 @@ export interface WorkflowSession {
     pendingClarifications: ClarificationRequest[];
     clarificationHistory: ClarificationResponse[];
     nodeEssentials?: Map<string, any>; // Cache of node essentials by nodeType
+    seo?: WorkflowSEOMetadata; // SEO metadata generated after discovery
     tokenUsage?: {
       byPhase: Record<string, number>;
       byCalls: Array<{
@@ -199,6 +201,10 @@ export type SessionOperation =
         nodeIds: string[];
         row?: number;
       }>;
+    }
+  | {
+      type: "setSEOMetadata";
+      seo: WorkflowSEOMetadata;
     };
 
 /**
