@@ -1,26 +1,25 @@
 /**
  * Discovery Phase Service
- * 
+ *
  * Handles the discovery phase of workflow generation, including:
  * - Intent analysis
  * - Node discovery and selection
  * - Clarification handling
  */
 
-import { BasePhaseService, type PhaseContext, type PhaseResult } from './base';
-import { DiscoveryPrompts } from '../prompts/discovery';
-import { TOKEN_LIMITS } from '../constants';
-import { 
+import { BasePhaseService, type PhaseContext, type PhaseResult } from "./base";
+import { DiscoveryPrompts } from "../prompts/discovery";
+import { TOKEN_LIMITS } from "../constants";
+import {
   intentAnalysisSchema,
   discoveryOperationsResponseSchema,
-  type z
-} from '../validation/schemas';
-import type { 
+} from "../validation/schemas";
+import type {
   WorkflowOperation,
   ClaudeAnalysisResponse,
-  DiscoveryOperationsResponse 
-} from '@/types';
-import { DISCOVERY_TOOLS } from '@/lib/mcp-tools/definitions';
+  DiscoveryOperationsResponse,
+} from "@/types";
+import { DISCOVERY_TOOLS } from "@/lib/mcp-tools/definitions";
 
 // ==========================================
 // Type Definitions
@@ -29,9 +28,8 @@ import { DISCOVERY_TOOLS } from '@/lib/mcp-tools/definitions';
 export interface DiscoveryInput {
   prompt: string;
   sessionId: string;
-  mode?: 'fresh' | 'incremental';
+  mode?: "fresh" | "incremental";
 }
-
 
 export interface DiscoveryOutput {
   operations: WorkflowOperation[];
@@ -63,11 +61,32 @@ export interface ClarificationInput {
 // Discovery Phase Service Implementation
 // ==========================================
 
-export class DiscoveryPhaseService extends BasePhaseService<DiscoveryInput, DiscoveryOutput> {
+export class DiscoveryPhaseService extends BasePhaseService<
+  DiscoveryInput,
+  DiscoveryOutput
+> {
   get phaseName(): string {
-    return 'discovery';
+    return "discovery";
   }
 
+  async execute(
+    input: DiscoveryInput,
+    context: PhaseContext
+  ): Promise<PhaseResult<DiscoveryOutput>> {
+    // High-level execute stub to satisfy abstract contract
+    // The orchestrator uses dedicated methods for specific actions.
+    const intent = await this.analyzeIntent({ prompt: input.prompt });
+    if (!intent.success || !intent.data) {
+      return {
+        success: false,
+        error: intent.error,
+      } as PhaseResult<DiscoveryOutput>;
+    }
+    return {
+      success: true,
+      data: { operations: [], reasoning: intent.reasoning || [] },
+    } as PhaseResult<DiscoveryOutput>;
+  }
 
   /**
    * Select nodes from gap search results
@@ -79,8 +98,8 @@ export class DiscoveryPhaseService extends BasePhaseService<DiscoveryInput, Disc
     gapResults: any;
     formattedResults: string; // Pre-formatted by GapSearchService
   }): Promise<PhaseResult<DiscoveryOperationsResponse>> {
-    this.logger.debug('Selecting nodes from gap search results');
-    
+    this.logger.debug("Selecting nodes from gap search results");
+
     // Create selection prompt - EXACT same structure as before
     const selectionPrompt = `Based on the user's request: "${input.prompt}"
 
@@ -134,115 +153,126 @@ Example format:
   "reasoning": ["Why these nodes were selected"]
 }`,
       user: selectionPrompt,
-      prefill: '{"operations":['
+      prefill: '{"operations":[',
     };
-    
+
     // Get available tools for discovery phase
     const tools = Object.values(DISCOVERY_TOOLS);
-    
+
     // Call Claude for selection with tools available
     const result = await this.callClaude<DiscoveryOperationsResponse>(
       promptParts,
       TOKEN_LIMITS.discovery,
       discoveryOperationsResponseSchema as any,
-      'selectFromGapResults',
+      "selectFromGapResults",
       tools // Pass tools for Claude to use if needed
     );
-    
+
     if (result.success && result.data) {
       // Log the actual operations Claude is returning
-      this.logger.debug('Claude gap selection operations:', 
+      this.logger.debug(
+        "Claude gap selection operations:",
         JSON.stringify(result.data.operations, null, 2)
       );
-      
+
       // Specifically log any IF node selections
       result.data.operations?.forEach((op: any) => {
-        if (op.type === 'discoverNode' && op.node) {
-          if (op.node.type?.toLowerCase().includes('if') || 
-              op.node.type === 'transform' ||
-              op.node.displayName?.toLowerCase().includes('if')) {
-            this.logger.info('Claude selected node details:', {
+        if (op.type === "discoverNode" && op.node) {
+          if (
+            op.node.type?.toLowerCase().includes("if") ||
+            op.node.type === "transform" ||
+            op.node.displayName?.toLowerCase().includes("if")
+          ) {
+            this.logger.info("Claude selected node details:", {
               nodeId: op.node.id,
               nodeType: op.node.type,
               displayName: op.node.displayName,
-              purpose: op.node.purpose
+              purpose: op.node.purpose,
             });
           }
         }
       });
-      
-      this.logSuccess('Gap node selection', {
-        operationsCount: result.data.operations?.length || 0
+
+      this.logSuccess("Gap node selection", {
+        operationsCount: result.data.operations?.length || 0,
       });
     }
-    
+
     return result;
   }
 
   /**
    * Analyze user intent to determine what to search for
    */
-  async analyzeIntent(input: IntentAnalysisInput): Promise<PhaseResult<ClaudeAnalysisResponse>> {
-    this.logger.debug('Analyzing workflow intent');
-    
+  async analyzeIntent(
+    input: IntentAnalysisInput
+  ): Promise<PhaseResult<ClaudeAnalysisResponse>> {
+    this.logger.debug("Analyzing workflow intent");
+
     // Handle empty or whitespace-only prompts
     if (!input.prompt || !input.prompt.trim()) {
-      this.logger.debug('Empty prompt detected, returning minimal analysis');
+      this.logger.debug("Empty prompt detected, returning minimal analysis");
       return {
         success: true,
         data: {
-          intent: 'No workflow intent provided',
-          requiredCapabilities: [],
-          suggestedSearchTerms: [],
-          nodeRecommendations: [],
-          reasoning: ['Empty or invalid prompt provided'],
-        },
+          intent: "No workflow intent provided",
+          logic_flow: [],
+          matched_tasks: [],
+          unmatched_capabilities: [],
+          search_suggestions: [],
+          workflow_pattern: "unknown",
+          complexity: "unknown",
+          clarification_needed: false,
+          reasoning: ["Empty or invalid prompt provided"],
+        } as any,
       };
     }
-    
+
     // Get the prompt
     const promptParts = DiscoveryPrompts.getIntentAnalysisPrompt(input.prompt);
-    
+
     // Get available tools for discovery phase
     const tools = Object.values(DISCOVERY_TOOLS);
-    
+
     // Call Claude with the intent analysis prompt and tools
     const result = await this.callClaude<ClaudeAnalysisResponse>(
       promptParts,
       TOKEN_LIMITS.intentAnalysis,
       intentAnalysisSchema as any,
-      'analyzeIntent',
+      "analyzeIntent",
       tools // Pass tools for Claude to use if needed
     );
-    
+
     if (result.success && result.data) {
       // Log the actual data structure for new schema
-      this.logSuccess('Intent analysis', {
+      this.logSuccess("Intent analysis", {
         matchedTasks: result.data.matched_tasks?.length || 0,
         unmatchedCapabilities: result.data.unmatched_capabilities?.length || 0,
         searchSuggestions: result.data.search_suggestions?.length || 0,
         clarificationNeeded: result.data.clarification_needed || false,
       });
-      
+
       // Log task selection reasoning if provided
-      if (result.data.task_selection_reasoning && result.data.task_selection_reasoning.length > 0) {
-        this.logger.info('[discovery] Task selection reasoning:');
+      if (
+        result.data.task_selection_reasoning &&
+        result.data.task_selection_reasoning.length > 0
+      ) {
+        this.logger.info("[discovery] Task selection reasoning:");
         result.data.task_selection_reasoning.forEach(({ task, reason }) => {
           this.logger.info(`[discovery]   📦 ${task}: ${reason}`);
         });
       }
     } else {
       // Log detailed error information
-      this.logger.error('Intent analysis failed', {
+      this.logger.error("Intent analysis failed", {
         success: result.success,
         error: result.error?.message,
-        usage: result.usage
+        usage: result.usage,
       });
     }
-    
+
     return result;
   }
-
 
   /**
    * Validate discovery output
@@ -250,46 +280,50 @@ Example format:
   validateOutput(output: DiscoveryOutput): boolean {
     // Check that we have operations
     if (!output.operations || output.operations.length === 0) {
-      this.logWarning('validateOutput', 'No operations generated');
+      this.logWarning("validateOutput", "No operations generated");
       return false;
     }
-    
+
     // Check for at least one discover or clarification operation
-    const hasValidOperations = output.operations.some(op => 
-      op.type === 'discoverNode' || 
-      op.type === 'selectNode' || 
-      op.type === 'requestClarification'
+    const hasValidOperations = output.operations.some(
+      (op) =>
+        op.type === "discoverNode" ||
+        op.type === "selectNode" ||
+        op.type === "requestClarification"
     );
-    
+
     if (!hasValidOperations) {
-      this.logWarning('validateOutput', 'No valid discovery operations found');
+      this.logWarning("validateOutput", "No valid discovery operations found");
       return false;
     }
-    
+
     // Check that discovered nodes have corresponding select operations (unless clarification)
     const discoveredNodeIds = new Set(
       output.operations
-        .filter(op => op.type === 'discoverNode')
-        .map(op => (op as any).node?.id)
+        .filter((op) => op.type === "discoverNode")
+        .map((op) => (op as any).node?.id)
         .filter(Boolean)
     );
-    
+
     const selectedNodeIds = new Set(
       output.operations
-        .filter(op => op.type === 'selectNode')
-        .map(op => (op as any).nodeId)
+        .filter((op) => op.type === "selectNode")
+        .map((op) => (op as any).nodeId)
         .filter(Boolean)
     );
-    
+
     // It's okay if not all discovered nodes are selected
     // But selected nodes should be discovered first
     for (const selectedId of selectedNodeIds) {
       if (!discoveredNodeIds.has(selectedId)) {
-        this.logWarning('validateOutput', `Node ${selectedId} selected but not discovered`);
+        this.logWarning(
+          "validateOutput",
+          `Node ${selectedId} selected but not discovered`
+        );
         // This is a warning, not a failure - Claude might have reasons
       }
     }
-    
+
     return true;
   }
 }

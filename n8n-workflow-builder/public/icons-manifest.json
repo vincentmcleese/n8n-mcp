@@ -1,0 +1,1398 @@
+{
+  "version": "1.0.0",
+  "totalIcons": 190,
+  "basePath": "/demo-icons/icons/nodes/svgs",
+  "categories": {
+    "communication": [
+      "discord",
+      "drift.dark",
+      "intercom",
+      "mailchimp",
+      "mailgun",
+      "mailjet",
+      "mandrill",
+      "mattermost",
+      "messagebird",
+      "msg91",
+      "rocketchat",
+      "sendGrid",
+      "seven",
+      "slack",
+      "telegram",
+      "twilio",
+      "vonage.dark",
+      "whatsapp",
+      "zoom",
+      "zulip"
+    ],
+    "crm": [
+      "activeCampaign",
+      "affinity.dark",
+      "airtable",
+      "autopilot",
+      "clearbit",
+      "copper",
+      "customerio.dark",
+      "freshworksCrm",
+      "gong",
+      "helpScout",
+      "highLevel",
+      "hubspot",
+      "humanticai",
+      "invoiceNinja",
+      "kitemaker.dark",
+      "mondayCom",
+      "pipedrive",
+      "salesforce",
+      "zendesk",
+      "zoho"
+    ],
+    "projectManagement": [
+      "asana",
+      "baserow",
+      "clickup",
+      "clockify",
+      "coda",
+      "jira",
+      "linear",
+      "notion",
+      "taiga",
+      "todoist",
+      "trello",
+      "wekan"
+    ],
+    "developer": [
+      "bitbucket",
+      "circleCi",
+      "code",
+      "DebugHelper",
+      "git",
+      "github.dark",
+      "gitlab",
+      "jenkins",
+      "n8n",
+      "n8nTrigger",
+      "netlify",
+      "npm",
+      "postgres",
+      "redis",
+      "snowflake",
+      "supabase",
+      "timescaleDb",
+      "webhook"
+    ],
+    "ai": [
+      "airtop",
+      "aitransform",
+      "cortex",
+      "deepL.dark",
+      "jinaAi.dark",
+      "mindee",
+      "mistralAi",
+      "openAi.dark",
+      "perplexity"
+    ],
+    "ecommerce": [
+      "magento",
+      "shopify",
+      "stripe",
+      "wooCommerce"
+    ],
+    "marketing": [
+      "actionNetwork",
+      "adalo",
+      "brevo",
+      "bubble",
+      "calendly",
+      "convertKit",
+      "crowdDev.dark",
+      "demio",
+      "dropcontact",
+      "egoi",
+      "emelia",
+      "formio",
+      "formstack",
+      "gotowebinar",
+      "lemlist",
+      "loneScale.dark",
+      "mailcheck",
+      "MailerLite",
+      "mautic",
+      "onesimpleapi",
+      "segment",
+      "surveyMonkey",
+      "tapfiliate",
+      "typeform",
+      "webflow"
+    ],
+    "social": [
+      "facebook",
+      "linkedin",
+      "reddit",
+      "spotify",
+      "strava",
+      "x"
+    ],
+    "analytics": [
+      "grafana",
+      "marketstack",
+      "metabase",
+      "postHog",
+      "profitwell.dark",
+      "splunk"
+    ],
+    "security": [
+      "bitwarden",
+      "jwt",
+      "ldap.dark",
+      "misp",
+      "securityScorecard",
+      "sentryio",
+      "thehive",
+      "thehiveproject",
+      "urlScanIo"
+    ],
+    "finance": [
+      "coinGecko",
+      "paypal",
+      "quickbooks",
+      "wise",
+      "xero"
+    ],
+    "storage": [
+      "dropbox",
+      "nextcloud",
+      "raindrop"
+    ],
+    "content": [
+      "ghost",
+      "markdown.dark",
+      "storyblok",
+      "strapi",
+      "wordpress"
+    ],
+    "automation": [
+      "cal.dark",
+      "flow",
+      "form",
+      "httprequest.dark",
+      "itemLists",
+      "lambda",
+      "merge",
+      "n8n",
+      "n8nTrigger"
+    ],
+    "collaboration": [
+      "figma",
+      "grist",
+      "koBoToolbox",
+      "nocodb",
+      "seaTable"
+    ],
+    "infrastructure": [
+      "amqp",
+      "cloudflare",
+      "cockpit",
+      "homeAssistant",
+      "kafka",
+      "mongodb",
+      "mqtt",
+      "mysql",
+      "rabbitmq"
+    ],
+    "support": [
+      "freshdesk",
+      "freshservice",
+      "halopsa",
+      "pagerDuty",
+      "servicenow",
+      "uptimerobot",
+      "zammad"
+    ],
+    "erp": [
+      "erpnext",
+      "odoo"
+    ],
+    "messaging": [
+      "plivo",
+      "pushbullet",
+      "pushover"
+    ],
+    "other": [
+      "apiTemplateIo",
+      "bitly",
+      "compare",
+      "dhl",
+      "discourse",
+      "html",
+      "Okta",
+      "Onfleet",
+      "openWeatherMap",
+      "orbit.dark",
+      "oura",
+      "postbin",
+      "quickChart",
+      "vero"
+    ]
+  },
+  "icons": [
+    {
+      "name": "actionNetwork",
+      "displayName": "Action Network",
+      "filename": "actionNetwork.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "activeCampaign",
+      "displayName": "ActiveCampaign",
+      "filename": "activeCampaign.svg",
+      "category": "crm"
+    },
+    {
+      "name": "adalo",
+      "displayName": "Adalo",
+      "filename": "adalo.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "affinity",
+      "displayName": "Affinity",
+      "filename": "affinity.dark.svg",
+      "category": "crm",
+      "variant": "dark"
+    },
+    {
+      "name": "airtable",
+      "displayName": "Airtable",
+      "filename": "airtable.svg",
+      "category": "crm"
+    },
+    {
+      "name": "airtop",
+      "displayName": "Airtop",
+      "filename": "airtop.svg",
+      "category": "ai"
+    },
+    {
+      "name": "aitransform",
+      "displayName": "AI Transform",
+      "filename": "aitransform.svg",
+      "category": "ai"
+    },
+    {
+      "name": "amqp",
+      "displayName": "AMQP",
+      "filename": "amqp.svg",
+      "category": "infrastructure"
+    },
+    {
+      "name": "apiTemplateIo",
+      "displayName": "API Template.io",
+      "filename": "apiTemplateIo.svg",
+      "category": "other"
+    },
+    {
+      "name": "asana",
+      "displayName": "Asana",
+      "filename": "asana.svg",
+      "category": "projectManagement"
+    },
+    {
+      "name": "autopilot",
+      "displayName": "Autopilot",
+      "filename": "autopilot.svg",
+      "category": "crm"
+    },
+    {
+      "name": "baserow",
+      "displayName": "Baserow",
+      "filename": "baserow.svg",
+      "category": "projectManagement"
+    },
+    {
+      "name": "bitbucket",
+      "displayName": "Bitbucket",
+      "filename": "bitbucket.svg",
+      "category": "developer"
+    },
+    {
+      "name": "bitly",
+      "displayName": "Bitly",
+      "filename": "bitly.svg",
+      "category": "other"
+    },
+    {
+      "name": "bitwarden",
+      "displayName": "Bitwarden",
+      "filename": "bitwarden.svg",
+      "category": "security"
+    },
+    {
+      "name": "brevo",
+      "displayName": "Brevo",
+      "filename": "brevo.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "bubble",
+      "displayName": "Bubble",
+      "filename": "bubble.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "cal",
+      "displayName": "Cal.com",
+      "filename": "cal.dark.svg",
+      "category": "automation",
+      "variant": "dark"
+    },
+    {
+      "name": "calendly",
+      "displayName": "Calendly",
+      "filename": "calendly.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "circleCi",
+      "displayName": "CircleCI",
+      "filename": "circleCi.svg",
+      "category": "developer"
+    },
+    {
+      "name": "clearbit",
+      "displayName": "Clearbit",
+      "filename": "clearbit.svg",
+      "category": "crm"
+    },
+    {
+      "name": "clickup",
+      "displayName": "ClickUp",
+      "filename": "clickup.svg",
+      "category": "projectManagement"
+    },
+    {
+      "name": "clockify",
+      "displayName": "Clockify",
+      "filename": "clockify.svg",
+      "category": "projectManagement"
+    },
+    {
+      "name": "cloudflare",
+      "displayName": "Cloudflare",
+      "filename": "cloudflare.svg",
+      "category": "infrastructure"
+    },
+    {
+      "name": "cockpit",
+      "displayName": "Cockpit",
+      "filename": "cockpit.svg",
+      "category": "infrastructure"
+    },
+    {
+      "name": "coda",
+      "displayName": "Coda",
+      "filename": "coda.svg",
+      "category": "projectManagement"
+    },
+    {
+      "name": "code",
+      "displayName": "Code",
+      "filename": "code.svg",
+      "category": "developer"
+    },
+    {
+      "name": "coinGecko",
+      "displayName": "CoinGecko",
+      "filename": "coinGecko.svg",
+      "category": "finance"
+    },
+    {
+      "name": "compare",
+      "displayName": "Compare",
+      "filename": "compare.svg",
+      "category": "other"
+    },
+    {
+      "name": "convertKit",
+      "displayName": "ConvertKit",
+      "filename": "convertKit.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "copper",
+      "displayName": "Copper",
+      "filename": "copper.svg",
+      "category": "crm"
+    },
+    {
+      "name": "cortex",
+      "displayName": "Cortex",
+      "filename": "cortex.svg",
+      "category": "ai"
+    },
+    {
+      "name": "crowdDev",
+      "displayName": "Crowd.dev",
+      "filename": "crowdDev.dark.svg",
+      "category": "marketing",
+      "variant": "dark"
+    },
+    {
+      "name": "customerio",
+      "displayName": "Customer.io",
+      "filename": "customerio.dark.svg",
+      "category": "crm",
+      "variant": "dark"
+    },
+    {
+      "name": "DebugHelper",
+      "displayName": "Debug Helper",
+      "filename": "DebugHelper.svg",
+      "category": "developer"
+    },
+    {
+      "name": "deepL",
+      "displayName": "DeepL",
+      "filename": "deepL.dark.svg",
+      "category": "ai",
+      "variant": "dark"
+    },
+    {
+      "name": "demio",
+      "displayName": "Demio",
+      "filename": "demio.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "dhl",
+      "displayName": "DHL",
+      "filename": "dhl.svg",
+      "category": "other"
+    },
+    {
+      "name": "discord",
+      "displayName": "Discord",
+      "filename": "discord.svg",
+      "category": "communication"
+    },
+    {
+      "name": "discourse",
+      "displayName": "Discourse",
+      "filename": "discourse.svg",
+      "category": "other"
+    },
+    {
+      "name": "drift",
+      "displayName": "Drift",
+      "filename": "drift.dark.svg",
+      "category": "communication",
+      "variant": "dark"
+    },
+    {
+      "name": "dropbox",
+      "displayName": "Dropbox",
+      "filename": "dropbox.svg",
+      "category": "storage"
+    },
+    {
+      "name": "dropcontact",
+      "displayName": "Dropcontact",
+      "filename": "dropcontact.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "egoi",
+      "displayName": "E-goi",
+      "filename": "egoi.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "emelia",
+      "displayName": "Emelia",
+      "filename": "emelia.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "erpnext",
+      "displayName": "ERPNext",
+      "filename": "erpnext.svg",
+      "category": "erp"
+    },
+    {
+      "name": "facebook",
+      "displayName": "Facebook",
+      "filename": "facebook.svg",
+      "category": "social"
+    },
+    {
+      "name": "figma",
+      "displayName": "Figma",
+      "filename": "figma.svg",
+      "category": "collaboration"
+    },
+    {
+      "name": "flow",
+      "displayName": "Flow",
+      "filename": "flow.svg",
+      "category": "automation"
+    },
+    {
+      "name": "form",
+      "displayName": "Form",
+      "filename": "form.svg",
+      "category": "automation"
+    },
+    {
+      "name": "formio",
+      "displayName": "Form.io",
+      "filename": "formio.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "formstack",
+      "displayName": "Formstack",
+      "filename": "formstack.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "freshdesk",
+      "displayName": "Freshdesk",
+      "filename": "freshdesk.svg",
+      "category": "support"
+    },
+    {
+      "name": "freshservice",
+      "displayName": "Freshservice",
+      "filename": "freshservice.svg",
+      "category": "support"
+    },
+    {
+      "name": "freshworksCrm",
+      "displayName": "Freshworks CRM",
+      "filename": "freshworksCrm.svg",
+      "category": "crm"
+    },
+    {
+      "name": "ghost",
+      "displayName": "Ghost",
+      "filename": "ghost.svg",
+      "category": "content"
+    },
+    {
+      "name": "git",
+      "displayName": "Git",
+      "filename": "git.svg",
+      "category": "developer"
+    },
+    {
+      "name": "github",
+      "displayName": "GitHub",
+      "filename": "github.dark.svg",
+      "category": "developer",
+      "variant": "dark"
+    },
+    {
+      "name": "gitlab",
+      "displayName": "GitLab",
+      "filename": "gitlab.svg",
+      "category": "developer"
+    },
+    {
+      "name": "gong",
+      "displayName": "Gong",
+      "filename": "gong.svg",
+      "category": "crm"
+    },
+    {
+      "name": "gotowebinar",
+      "displayName": "GoToWebinar",
+      "filename": "gotowebinar.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "grafana",
+      "displayName": "Grafana",
+      "filename": "grafana.svg",
+      "category": "analytics"
+    },
+    {
+      "name": "grist",
+      "displayName": "Grist",
+      "filename": "grist.svg",
+      "category": "collaboration"
+    },
+    {
+      "name": "halopsa",
+      "displayName": "HaloPSA",
+      "filename": "halopsa.svg",
+      "category": "support"
+    },
+    {
+      "name": "helpScout",
+      "displayName": "Help Scout",
+      "filename": "helpScout.svg",
+      "category": "crm"
+    },
+    {
+      "name": "highLevel",
+      "displayName": "HighLevel",
+      "filename": "highLevel.svg",
+      "category": "crm"
+    },
+    {
+      "name": "homeAssistant",
+      "displayName": "Home Assistant",
+      "filename": "homeAssistant.svg",
+      "category": "infrastructure"
+    },
+    {
+      "name": "html",
+      "displayName": "HTML",
+      "filename": "html.svg",
+      "category": "other"
+    },
+    {
+      "name": "httprequest",
+      "displayName": "HTTP Request",
+      "filename": "httprequest.dark.svg",
+      "category": "automation",
+      "variant": "dark"
+    },
+    {
+      "name": "hubspot",
+      "displayName": "HubSpot",
+      "filename": "hubspot.svg",
+      "category": "crm"
+    },
+    {
+      "name": "humanticai",
+      "displayName": "Humantic AI",
+      "filename": "humanticai.svg",
+      "category": "crm"
+    },
+    {
+      "name": "intercom",
+      "displayName": "Intercom",
+      "filename": "intercom.svg",
+      "category": "communication"
+    },
+    {
+      "name": "invoiceNinja",
+      "displayName": "Invoice Ninja",
+      "filename": "invoiceNinja.svg",
+      "category": "crm"
+    },
+    {
+      "name": "itemLists",
+      "displayName": "Item Lists",
+      "filename": "itemLists.svg",
+      "category": "automation"
+    },
+    {
+      "name": "jenkins",
+      "displayName": "Jenkins",
+      "filename": "jenkins.svg",
+      "category": "developer"
+    },
+    {
+      "name": "jinaAi",
+      "displayName": "Jina AI",
+      "filename": "jinaAi.dark.svg",
+      "category": "ai",
+      "variant": "dark"
+    },
+    {
+      "name": "jira",
+      "displayName": "Jira",
+      "filename": "jira.svg",
+      "category": "projectManagement"
+    },
+    {
+      "name": "jwt",
+      "displayName": "JWT",
+      "filename": "jwt.svg",
+      "category": "security"
+    },
+    {
+      "name": "kafka",
+      "displayName": "Kafka",
+      "filename": "kafka.svg",
+      "category": "infrastructure"
+    },
+    {
+      "name": "kitemaker",
+      "displayName": "Kitemaker",
+      "filename": "kitemaker.dark.svg",
+      "category": "crm",
+      "variant": "dark"
+    },
+    {
+      "name": "koBoToolbox",
+      "displayName": "KoBoToolbox",
+      "filename": "koBoToolbox.svg",
+      "category": "collaboration"
+    },
+    {
+      "name": "lambda",
+      "displayName": "AWS Lambda",
+      "filename": "lambda.svg",
+      "category": "automation"
+    },
+    {
+      "name": "ldap",
+      "displayName": "LDAP",
+      "filename": "ldap.dark.svg",
+      "category": "security",
+      "variant": "dark"
+    },
+    {
+      "name": "lemlist",
+      "displayName": "Lemlist",
+      "filename": "lemlist.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "linear",
+      "displayName": "Linear",
+      "filename": "linear.svg",
+      "category": "projectManagement"
+    },
+    {
+      "name": "linkedin",
+      "displayName": "LinkedIn",
+      "filename": "linkedin.svg",
+      "category": "social"
+    },
+    {
+      "name": "loneScale",
+      "displayName": "LoneScale",
+      "filename": "loneScale.dark.svg",
+      "category": "marketing",
+      "variant": "dark"
+    },
+    {
+      "name": "magento",
+      "displayName": "Magento",
+      "filename": "magento.svg",
+      "category": "ecommerce"
+    },
+    {
+      "name": "mailcheck",
+      "displayName": "Mailcheck",
+      "filename": "mailcheck.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "mailchimp",
+      "displayName": "Mailchimp",
+      "filename": "mailchimp.svg",
+      "category": "communication"
+    },
+    {
+      "name": "MailerLite",
+      "displayName": "MailerLite",
+      "filename": "MailerLite.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "mailgun",
+      "displayName": "Mailgun",
+      "filename": "mailgun.svg",
+      "category": "communication"
+    },
+    {
+      "name": "mailjet",
+      "displayName": "Mailjet",
+      "filename": "mailjet.svg",
+      "category": "communication"
+    },
+    {
+      "name": "mandrill",
+      "displayName": "Mandrill",
+      "filename": "mandrill.svg",
+      "category": "communication"
+    },
+    {
+      "name": "markdown",
+      "displayName": "Markdown",
+      "filename": "markdown.dark.svg",
+      "category": "content",
+      "variant": "dark"
+    },
+    {
+      "name": "marketstack",
+      "displayName": "Marketstack",
+      "filename": "marketstack.svg",
+      "category": "analytics"
+    },
+    {
+      "name": "mattermost",
+      "displayName": "Mattermost",
+      "filename": "mattermost.svg",
+      "category": "communication"
+    },
+    {
+      "name": "mautic",
+      "displayName": "Mautic",
+      "filename": "mautic.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "merge",
+      "displayName": "Merge",
+      "filename": "merge.svg",
+      "category": "automation"
+    },
+    {
+      "name": "messagebird",
+      "displayName": "MessageBird",
+      "filename": "messagebird.svg",
+      "category": "communication"
+    },
+    {
+      "name": "metabase",
+      "displayName": "Metabase",
+      "filename": "metabase.svg",
+      "category": "analytics"
+    },
+    {
+      "name": "mindee",
+      "displayName": "Mindee",
+      "filename": "mindee.svg",
+      "category": "ai"
+    },
+    {
+      "name": "misp",
+      "displayName": "MISP",
+      "filename": "misp.svg",
+      "category": "security"
+    },
+    {
+      "name": "mistralAi",
+      "displayName": "Mistral AI",
+      "filename": "mistralAi.svg",
+      "category": "ai"
+    },
+    {
+      "name": "mocean",
+      "displayName": "Mocean",
+      "filename": "mocean.dark.svg",
+      "category": "communication",
+      "variant": "dark"
+    },
+    {
+      "name": "mondayCom",
+      "displayName": "Monday.com",
+      "filename": "mondayCom.svg",
+      "category": "crm"
+    },
+    {
+      "name": "mongodb",
+      "displayName": "MongoDB",
+      "filename": "mongodb.svg",
+      "category": "infrastructure"
+    },
+    {
+      "name": "mqtt",
+      "displayName": "MQTT",
+      "filename": "mqtt.svg",
+      "category": "infrastructure"
+    },
+    {
+      "name": "msg91",
+      "displayName": "MSG91",
+      "filename": "msg91.svg",
+      "category": "communication"
+    },
+    {
+      "name": "mysql",
+      "displayName": "MySQL",
+      "filename": "mysql.svg",
+      "category": "infrastructure"
+    },
+    {
+      "name": "n8n",
+      "displayName": "n8n",
+      "filename": "n8n.svg",
+      "category": "automation"
+    },
+    {
+      "name": "n8nTrigger",
+      "displayName": "n8n Trigger",
+      "filename": "n8nTrigger.svg",
+      "category": "automation"
+    },
+    {
+      "name": "netlify",
+      "displayName": "Netlify",
+      "filename": "netlify.svg",
+      "category": "developer"
+    },
+    {
+      "name": "nextcloud",
+      "displayName": "Nextcloud",
+      "filename": "nextcloud.svg",
+      "category": "storage"
+    },
+    {
+      "name": "nocodb",
+      "displayName": "NocoDB",
+      "filename": "nocodb.svg",
+      "category": "collaboration"
+    },
+    {
+      "name": "notion",
+      "displayName": "Notion",
+      "filename": "notion.svg",
+      "category": "projectManagement"
+    },
+    {
+      "name": "npm",
+      "displayName": "npm",
+      "filename": "npm.svg",
+      "category": "developer"
+    },
+    {
+      "name": "odoo",
+      "displayName": "Odoo",
+      "filename": "odoo.svg",
+      "category": "erp"
+    },
+    {
+      "name": "Okta",
+      "displayName": "Okta",
+      "filename": "Okta.svg",
+      "category": "other"
+    },
+    {
+      "name": "onesimpleapi",
+      "displayName": "OneSimpleAPI",
+      "filename": "onesimpleapi.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "Onfleet",
+      "displayName": "Onfleet",
+      "filename": "Onfleet.svg",
+      "category": "other"
+    },
+    {
+      "name": "openAi",
+      "displayName": "OpenAI",
+      "filename": "openAi.dark.svg",
+      "category": "ai",
+      "variant": "dark"
+    },
+    {
+      "name": "openWeatherMap",
+      "displayName": "OpenWeatherMap",
+      "filename": "openWeatherMap.svg",
+      "category": "other"
+    },
+    {
+      "name": "orbit",
+      "displayName": "Orbit",
+      "filename": "orbit.dark.svg",
+      "category": "other",
+      "variant": "dark"
+    },
+    {
+      "name": "oura",
+      "displayName": "Oura",
+      "filename": "oura.svg",
+      "category": "other"
+    },
+    {
+      "name": "pagerDuty",
+      "displayName": "PagerDuty",
+      "filename": "pagerDuty.svg",
+      "category": "support"
+    },
+    {
+      "name": "paypal",
+      "displayName": "PayPal",
+      "filename": "paypal.svg",
+      "category": "finance"
+    },
+    {
+      "name": "perplexity",
+      "displayName": "Perplexity",
+      "filename": "perplexity.svg",
+      "category": "ai"
+    },
+    {
+      "name": "pipedrive",
+      "displayName": "Pipedrive",
+      "filename": "pipedrive.svg",
+      "category": "crm"
+    },
+    {
+      "name": "plivo",
+      "displayName": "Plivo",
+      "filename": "plivo.svg",
+      "category": "messaging"
+    },
+    {
+      "name": "postbin",
+      "displayName": "PostBin",
+      "filename": "postbin.svg",
+      "category": "other"
+    },
+    {
+      "name": "postgres",
+      "displayName": "PostgreSQL",
+      "filename": "postgres.svg",
+      "category": "developer"
+    },
+    {
+      "name": "postHog",
+      "displayName": "PostHog",
+      "filename": "postHog.svg",
+      "category": "analytics"
+    },
+    {
+      "name": "profitwell",
+      "displayName": "ProfitWell",
+      "filename": "profitwell.dark.svg",
+      "category": "analytics",
+      "variant": "dark"
+    },
+    {
+      "name": "pushbullet",
+      "displayName": "Pushbullet",
+      "filename": "pushbullet.svg",
+      "category": "messaging"
+    },
+    {
+      "name": "pushover",
+      "displayName": "Pushover",
+      "filename": "pushover.svg",
+      "category": "messaging"
+    },
+    {
+      "name": "quickbooks",
+      "displayName": "QuickBooks",
+      "filename": "quickbooks.svg",
+      "category": "finance"
+    },
+    {
+      "name": "quickChart",
+      "displayName": "QuickChart",
+      "filename": "quickChart.svg",
+      "category": "other"
+    },
+    {
+      "name": "rabbitmq",
+      "displayName": "RabbitMQ",
+      "filename": "rabbitmq.svg",
+      "category": "infrastructure"
+    },
+    {
+      "name": "raindrop",
+      "displayName": "Raindrop",
+      "filename": "raindrop.svg",
+      "category": "storage"
+    },
+    {
+      "name": "reddit",
+      "displayName": "Reddit",
+      "filename": "reddit.svg",
+      "category": "social"
+    },
+    {
+      "name": "redis",
+      "displayName": "Redis",
+      "filename": "redis.svg",
+      "category": "developer"
+    },
+    {
+      "name": "rocketchat",
+      "displayName": "Rocket.Chat",
+      "filename": "rocketchat.svg",
+      "category": "communication"
+    },
+    {
+      "name": "salesforce",
+      "displayName": "Salesforce",
+      "filename": "salesforce.svg",
+      "category": "crm"
+    },
+    {
+      "name": "seaTable",
+      "displayName": "SeaTable",
+      "filename": "seaTable.svg",
+      "category": "collaboration"
+    },
+    {
+      "name": "securityScorecard",
+      "displayName": "SecurityScorecard",
+      "filename": "securityScorecard.svg",
+      "category": "security"
+    },
+    {
+      "name": "segment",
+      "displayName": "Segment",
+      "filename": "segment.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "sendGrid",
+      "displayName": "SendGrid",
+      "filename": "sendGrid.svg",
+      "category": "communication"
+    },
+    {
+      "name": "sentryio",
+      "displayName": "Sentry",
+      "filename": "sentryio.svg",
+      "category": "security"
+    },
+    {
+      "name": "servicenow",
+      "displayName": "ServiceNow",
+      "filename": "servicenow.svg",
+      "category": "support"
+    },
+    {
+      "name": "seven",
+      "displayName": "Seven",
+      "filename": "seven.svg",
+      "category": "communication"
+    },
+    {
+      "name": "shopify",
+      "displayName": "Shopify",
+      "filename": "shopify.svg",
+      "category": "ecommerce"
+    },
+    {
+      "name": "slack",
+      "displayName": "Slack",
+      "filename": "slack.svg",
+      "category": "communication"
+    },
+    {
+      "name": "snowflake",
+      "displayName": "Snowflake",
+      "filename": "snowflake.svg",
+      "category": "developer"
+    },
+    {
+      "name": "splunk",
+      "displayName": "Splunk",
+      "filename": "splunk.svg",
+      "category": "analytics"
+    },
+    {
+      "name": "spotify",
+      "displayName": "Spotify",
+      "filename": "spotify.svg",
+      "category": "social"
+    },
+    {
+      "name": "storyblok",
+      "displayName": "Storyblok",
+      "filename": "storyblok.svg",
+      "category": "content"
+    },
+    {
+      "name": "strapi",
+      "displayName": "Strapi",
+      "filename": "strapi.svg",
+      "category": "content"
+    },
+    {
+      "name": "strava",
+      "displayName": "Strava",
+      "filename": "strava.svg",
+      "category": "social"
+    },
+    {
+      "name": "stripe",
+      "displayName": "Stripe",
+      "filename": "stripe.svg",
+      "category": "ecommerce"
+    },
+    {
+      "name": "supabase",
+      "displayName": "Supabase",
+      "filename": "supabase.svg",
+      "category": "developer"
+    },
+    {
+      "name": "surveyMonkey",
+      "displayName": "SurveyMonkey",
+      "filename": "surveyMonkey.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "taiga",
+      "displayName": "Taiga",
+      "filename": "taiga.svg",
+      "category": "projectManagement"
+    },
+    {
+      "name": "tapfiliate",
+      "displayName": "Tapfiliate",
+      "filename": "tapfiliate.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "telegram",
+      "displayName": "Telegram",
+      "filename": "telegram.svg",
+      "category": "communication"
+    },
+    {
+      "name": "thehive",
+      "displayName": "TheHive",
+      "filename": "thehive.svg",
+      "category": "security"
+    },
+    {
+      "name": "thehiveproject",
+      "displayName": "TheHive Project",
+      "filename": "thehiveproject.svg",
+      "category": "security"
+    },
+    {
+      "name": "timescaleDb",
+      "displayName": "TimescaleDB",
+      "filename": "timescaleDb.svg",
+      "category": "developer"
+    },
+    {
+      "name": "todoist",
+      "displayName": "Todoist",
+      "filename": "todoist.svg",
+      "category": "projectManagement"
+    },
+    {
+      "name": "trello",
+      "displayName": "Trello",
+      "filename": "trello.svg",
+      "category": "projectManagement"
+    },
+    {
+      "name": "twilio",
+      "displayName": "Twilio",
+      "filename": "twilio.svg",
+      "category": "communication"
+    },
+    {
+      "name": "typeform",
+      "displayName": "Typeform",
+      "filename": "typeform.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "uptimerobot",
+      "displayName": "UptimeRobot",
+      "filename": "uptimerobot.svg",
+      "category": "support"
+    },
+    {
+      "name": "urlScanIo",
+      "displayName": "urlscan.io",
+      "filename": "urlScanIo.svg",
+      "category": "security"
+    },
+    {
+      "name": "vero",
+      "displayName": "Vero",
+      "filename": "vero.svg",
+      "category": "other"
+    },
+    {
+      "name": "vonage",
+      "displayName": "Vonage",
+      "filename": "vonage.dark.svg",
+      "category": "communication",
+      "variant": "dark"
+    },
+    {
+      "name": "webflow",
+      "displayName": "Webflow",
+      "filename": "webflow.svg",
+      "category": "marketing"
+    },
+    {
+      "name": "webhook",
+      "displayName": "Webhook",
+      "filename": "webhook.svg",
+      "category": "developer"
+    },
+    {
+      "name": "wekan",
+      "displayName": "Wekan",
+      "filename": "wekan.svg",
+      "category": "projectManagement"
+    },
+    {
+      "name": "whatsapp",
+      "displayName": "WhatsApp",
+      "filename": "whatsapp.svg",
+      "category": "communication"
+    },
+    {
+      "name": "wise",
+      "displayName": "Wise",
+      "filename": "wise.svg",
+      "category": "finance"
+    },
+    {
+      "name": "wooCommerce",
+      "displayName": "WooCommerce",
+      "filename": "wooCommerce.svg",
+      "category": "ecommerce"
+    },
+    {
+      "name": "wordpress",
+      "displayName": "WordPress",
+      "filename": "wordpress.svg",
+      "category": "content"
+    },
+    {
+      "name": "x",
+      "displayName": "X (Twitter)",
+      "filename": "x.svg",
+      "category": "social"
+    },
+    {
+      "name": "xero",
+      "displayName": "Xero",
+      "filename": "xero.svg",
+      "category": "finance"
+    },
+    {
+      "name": "zammad",
+      "displayName": "Zammad",
+      "filename": "zammad.svg",
+      "category": "support"
+    },
+    {
+      "name": "zendesk",
+      "displayName": "Zendesk",
+      "filename": "zendesk.svg",
+      "category": "crm"
+    },
+    {
+      "name": "zoho",
+      "displayName": "Zoho",
+      "filename": "zoho.svg",
+      "category": "crm"
+    },
+    {
+      "name": "zoom",
+      "displayName": "Zoom",
+      "filename": "zoom.svg",
+      "category": "communication"
+    },
+    {
+      "name": "zulip",
+      "displayName": "Zulip",
+      "filename": "zulip.svg",
+      "category": "communication"
+    }
+  ]
+}

@@ -1,13 +1,13 @@
 /**
  * Workflow Orchestrator Hooks for Supabase State Persistence
- * 
+ *
  * Provides integration points to persist state at key moments
  * without modifying the core orchestrator logic
  */
 
-import { sessionManager } from './services/session-manager';
-import { loggers } from './utils/logger';
-import type { WorkflowOperation } from '../types/workflow';
+import { sessionManager } from "./services/session-manager";
+import { loggers } from "./utils/logger";
+import type { WorkflowOperation } from "../types/workflow";
 
 export class WorkflowOrchestratorHooks {
   private readonly logger = loggers.orchestrator;
@@ -15,12 +15,12 @@ export class WorkflowOrchestratorHooks {
 
   constructor() {
     // Check if we should use Supabase based on environment
-    this.useSupabase = process.env.USE_SUPABASE_STATE === 'true';
-    
+    this.useSupabase = process.env.USE_SUPABASE_STATE === "true";
+
     if (this.useSupabase) {
-      this.logger.info('Supabase state persistence enabled');
+      this.logger.info("Supabase state persistence enabled");
     } else {
-      this.logger.info('Using in-memory state (Supabase disabled)');
+      this.logger.info("Using in-memory state (Supabase disabled)");
     }
   }
 
@@ -34,19 +34,23 @@ export class WorkflowOrchestratorHooks {
       // First check if session already exists
       const existingSession = await sessionManager.loadSession(sessionId);
       if (existingSession) {
-        this.logger.debug(`Session ${sessionId} already exists, skipping creation`);
+        this.logger.debug(
+          `Session ${sessionId} already exists, skipping creation`
+        );
         return;
       }
-      
+
       await sessionManager.createSession(sessionId, prompt);
       this.logger.debug(`Initialized Supabase session: ${sessionId}`);
     } catch (error: any) {
       // Check if it's a duplicate key error
-      if (error?.message?.includes('duplicate key')) {
-        this.logger.debug(`Session ${sessionId} already exists (duplicate key), continuing...`);
+      if (error?.message?.includes("duplicate key")) {
+        this.logger.debug(
+          `Session ${sessionId} already exists (duplicate key), continuing...`
+        );
         return;
       }
-      this.logger.error('Failed to initialize Supabase session:', error);
+      this.logger.error("Failed to initialize Supabase session:", error);
       // Don't throw - allow fallback to in-memory
     }
   }
@@ -55,7 +59,7 @@ export class WorkflowOrchestratorHooks {
    * Queue operations for batch persistence
    */
   async persistOperations(
-    sessionId: string, 
+    sessionId: string,
     operations: WorkflowOperation[]
   ): Promise<void> {
     if (!this.useSupabase || operations.length === 0) return;
@@ -65,12 +69,12 @@ export class WorkflowOrchestratorHooks {
       for (const operation of operations) {
         await sessionManager.queueOperation(sessionId, operation);
       }
-      
+
       this.logger.debug(
         `Queued ${operations.length} operations for persistence`
       );
     } catch (error) {
-      this.logger.error('Failed to queue operations:', error);
+      this.logger.error("Failed to queue operations:", error);
       // Don't throw - continue with in-memory state
     }
   }
@@ -85,7 +89,7 @@ export class WorkflowOrchestratorHooks {
       await sessionManager.flush(sessionId);
       this.logger.debug(`Force saved session: ${sessionId}`);
     } catch (error) {
-      this.logger.error('Failed to force save:', error);
+      this.logger.error("Failed to force save:", error);
     }
   }
 
@@ -102,9 +106,9 @@ export class WorkflowOrchestratorHooks {
         return session;
       }
     } catch (error) {
-      this.logger.error('Failed to load session from Supabase:', error);
+      this.logger.error("Failed to load session from Supabase:", error);
     }
-    
+
     return null;
   }
 
@@ -112,7 +116,7 @@ export class WorkflowOrchestratorHooks {
    * Update Claude token usage
    */
   async updateTokenUsage(
-    sessionId: string, 
+    sessionId: string,
     tokensUsed: number,
     phase?: string,
     method?: string
@@ -127,31 +131,31 @@ export class WorkflowOrchestratorHooks {
             session.state.tokenUsage = {
               byPhase: {},
               byCalls: [],
-              total: 0
+              total: 0,
             };
           }
-          
+
           // Update phase totals
           if (phase) {
-            session.state.tokenUsage.byPhase[phase] = 
+            session.state.tokenUsage.byPhase[phase] =
               (session.state.tokenUsage.byPhase[phase] || 0) + tokensUsed;
           }
-          
+
           // Add call detail
           if (phase && method) {
             session.state.tokenUsage.byCalls.push({
               phase,
               method,
               tokens: tokensUsed,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
             });
           }
-          
+
           // Update total
           session.state.tokenUsage.total += tokensUsed;
         }
       } catch (error) {
-        this.logger.error('Failed to update in-memory token usage:', error);
+        this.logger.error("Failed to update in-memory token usage:", error);
       }
       return;
     }
@@ -160,42 +164,41 @@ export class WorkflowOrchestratorHooks {
       // Get current session state
       const session = await sessionManager.loadSession(sessionId);
       if (!session?.state) return;
-      
+
       // Initialize tokenUsage if not exists
       if (!session.state.tokenUsage) {
         session.state.tokenUsage = {
           byPhase: {},
           byCalls: [],
-          total: 0
+          total: 0,
         };
       }
-      
+
       // Update phase totals
       if (phase) {
-        session.state.tokenUsage.byPhase[phase] = 
+        session.state.tokenUsage.byPhase[phase] =
           (session.state.tokenUsage.byPhase[phase] || 0) + tokensUsed;
       }
-      
+
       // Add call detail
       if (phase && method) {
         session.state.tokenUsage.byCalls.push({
           phase,
           method,
           tokens: tokensUsed,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
-      
+
       // Update total
       session.state.tokenUsage.total += tokensUsed;
-      
+
       // Save updated state
       await sessionManager.updateMetadata(sessionId, {
-        tokenUsage: session.state.tokenUsage,
-        claudeTokensUsed: session.state.tokenUsage.total
+        claudeTokensUsed: session.state.tokenUsage.total,
       });
     } catch (error) {
-      this.logger.error('Failed to update token usage:', error);
+      this.logger.error("Failed to update token usage:", error);
     }
   }
 
@@ -203,8 +206,8 @@ export class WorkflowOrchestratorHooks {
    * Record error state
    */
   async recordError(
-    sessionId: string, 
-    error: any, 
+    sessionId: string,
+    error: any,
     phase: string
   ): Promise<void> {
     if (!this.useSupabase) return;
@@ -214,11 +217,11 @@ export class WorkflowOrchestratorHooks {
         lastError: {
           message: error.message || String(error),
           phase,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       });
     } catch (updateError) {
-      this.logger.error('Failed to record error state:', updateError);
+      this.logger.error("Failed to record error state:", updateError);
     }
   }
 
@@ -235,7 +238,7 @@ export class WorkflowOrchestratorHooks {
       await sessionManager.cleanupSession(sessionId);
       this.logger.debug(`Archived and cleaned up session: ${sessionId}`);
     } catch (error) {
-      this.logger.error('Failed to archive session:', error);
+      this.logger.error("Failed to archive session:", error);
     }
   }
 
@@ -252,7 +255,7 @@ export class WorkflowOrchestratorHooks {
   setEnabled(enabled: boolean): void {
     this.useSupabase = enabled;
     this.logger.info(
-      enabled ? 'Supabase state enabled' : 'Supabase state disabled'
+      enabled ? "Supabase state enabled" : "Supabase state disabled"
     );
   }
 }

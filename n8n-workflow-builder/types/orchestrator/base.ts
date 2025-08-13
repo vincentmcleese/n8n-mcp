@@ -1,10 +1,10 @@
 /**
  * Base Orchestrator Types
- * 
+ *
  * Common types and interfaces used across all orchestrator phases.
  */
 
-import type { WorkflowOperation } from '../workflow';
+import type { WorkflowOperation } from "../workflow";
 
 /**
  * Common interface for all phase runners
@@ -39,11 +39,11 @@ export interface PhaseResult {
 /**
  * Common error types for phase execution
  */
-export type PhaseErrorType = 
+export type PhaseErrorType =
   | "validation"
-  | "claude_api" 
-  | "mcp_server" 
-  | "database" 
+  | "claude_api"
+  | "mcp_server"
+  | "database"
   | "client";
 
 /**
@@ -67,7 +67,7 @@ export interface PhaseContext {
   sessionId: string;
   userId?: string;
   timestamp: string;
-  environment?: 'development' | 'staging' | 'production';
+  environment?: "development" | "staging" | "production";
   metadata?: Record<string, any>;
 }
 
@@ -91,4 +91,6 @@ export interface OrchestratorDeps {
   phaseManager?: any;
   sessionRepo?: any;
   nodeContextService?: any;
+  /** Optional Anthropic client for Claude services */
+  anthropicClient?: any;
 }

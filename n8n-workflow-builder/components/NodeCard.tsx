@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { NodeIcon } from "@/components/ui/node-icon";
 
 type NodeState =
   | "placeholder"
@@ -11,12 +12,19 @@ type NodeState =
 export interface NodeCardProps {
   id?: string;
   logoUrl?: string; // path to local SVG asset
+  iconName?: string; // preferred icon identifier for NodeIcon
   name?: string;
   purpose?: string;
   state: NodeState;
 }
 
-export function NodeCard({ logoUrl, name, purpose, state }: NodeCardProps) {
+export function NodeCard({
+  logoUrl,
+  iconName,
+  name,
+  purpose,
+  state,
+}: NodeCardProps) {
   const isPlaceholder = state === "placeholder";
   const isSelected = state === "selected";
   const isConfiguring = state === "configuring";
@@ -38,7 +46,7 @@ export function NodeCard({ logoUrl, name, purpose, state }: NodeCardProps) {
         {isConfiguring && (
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 text-amber-700 px-2 py-0.5 text-xs">
             <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-            Configuring
+            Working
           </span>
         )}
         {isValidated && (
@@ -49,9 +57,21 @@ export function NodeCard({ logoUrl, name, purpose, state }: NodeCardProps) {
       </div>
 
       <div className="flex items-start gap-3">
-        <div className="h-12 w-12 rounded-lg bg-neutral-100 overflow-hidden flex items-center justify-center">
+        <div
+          className={
+            "h-12 w-12 rounded-lg bg-neutral-100 overflow-hidden flex items-center justify-center " +
+            (isConfiguring ? "animate-pulse" : "")
+          }
+        >
           {isPlaceholder ? (
             <div className="h-6 w-6 rounded-full bg-neutral-200 animate-pulse" />
+          ) : iconName ? (
+            <NodeIcon
+              name={iconName}
+              title={iconName}
+              size="md"
+              fallback={<CustomFallbackIcon />}
+            />
           ) : logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt="" className="h-8 w-8" loading="lazy" />
@@ -79,7 +99,7 @@ export function NodeCard({ logoUrl, name, purpose, state }: NodeCardProps) {
               {isValidated
                 ? "Ready"
                 : isConfiguring
-                ? "Configuring…"
+                ? "Working…"
                 : isSelected
                 ? "Selected"
                 : "Found"}
@@ -107,5 +127,17 @@ function CheckIcon(props: React.SVGProps<SVGSVGElement>) {
         clipRule="evenodd"
       />
     </svg>
+  );
+}
+
+function CustomFallbackIcon() {
+  return (
+    <div
+      className="inline-flex items-center justify-center bg-neutral-200 rounded"
+      style={{ width: 24, height: 24 }}
+      aria-hidden
+    >
+      <span className="text-[10px] text-neutral-500">?</span>
+    </div>
   );
 }

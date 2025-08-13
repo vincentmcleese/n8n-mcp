@@ -1,6 +1,6 @@
 /**
  * Claude Response Types
- * 
+ *
  * This file contains all TypeScript interfaces for Claude's responses
  * across all workflow phases. It serves as the single source of truth
  * for expected JSON formats from the Claude service.
@@ -13,8 +13,8 @@ import type {
   RequestClarificationOperation,
   ConfigureNodeOperation,
   ValidationFixOperation,
-  AddStickyNoteOperation
-} from './operations';
+  AddStickyNoteOperation,
+} from "./operations";
 
 // ==========================================
 // Common Types
@@ -46,7 +46,7 @@ export interface BaseClaudeResponse {
 /**
  * Initial workflow intent analysis response (optimized for task-based discovery)
  * Used in: analyzeWorkflowIntent()
- * 
+ *
  * @example
  * {
  *   "intent": "Create a webhook that sends Slack notifications",
@@ -68,7 +68,7 @@ export interface ClaudeAnalysisResponse extends BaseClaudeResponse {
   logic_flow: Array<{
     step: number;
     action: string;
-    type: 'trigger' | 'process' | 'condition' | 'output';
+    type: "trigger" | "process" | "condition" | "output";
     task?: string; // Exact MCP task name if applicable
     nodeType?: string; // For non-task nodes
   }>;
@@ -88,7 +88,7 @@ export interface ClaudeAnalysisResponse extends BaseClaudeResponse {
     alternatives: string[];
   }>;
   workflow_pattern: string;
-  complexity: 'simple' | 'medium' | 'complex' | 'unknown';
+  complexity: "simple" | "medium" | "complex" | "unknown";
   clarification_needed: boolean;
   clarification?: {
     question: string;
@@ -97,11 +97,10 @@ export interface ClaudeAnalysisResponse extends BaseClaudeResponse {
   };
 }
 
-
 /**
  * Discovery phase operations response
  * Used in: analyzeDiscoveryIntent()
- * 
+ *
  * @example
  * {
  *   "operations": [
@@ -137,7 +136,7 @@ export interface DiscoveryOperationsResponse extends BaseClaudeResponse {
 /**
  * Node requirements analysis response
  * Used in: analyzeNodeRequirements()
- * 
+ *
  * @example
  * {
  *   "needsAuth": true,
@@ -153,7 +152,7 @@ export interface DiscoveryOperationsResponse extends BaseClaudeResponse {
 /**
  * Configuration phase operations response
  * Used in: generateConfiguration()
- * 
+ *
  * @example
  * {
  *   "operations": [
@@ -182,7 +181,7 @@ export interface ConfigurationOperationsResponse extends BaseClaudeResponse {
 /**
  * Complete workflow build response
  * Used in: buildWorkflow()
- * 
+ *
  * @example
  * {
  *   "name": "Webhook to Slack Notification",
@@ -228,13 +227,18 @@ export interface WorkflowBuildResponse extends BaseClaudeResponse {
     maxTries?: number;
     waitBetweenTries?: number;
   }>;
-  connections: Record<string, {
-    main: Array<Array<{
-      node: string;
-      type: "main";
-      index: number;
-    }>>;
-  }>;
+  connections: Record<
+    string,
+    {
+      main: Array<
+        Array<{
+          node: string;
+          type: "main";
+          index: number;
+        }>
+      >;
+    }
+  >;
   settings: {
     executionOrder: string;
     saveDataSuccessExecution: string;
@@ -242,7 +246,16 @@ export interface WorkflowBuildResponse extends BaseClaudeResponse {
     saveManualExecutions: boolean;
   };
   phases?: Array<{
-    type: 'trigger' | 'data_collection' | 'data_processing' | 'decision' | 'aggregation' | 'notification' | 'storage' | 'integration' | 'error_handling';
+    type:
+      | "trigger"
+      | "data_collection"
+      | "data_processing"
+      | "decision"
+      | "aggregation"
+      | "notification"
+      | "storage"
+      | "integration"
+      | "error_handling";
     description: string;
     nodeIds: string[];
     row?: number;
@@ -257,7 +270,7 @@ export interface WorkflowBuildResponse extends BaseClaudeResponse {
  * Validation fixes response
  * Used in: generateValidationFixes()
  * Returns either an array of fixes (legacy) or an object with fixes and reasoning
- * 
+ *
  * @example
  * {
  *   "fixes": [
@@ -280,20 +293,22 @@ export interface WorkflowBuildResponse extends BaseClaudeResponse {
  *   ]
  * }
  */
-export type ValidationFixesResponse = {
-  fixes: ValidationFixOperation[];
-  reasoning: string[];
-} | ValidationFixOperation[];
+export type ValidationFixesResponse =
+  | {
+      fixes: ValidationFixOperation[];
+      reasoning: string[];
+    }
+  | ValidationFixOperation[];
 
 /**
  * Complete validated workflow response
  * Used in: validateWorkflow()
- * 
+ *
  * Note: This response uses custom markers in the actual implementation:
  * === BEGIN RESULT ===
  * { workflow object }
  * === END RESULT ===
- * 
+ *
  * @example
  * {
  *   "workflow": {
@@ -339,7 +354,7 @@ export interface ValidatedWorkflowResponse extends BaseClaudeResponse {
 /**
  * Documentation phase operations response
  * Used in: generateDocumentation()
- * 
+ *
  * @example
  * {
  *   "operations": [
@@ -367,12 +382,10 @@ export interface DocumentationOperationsResponse extends BaseClaudeResponse {
 /**
  * Union type for all possible Claude responses
  */
-export type ClaudeResponse = 
+export type ClaudeResponse =
   | ClaudeAnalysisResponse
   | DiscoveryOperationsResponse
-  | NodeRequirementsResponse
   | ConfigurationOperationsResponse
-  | FixedNodeConfigResponse
   | WorkflowBuildResponse
   | ValidationFixesResponse
   | ValidatedWorkflowResponse

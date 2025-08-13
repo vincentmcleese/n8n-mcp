@@ -12,9 +12,9 @@ export interface OperationMetadata {
   error?: string;
 }
 
-export interface EnhancedOperation extends WorkflowOperation {
+export type EnhancedOperation = WorkflowOperation & {
   metadata?: OperationMetadata;
-}
+};
 
 /**
  * Centralized operation logger that handles:
@@ -154,7 +154,9 @@ export class OperationLogger {
 
     try {
       // Extract base operations for persistence
-      const baseOperations = pending.map(({ metadata, ...op }) => op);
+      const baseOperations: WorkflowOperation[] = pending.map(
+        ({ metadata, ...op }) => op as WorkflowOperation
+      );
       await orchestratorHooks.persistOperations(this.sessionId, baseOperations);
 
       // Update token usage if any operations have token data
@@ -205,29 +207,38 @@ export class OperationLogger {
 
     const onTokenUsage = async (tokens: number) => {
       accumulatedTokens += tokens;
-      
+
       // Log at INFO level for better visibility
       loggers.orchestrator.info(
         `Session token usage: +${tokens} (total: ${accumulatedTokens.toLocaleString()})`
       );
-      
+
       // Store token usage data in session
       try {
-        await orchestratorHooks.updateTokenUsage(this.sessionId, tokens, this.phase);
+        await orchestratorHooks.updateTokenUsage(
+          this.sessionId,
+          tokens,
+          this.phase
+        );
       } catch (error) {
-        loggers.orchestrator.error('Failed to update token usage in session:', error);
+        loggers.orchestrator.error(
+          "Failed to update token usage in session:",
+          error
+        );
       }
-      
+
       // Check for threshold warnings
-      while (nextThresholdIndex < thresholds.length && 
-             accumulatedTokens >= thresholds[nextThresholdIndex]) {
+      while (
+        nextThresholdIndex < thresholds.length &&
+        accumulatedTokens >= thresholds[nextThresholdIndex]
+      ) {
         const threshold = thresholds[nextThresholdIndex];
         loggers.orchestrator.warn(
           `⚠️ Session token usage has exceeded ${threshold.toLocaleString()} tokens (current: ${accumulatedTokens.toLocaleString()})`
         );
         nextThresholdIndex++;
       }
-      
+
       // Extra warning for very high usage
       if (accumulatedTokens > 200000) {
         loggers.orchestrator.error(

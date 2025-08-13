@@ -10,49 +10,42 @@ export function ProgressChips({ current }: { current: Step }) {
     { key: "polishing", label: "Polishing" },
   ];
 
+  const currentIndex = steps.findIndex((s) => s.key === current);
+  const progressPercent = ((currentIndex + 1) / steps.length) * 100;
+
   return (
     <div className="w-full max-w-screen-lg mx-auto px-4">
       <div className="flex items-center gap-2 overflow-x-auto py-3">
-        {steps.map((s, idx) => {
+        {steps.map((s) => {
           const active = s.key === current;
           return (
             <div
               key={s.key}
               aria-current={active ? "step" : undefined}
               className={
-                "inline-flex items-center rounded-full px-3 py-1 text-sm whitespace-nowrap transition-colors " +
+                "inline-flex items-center rounded-full px-3 py-1 text-xs sm:text-sm font-medium whitespace-nowrap transition-all " +
                 (active
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "bg-neutral-100 text-neutral-600")
+                  ? "bg-emerald-600 text-white shadow-[0_4px_12px_rgba(27,200,140,0.30)]"
+                  : "bg-white/80 text-neutral-700 border border-neutral-200")
               }
             >
               <span
                 className={
                   "mr-2 h-2 w-2 rounded-full " +
-                  (active ? "bg-white" : "bg-[rgba(27,200,140,0.6)]")
+                  (active ? "bg-white" : "bg-emerald-500/60")
                 }
               />
               {s.label}
-              {idx < steps.length - 1 && (
-                <span className="mx-2 text-neutral-300">/</span>
-              )}
             </div>
           );
         })}
       </div>
-      <div className="h-0.5 w-full bg-neutral-100 overflow-hidden rounded">
-        <div className="h-full w-1/3 bg-[rgb(27,200,140)]/70 animate-[progress_1.8s_linear_infinite]" />
+      <div className="h-1 w-full bg-neutral-200 rounded overflow-hidden">
+        <div
+          className="h-full bg-emerald-500 transition-all duration-500"
+          style={{ width: `${progressPercent}%` }}
+        />
       </div>
-      <style jsx>{`
-        @keyframes progress {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(300%);
-          }
-        }
-      `}</style>
     </div>
   );
 }

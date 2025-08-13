@@ -1,6 +1,6 @@
 /**
  * Claude Service Facade
- * 
+ *
  * Main entry point for the Claude service module.
  * Provides backward compatibility while exposing new modular components.
  */
@@ -14,8 +14,8 @@
 // ==========================================
 
 // Constants
-export * from './constants';
-export { 
+export * from "./constants";
+export {
   PREFILLS,
   MODELS,
   TOKEN_LIMITS,
@@ -26,16 +26,16 @@ export {
   PHASE_CONFIG,
   API_CONFIG,
   getModel,
-} from './constants';
+} from "./constants";
 
 // Client
-export { 
+export {
   AnthropicClient,
   ProviderError,
   type CompletionParams,
   type CompletionResult,
   type ClientConfig,
-} from './client';
+} from "./client";
 
 // Parsing utilities
 export {
@@ -45,11 +45,10 @@ export {
   balanceBraces,
   looksLikeJson,
   extractJsonFromMixedContent,
-  JsonParser,
   type ParseResult,
   type ParseError,
   type ParseOptions,
-} from './parsing/json-prefill';
+} from "./parsing/json-prefill";
 
 export {
   Recovery,
@@ -60,7 +59,7 @@ export {
   fixIncompleteStrings,
   fixNesting,
   comprehensiveRecover,
-} from './parsing/recovery';
+} from "./parsing/recovery";
 
 // Prompts
 export {
@@ -72,13 +71,13 @@ export {
   ERROR_HANDLING_RULES,
   NODE_NAMING_RULES,
   MCP_TOOL_CONTEXT,
-} from './prompts/common';
+} from "./prompts/common";
 
-export { DiscoveryPrompts } from './prompts/discovery';
+export { DiscoveryPrompts } from "./prompts/discovery";
 // ConfigurationPrompts deprecated - use ConfigurationPromptBuilder instead
-export { ValidationPrompts } from './prompts/validation';
-export { BuildingPrompts } from './prompts/building';
-export { DocumentationPrompts } from './prompts/documentation';
+export { ValidationPrompts } from "./prompts/validation";
+export { BuildingPrompts } from "./prompts/building";
+export { DocumentationPrompts } from "./prompts/documentation";
 
 // Validation schemas
 export {
@@ -93,63 +92,78 @@ export {
   validationFixesResponseSchema,
   validatedWorkflowResponseSchema,
   documentationOperationsResponseSchema,
-} from './validation/schemas';
+} from "./validation/schemas";
 
 // ==========================================
 // Phase Services (New in Phase 2)
 // ==========================================
 
-export { BasePhaseService } from './phases/base';
-export type { PhaseServiceConfig, PhaseContext, PhaseResult } from './phases/base';
+export { BasePhaseService } from "./phases/base";
+export type {
+  PhaseServiceConfig,
+  PhaseContext,
+  PhaseResult,
+} from "./phases/base";
 
-export { DiscoveryPhaseService } from './phases/discovery';
-export type { 
-  DiscoveryInput, 
-  DiscoveryOutput, 
-  DiscoveryContext,
+export { DiscoveryPhaseService } from "./phases/discovery";
+export type {
+  DiscoveryInput,
+  DiscoveryOutput,
   IntentAnalysisInput,
-  ClarificationInput 
-} from './phases/discovery';
+  ClarificationInput,
+} from "./phases/discovery";
 
-export { ConfigurationPhaseService } from './phases/configuration';
-export type { 
-  ConfigurationInput, 
-  ConfigurationOutput, 
-  ConfigurationContext
-} from './phases/configuration';
+export { ConfigurationPhaseService } from "./phases/configuration";
+export type {
+  ConfigurationInput,
+  ConfigurationOutput,
+  ConfigurationContext,
+} from "./phases/configuration";
 
-export { BuildingPhaseService } from './phases/building';
-export type { 
-  BuildingInput, 
+export { BuildingPhaseService } from "./phases/building";
+export type {
+  BuildingInput,
   BuildingOutput,
-  ConfiguredNode
-} from './phases/building';
+  ConfiguredNode,
+} from "./phases/building";
 
-export { ValidationPhaseService } from './phases/validation';
-export type { 
-  ValidationInput, 
+export { ValidationPhaseService } from "./phases/validation";
+export type {
+  ValidationInput,
   ValidationOutput,
-  ValidationFixesInput
-} from './phases/validation';
+  ValidationFixesInput,
+} from "./phases/validation";
 
-export { DocumentationPhaseService } from './phases/documentation';
-export type { 
-  DocumentationInput, 
+export { DocumentationPhaseService } from "./phases/documentation";
+export type {
+  DocumentationInput,
   DocumentationOutput,
-  NodeMetadata
-} from './phases/documentation';
+  NodeMetadata,
+} from "./phases/documentation";
 
 // ==========================================
 // Factory Functions
 // ==========================================
 
-import { AnthropicClient } from './client';
-import type { ClientConfig } from './client';
-import { DiscoveryPhaseService } from './phases/discovery';
-import { ConfigurationPhaseService } from './phases/configuration';
-import { BuildingPhaseService } from './phases/building';
-import { ValidationPhaseService } from './phases/validation';
-import { DocumentationPhaseService } from './phases/documentation';
+import { AnthropicClient } from "./client";
+import type { ClientConfig } from "./client";
+import { DiscoveryPhaseService } from "./phases/discovery";
+import { ConfigurationPhaseService } from "./phases/configuration";
+import { BuildingPhaseService } from "./phases/building";
+import { ValidationPrompts } from "./prompts/validation";
+import { ValidationPhaseService } from "./phases/validation";
+import { BuildingPrompts } from "./prompts/building";
+import { DocumentationPrompts } from "./prompts/documentation";
+import { DocumentationPhaseService } from "./phases/documentation";
+import {
+  parseWithPrefill,
+  parseJson,
+  recoverJson,
+  balanceBraces,
+  looksLikeJson,
+  extractJsonFromMixedContent,
+} from "./parsing/json-prefill";
+import { DiscoveryPrompts } from "./prompts/discovery";
 
 /**
  * Create a new Anthropic client instance
@@ -183,7 +197,7 @@ export function createPhaseServices(config?: {
     mcpClient: config?.mcpClient, // Pass MCP client for tool execution
     onTokenUsage: config?.onTokenUsage,
   };
-  
+
   return {
     discovery: new DiscoveryPhaseService(baseConfig),
     configuration: new ConfigurationPhaseService(baseConfig),
@@ -196,7 +210,14 @@ export function createPhaseServices(config?: {
 /**
  * Create a single phase service
  */
-export function createPhaseService<T extends 'discovery' | 'configuration' | 'building' | 'validation' | 'documentation'>(
+export function createPhaseService<
+  T extends
+    | "discovery"
+    | "configuration"
+    | "building"
+    | "validation"
+    | "documentation"
+>(
   phase: T,
   config?: {
     client?: AnthropicClient;
@@ -210,17 +231,17 @@ export function createPhaseService<T extends 'discovery' | 'configuration' | 'bu
     mcpClient: config?.mcpClient, // Pass MCP client for tool execution
     onTokenUsage: config?.onTokenUsage,
   };
-  
+
   switch (phase) {
-    case 'discovery':
+    case "discovery":
       return new DiscoveryPhaseService(baseConfig);
-    case 'configuration':
+    case "configuration":
       return new ConfigurationPhaseService(baseConfig);
-    case 'building':
+    case "building":
       return new BuildingPhaseService(baseConfig);
-    case 'validation':
+    case "validation":
       return new ValidationPhaseService(baseConfig);
-    case 'documentation':
+    case "documentation":
       return new DocumentationPhaseService(baseConfig);
     default:
       throw new Error(`Unknown phase: ${phase}`);
@@ -231,7 +252,7 @@ export function createPhaseService<T extends 'discovery' | 'configuration' | 'bu
 // Version Information
 // ==========================================
 
-export const CLAUDE_SERVICE_VERSION = '2.0.0-phase2';
+export const CLAUDE_SERVICE_VERSION = "2.0.0-phase2";
 
 /**
  * Check if the new modular architecture is being used
@@ -258,7 +279,7 @@ export function migrateToModular(oldService?: any): {
 } {
   const client = createDefaultClient();
   const phases = createPhaseServices({ client });
-  
+
   return {
     client,
     prompts: {
@@ -268,7 +289,14 @@ export function migrateToModular(oldService?: any): {
       building: BuildingPrompts,
       documentation: DocumentationPrompts,
     },
-    parser: JsonParser,
+    parser: {
+      parseWithPrefill,
+      parseJson,
+      recoverJson,
+      balanceBraces,
+      looksLikeJson,
+      extractJsonFromMixedContent,
+    },
     phases,
   };
 }

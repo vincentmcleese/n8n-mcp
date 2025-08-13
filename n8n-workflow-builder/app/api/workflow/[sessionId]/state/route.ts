@@ -1,16 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { sessionManager } from "@/lib/services/session-manager";
 import { DiscoveredNode } from "@/types/workflow";
+import { isMockEnabled, mockStateResponse } from "@/lib/mocks/workflow";
 
 /**
  * GET /api/workflow/[sessionId]/state
  * Returns the current phase and progress of a workflow session
  */
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { sessionId: string } }
 ) {
   try {
+    if (isMockEnabled()) {
+      return NextResponse.json(mockStateResponse(request));
+    }
     const { sessionId } = params;
 
     if (!sessionId) {

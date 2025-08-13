@@ -535,7 +535,6 @@ export class SessionManager {
           updatedState.configured[op.nodeId] = {
             nodeId: op.nodeId,
             nodeType: op.nodeType || "", // Use nodeType from operation, fallback to empty
-            purpose: op.purpose || "", // Use purpose from operation, fallback to empty
             parameters: op.config,
           };
           break;
@@ -605,10 +604,13 @@ export class SessionManager {
         case "setBuildPhases":
           updatedState.buildPhases = op.phases;
           this.logger.info(
-            `📊 SESSION: Saving ${op.phases?.length || 0} build phases to session state`
+            `📊 SESSION: Saving ${
+              op.phases?.length || 0
+            } build phases to session state`
           );
           this.logger.debug(
-            `📊 SESSION: Build phases content:`, JSON.stringify(op.phases, null, 2)
+            `📊 SESSION: Build phases content:`,
+            JSON.stringify(op.phases, null, 2)
           );
           break;
 

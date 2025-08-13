@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
-import { sessionManager } from '@/lib/services/session-manager';
+import { NextResponse } from "next/server";
+import { sessionManager } from "@/lib/services/session-manager";
+import { isMockEnabled, mockExportWorkflow } from "@/lib/mocks/workflow";
 
 /**
  * GET /api/workflow/[sessionId]/export
@@ -10,11 +11,14 @@ export async function GET(
   { params }: { params: { sessionId: string } }
 ) {
   try {
+    if (isMockEnabled()) {
+      return NextResponse.json(mockExportWorkflow());
+    }
     const { sessionId } = params;
 
     if (!sessionId) {
       return NextResponse.json(
-        { error: 'Session ID is required' },
+        { error: "Session ID is required" },
         { status: 400 }
       );
     }
@@ -23,27 +27,23 @@ export async function GET(
     const session = await sessionManager.loadSession(sessionId);
 
     if (!session) {
-      return NextResponse.json(
-        { error: 'Session not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
     // Check if workflow is complete
-    if (session.state.phase !== 'complete') {
+    if (session.state.phase !== "complete") {
       return NextResponse.json(
-        { error: 'Workflow is not yet complete' },
+        { error: "Workflow is not yet complete" },
         { status: 400 }
       );
     }
 
     // Return the workflow data directly from state
     return NextResponse.json(session.state.workflow);
-
   } catch (error) {
-    console.error('Failed to export workflow:', error);
+    console.error("Failed to export workflow:", error);
     return NextResponse.json(
-      { error: 'Failed to export workflow' },
+      { error: "Failed to export workflow" },
       { status: 500 }
     );
   }

@@ -7,7 +7,7 @@ import {
   DiscoveredNode,
   ErrorResponse,
 } from "@/types/workflow";
-import { 
+import {
   createAnthropicClient,
   createPhaseServices,
   type AnthropicClient,
@@ -15,7 +15,7 @@ import {
   type ConfigurationPhaseService,
   type BuildingPhaseService,
   type ValidationPhaseService,
-  type DocumentationPhaseService
+  type DocumentationPhaseService,
 } from "@/services/claude";
 import { MCPClient } from "@/lib/mcp-client";
 import { createServiceClient } from "@/lib/supabase";
@@ -137,13 +137,13 @@ export interface PhaseStatusResult {
 
 /**
  * Workflow Orchestrator - Composition Root
- * 
+ *
  * This is now a lightweight orchestrator that:
  * - Validates phase transitions through PhaseManager
  * - Loads WorkflowSession from SessionRepo
  * - Delegates to the appropriate PhaseRunner
  * - Forwards operations to orchestratorHooks
- * 
+ *
  * All phase logic has been extracted to dedicated runners.
  */
 export class WorkflowOrchestrator {
@@ -169,16 +169,20 @@ export class WorkflowOrchestrator {
 
   constructor(deps?: Partial<OrchestratorDeps>) {
     // Create Anthropic client
-    this.anthropicClient = deps?.anthropicClient || createAnthropicClient({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
+    this.anthropicClient =
+      deps?.anthropicClient ||
+      createAnthropicClient({
+        apiKey: process.env.ANTHROPIC_API_KEY,
+      });
 
     // Initialize MCP client first (needed for phase services)
-    this.mcpClient = deps?.mcpClient || MCPClient.getInstance({
-      serverUrl: process.env.MCP_SERVER_URL || "https://mcp.smithery.ai",
-      apiKey: process.env.MCP_API_KEY || "",
-      profile: process.env.MCP_PROFILE || "default",
-    });
+    this.mcpClient =
+      deps?.mcpClient ||
+      MCPClient.getInstance({
+        serverUrl: process.env.MCP_SERVER_URL || "https://mcp.smithery.ai",
+        apiKey: process.env.MCP_API_KEY || "",
+        profile: process.env.MCP_PROFILE || "default",
+      });
 
     // Create phase services with shared client AND mcpClient for tool support
     this.phaseServices = createPhaseServices({
@@ -188,7 +192,8 @@ export class WorkflowOrchestrator {
 
     this.phaseManager = deps?.phaseManager || new PhaseManager();
     this.sessionRepo = deps?.sessionRepo || new SessionRepo();
-    this.nodeContextService = deps?.nodeContextService || new NodeContextService(this.mcpClient);
+    this.nodeContextService =
+      deps?.nodeContextService || new NodeContextService(this.mcpClient);
 
     // Create runners with their dependencies
     // For now, keep passing the phase services as claudeService to maintain compatibility
@@ -196,32 +201,32 @@ export class WorkflowOrchestrator {
       claudeService: this.phaseServices.discovery,
       nodeContextService: this.nodeContextService,
       sessionRepo: this.sessionRepo,
-      loggers
+      loggers,
     });
 
     this.configurationRunner = new ConfigurationRunner({
       claudeService: this.phaseServices.configuration,
       nodeContextService: this.nodeContextService,
       sessionRepo: this.sessionRepo,
-      loggers
+      loggers,
     });
 
     this.buildingRunner = new BuildingRunner({
       claudeService: this.phaseServices.building,
       sessionRepo: this.sessionRepo,
-      loggers
+      loggers,
     });
 
     this.validationRunner = new ValidationRunner({
       claudeService: this.phaseServices.validation,
       nodeContextService: this.nodeContextService,
       sessionRepo: this.sessionRepo,
-      loggers
+      loggers,
     });
 
     this.documentationRunner = new DocumentationRunner({
       sessionRepo: this.sessionRepo,
-      loggers
+      loggers,
     });
   }
 
@@ -234,7 +239,7 @@ export class WorkflowOrchestrator {
   ): Promise<DiscoveryResult> {
     // Delegate to discovery runner
     const result = await this.discoveryRunner.run({ sessionId, prompt });
-    
+
     // The runner returns DiscoveryOutput which is compatible with DiscoveryResult
     return result;
   }
@@ -251,9 +256,9 @@ export class WorkflowOrchestrator {
     const result = await this.discoveryRunner.handleClarification({
       sessionId,
       questionId,
-      response
+      response,
     });
-    
+
     return result;
   }
 
@@ -266,7 +271,7 @@ export class WorkflowOrchestrator {
   ): Promise<ConfigurationResult> {
     // Delegate to configuration runner
     const result = await this.configurationRunner.run({ sessionId });
-    
+
     // The runner returns ConfigurationOutput which is compatible with ConfigurationResult
     return result;
   }
@@ -280,7 +285,7 @@ export class WorkflowOrchestrator {
   ): Promise<BuildingResult> {
     // Delegate to building runner
     const result = await this.buildingRunner.run({ sessionId });
-    
+
     // The runner returns BuildingOutput which is compatible with BuildingResult
     return result;
   }
@@ -293,8 +298,11 @@ export class WorkflowOrchestrator {
     buildingResult?: BuildingResult
   ): Promise<ValidationPhaseResult> {
     // Delegate to validation runner
-    const result = await this.validationRunner.run({ sessionId, buildingResult });
-    
+    const result = await this.validationRunner.run({
+      sessionId,
+      buildingResult,
+    });
+
     // The runner returns ValidationOutput which is compatible with ValidationPhaseResult
     return result;
   }
@@ -307,15 +315,18 @@ export class WorkflowOrchestrator {
     validationResult?: ValidationPhaseResult
   ): Promise<DocumentationPhaseResult> {
     // Delegate to documentation runner
-    const result = await this.documentationRunner.run({ sessionId, validationResult });
-    
+    const result = await this.documentationRunner.run({
+      sessionId,
+      validationResult,
+    });
+
     // The runner returns DocumentationOutput which is compatible with DocumentationPhaseResult
     return result;
   }
 
   /**
    * Apply operations to session state
-   * 
+   *
    * This method is used by the UI to apply operations returned from phases.
    * It updates the in-memory session state and queues operations for Supabase persistence.
    */
@@ -328,60 +339,68 @@ export class WorkflowOrchestrator {
       let session = this.sessions.get(sessionId);
       if (!session) {
         // Try to load from Supabase if not in memory
-        const supabaseSession = await orchestratorHooks.loadSession(sessionId);
-        if (supabaseSession) {
-          session = supabaseSession;
-          this.sessions.set(sessionId, session);
-        } else {
+        const supabaseSession = (await orchestratorHooks.loadSession(
+          sessionId
+        )) as WorkflowSession | null;
+        if (!supabaseSession) {
           throw new Error(`Session ${sessionId} not found`);
         }
+        session = supabaseSession;
+        this.sessions.set(sessionId, session as WorkflowSession);
       }
 
       // Apply operations to in-memory state (implementation details omitted for brevity)
       // The actual operation application logic would be here
-      
+
       // Queue operations for Supabase persistence
       await orchestratorHooks.persistOperations(sessionId, operations);
-      
+
       // Calculate state update summary
+      const s = session as WorkflowSession;
       const stateUpdate = {
-        phase: session.state.phase,
-        discovered: session.state.discovered.length,
-        configured: session.state.configured.size,
-        validated: session.state.validated.size,
-        errors: Array.from(session.state.validated.values())
-          .filter(v => !v.valid)
-          .flatMap(v => v.errors || [])
+        phase: s.state.phase,
+        discovered: s.state.discovered.length,
+        configured: s.state.configured.size,
+        validated: s.state.validated.size,
+        errors: Array.from(s.state.validated.values())
+          .filter((v) => !v.valid)
+          .flatMap((v) => v.errors || []),
       };
-      
+
       // Check for pending clarifications
-      const pendingClarification = session.state.pendingClarifications.length > 0
-        ? {
-            questionId: session.state.pendingClarifications[0].questionId,
-            question: session.state.pendingClarifications[0].question
-          }
-        : undefined;
+      const pendingClarification =
+        s.state.pendingClarifications.length > 0
+          ? {
+              questionId: s.state.pendingClarifications[0].questionId,
+              question: s.state.pendingClarifications[0].question,
+            }
+          : undefined;
 
       return {
         success: true,
         applied: operations.length,
         stateUpdate,
-        pendingClarification
+        pendingClarification,
       };
     } catch (error) {
-      loggers.orchestrator.error('Failed to apply operations:', error);
-      
+      loggers.orchestrator.error("Failed to apply operations:", error);
+
       return {
         success: false,
         applied: 0,
         stateUpdate: {
           phase: "discovery",
-          errors: [{
-            nodeId: "system",
-            message: error instanceof Error ? error.message : "Failed to apply operations",
-            severity: "error"
-          }]
-        }
+          errors: [
+            {
+              nodeId: "system",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Failed to apply operations",
+              severity: "error",
+            },
+          ],
+        },
       };
     }
   }
@@ -412,7 +431,7 @@ export class WorkflowOrchestrator {
         currentPhase: "discovery",
         canProgress: false,
         autoTransition: false,
-        reason: "Session not found"
+        reason: "Session not found",
       };
     }
 

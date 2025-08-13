@@ -385,7 +385,13 @@ export class ValidationRunner
               nodeId: node.id,
               result: {
                 valid: false, // Still needs re-validation
-                errors: [`Node replaced entirely`],
+                errors: [
+                  {
+                    nodeId: node.id,
+                    message: "Node replaced entirely",
+                    severity: "error",
+                  },
+                ],
               },
               timestamp: new Date().toISOString(),
               reasoning: `Node replaced to fix validation errors`,
@@ -851,7 +857,7 @@ export class ValidationRunner
       // The errors have a complex structure with node and message fields
       results.workflow = {
         errors: allErrors, // Now includes typeVersion warnings promoted to errors
-        warnings: allWarnings.filter((w) => {
+        warnings: allWarnings.filter((w: any) => {
           // Extract message properly to check if it's a typeVersion warning
           let message = "";
           if (typeof w?.message === "string") {
