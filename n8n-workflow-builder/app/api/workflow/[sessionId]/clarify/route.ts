@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { WorkflowOrchestrator } from "@/lib/workflow-orchestrator";
 import { isMockEnabled, mockClarifyResponse } from "@/lib/mocks/workflow";
+import { logger } from "@/lib/utils/logger";
 
 /**
  * POST /api/workflow/[sessionId]/clarify
@@ -43,7 +44,7 @@ export async function POST(
 
     // Continue with remaining phases if no more clarifications needed
     if (!result.pendingClarification && result.selectedNodeIds?.length > 0) {
-      console.log(`Continuing workflow for ${sessionId} after clarification`);
+      logger.info(`Continuing workflow for ${sessionId} after clarification`);
 
       // Continue processing phases in background
       orchestrator
@@ -54,14 +55,14 @@ export async function POST(
             await orchestrator.runValidationPhase(sessionId);
             await orchestrator.runDocumentationPhase(sessionId);
           } catch (phaseError) {
-            console.error(
+            logger.error(
               `Phase processing failed for ${sessionId}:`,
               phaseError
             );
           }
         })
         .catch((error) => {
-          console.error(`Configuration phase failed for ${sessionId}:`, error);
+          logger.error(`Configuration phase failed for ${sessionId}:`, error);
         });
     }
 
@@ -74,7 +75,7 @@ export async function POST(
         : "Thanks for the clarification! Processing your workflow...",
     });
   } catch (error) {
-    console.error("Failed to handle clarification:", error);
+    logger.error("Failed to handle clarification:", error);
     return NextResponse.json(
       { error: "Failed to process clarification response" },
       { status: 500 }

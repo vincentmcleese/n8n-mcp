@@ -40,6 +40,8 @@ interface SupabaseSessionState {
     description: string;
     nodeIds: string[];
   }>;
+  // Optional configuration analysis snapshot
+  configAnalysis?: import("../../types/workflow").WorkflowConfigAnalysis;
   operationHistory: WorkflowOperation[];
   pendingClarifications: ClarificationRequest[];
   clarificationHistory: ClarificationResponse[];
@@ -66,7 +68,8 @@ export class SessionManager {
    */
   async createSession(
     sessionId: string,
-    initialPrompt: string
+    initialPrompt: string,
+    userId?: string
   ): Promise<WorkflowSession> {
     try {
       const initialState: SupabaseSessionState = {
@@ -99,6 +102,7 @@ export class SessionManager {
             session_id: sessionId,
             user_prompt: initialPrompt,
             state: initialState,
+            user_id: userId, // Add user_id for workflow ownership
           },
           {
             onConflict: "session_id",
@@ -634,6 +638,13 @@ export class SessionManager {
           );
           break;
 
+        case "setConfigAnalysis":
+          updatedState.configAnalysis = op.analysis;
+          this.logger.info(
+            `📋 SESSION: Saving configuration analysis - ${op.analysis.configuredNodes}/${op.analysis.totalNodes} nodes configured`
+          );
+          break;
+
         // Add more operation types as needed
       }
     }
@@ -669,6 +680,7 @@ export class SessionManager {
         workflow: state.workflow,
         seo: state.seo,
         buildPhases: state.buildPhases, // Include build phases from session state
+        configAnalysis: (state as any).configAnalysis,
         operationHistory: state.operationHistory,
         pendingClarifications: state.pendingClarifications,
         clarificationHistory: state.clarificationHistory,

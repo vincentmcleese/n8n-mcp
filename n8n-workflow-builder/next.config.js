@@ -7,6 +7,7 @@ const nextConfig = {
   },
   images: {
     formats: ['image/avif', 'image/webp'],
+    domains: ['lh3.googleusercontent.com'], // Allow Google profile images
   },
   headers: async () => [
     {

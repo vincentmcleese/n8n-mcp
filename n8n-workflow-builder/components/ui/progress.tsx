@@ -22,10 +22,7 @@ export const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
         {...props}
       >
         {indeterminate ? (
-          <>
-            <div className="absolute inset-y-0 left-0 w-2/5 rounded progress-runner" />
-            <div className="absolute inset-y-0 left-0 w-2/5 rounded progress-runner progress-runner--delay" />
-          </>
+          <div className="absolute inset-0 rounded progress-gradient" />
         ) : (
           <div
             className="h-full w-full rounded bg-emerald-500 transition-all"

@@ -235,10 +235,11 @@ export class WorkflowOrchestrator {
    */
   async runDiscoveryPhase(
     sessionId: string,
-    prompt: string
+    prompt: string,
+    userId?: string
   ): Promise<DiscoveryResult> {
     // Delegate to discovery runner
-    const result = await this.discoveryRunner.run({ sessionId, prompt });
+    const result = await this.discoveryRunner.run({ sessionId, prompt, userId });
 
     // The runner returns DiscoveryOutput which is compatible with DiscoveryResult
     return result;

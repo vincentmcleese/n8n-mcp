@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useRef, memo } from "react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +28,9 @@ export interface NodeIconProps {
   onLoad?: () => void; // Success callback
   onError?: (error: Error) => void; // Error callback
   onVariantDetected?: (isDark: boolean) => void; // Callback when variant is detected
+
+  // Force background wrapper even if not dark variant
+  forceBackground?: boolean;
 }
 
 // Simple cache for loaded SVGs
@@ -48,9 +53,37 @@ function processInlineSVG(
 
   if (!svg) return svgString;
 
-  // Remove default dimensions
+  // Normalize symbol/use → inline nodes to avoid rendering quirks
+  const useEl = svg.querySelector("use");
+  if (useEl) {
+    const href = useEl.getAttribute("xlink:href") || useEl.getAttribute("href");
+    if (href && href.startsWith("#")) {
+      const symbol = svg.querySelector(href) as SVGSymbolElement | null;
+      if (symbol) {
+        const group = doc.createElementNS("http://www.w3.org/2000/svg", "g");
+        const x = parseFloat(useEl.getAttribute("x") || "0");
+        const y = parseFloat(useEl.getAttribute("y") || "0");
+        if (x !== 0 || y !== 0) {
+          group.setAttribute("transform", `translate(${x}, ${y})`);
+        }
+        // Move all children from symbol into group
+        Array.from(symbol.childNodes).forEach((n) =>
+          group.appendChild(n.cloneNode(true))
+        );
+        useEl.replaceWith(group);
+        symbol.remove();
+      }
+    }
+  }
+
+  // Remove default dimensions and normalize viewBox
   svg.removeAttribute("width");
   svg.removeAttribute("height");
+  const vb = svg.getAttribute("viewBox");
+  if (!vb) {
+    // Fallback to 24 box if missing
+    svg.setAttribute("viewBox", "0 0 24 24");
+  }
 
   // Apply size
   const sizeMap = { xs: 16, sm: 20, md: 24, lg: 32, xl: 48 };
@@ -61,6 +94,7 @@ function processInlineSVG(
 
   svg.setAttribute("width", String(sizeValue));
   svg.setAttribute("height", String(sizeValue));
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
   // Apply colors
   if (options.color) {
@@ -101,6 +135,7 @@ function processInlineSVG(
 
   // Add focus styling
   svg.setAttribute("focusable", "false");
+  svg.setAttribute("style", "overflow:visible;display:block");
 
   return new XMLSerializer().serializeToString(doc);
 }
@@ -121,6 +156,7 @@ const NodeIcon = memo(
     onLoad,
     onError,
     onVariantDetected,
+    forceBackground = false,
     ...props
   }: NodeIconProps) => {
     const [svgContent, setSvgContent] = useState<string | null>(null);
@@ -144,15 +180,16 @@ const NodeIcon = memo(
         .then((res) => {
           if (!res.ok) {
             // Try dark variant
-            return fetch(`/demo-icons/icons/nodes/svgs/${name}.dark.svg`)
-              .then((darkRes) => {
+            return fetch(`/demo-icons/icons/nodes/svgs/${name}.dark.svg`).then(
+              (darkRes) => {
                 if (darkRes.ok) {
                   setIsDarkVariant(true);
                   onVariantDetected?.(true);
                   return darkRes;
                 }
                 throw new Error(`Icon ${name} not found`);
-              });
+              }
+            );
           }
           setIsDarkVariant(false);
           onVariantDetected?.(false);
@@ -179,7 +216,17 @@ const NodeIcon = memo(
           setIsLoading(false);
           onError?.(err);
         });
-    }, [name, size, color, strokeColor, title, decorative, onLoad, onError, onVariantDetected]);
+    }, [
+      name,
+      size,
+      color,
+      strokeColor,
+      title,
+      decorative,
+      onLoad,
+      onError,
+      onVariantDetected,
+    ]);
 
     const sizeClasses = {
       xs: "w-4 h-4",
@@ -245,19 +292,20 @@ const NodeIcon = memo(
       );
     }
 
-    // Loaded state - wrap in background if dark variant
-    if (isDarkVariant && showBackground) {
+    // Loaded state - wrap in background if dark variant or forced
+    if ((isDarkVariant && showBackground) || forceBackground) {
       return (
         <div
           ref={containerRef}
           className={cn(
-            "inline-flex items-center justify-center p-1 bg-gray-800 rounded",
+            "inline-flex items-center justify-center p-1.5 rounded overflow-visible",
+            isDarkVariant ? "bg-gray-800" : "bg-neutral-100",
             backgroundClassName,
             className
           )}
           {...props}
         >
-          <div 
+          <div
             className="inline-flex items-center justify-center"
             dangerouslySetInnerHTML={{ __html: svgContent! }}
           />

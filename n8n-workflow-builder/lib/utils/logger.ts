@@ -48,8 +48,8 @@ const getDefaultLogLevel = (): LogLevel => {
     return process.env.TEST_VERBOSE === 'true' ? LogLevel.VERBOSE : LogLevel.INFO;
   }
   
-  // Development defaults to DEBUG
-  return process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG;
+  // Default to INFO for cleaner logs (can override with LOG_LEVEL env var)
+  return LogLevel.INFO;
 };
 
 export class Logger {

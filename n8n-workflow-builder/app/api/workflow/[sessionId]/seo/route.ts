@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { sessionManager } from "@/lib/services/session-manager";
 import { getSEOGenerator } from "@/lib/services/seo-generator.service";
 import { GenerateSEORequest, GenerateSEOResponse } from "@/types/seo";
+import { logger } from "@/lib/utils/logger";
 
 /**
  * GET /api/workflow/[sessionId]/seo
@@ -44,7 +45,7 @@ export async function GET(
       error: "SEO metadata not yet generated. Complete discovery phase first."
     } as GenerateSEOResponse);
   } catch (error) {
-    console.error("Failed to get SEO metadata:", error);
+    logger.error("Failed to get SEO metadata:", error);
     return NextResponse.json(
       { 
         success: false,
@@ -119,7 +120,7 @@ export async function POST(
       seo: seoMetadata
     } as GenerateSEOResponse);
   } catch (error) {
-    console.error("Failed to generate SEO metadata:", error);
+    logger.error("Failed to generate SEO metadata:", error);
     return NextResponse.json(
       { 
         success: false,

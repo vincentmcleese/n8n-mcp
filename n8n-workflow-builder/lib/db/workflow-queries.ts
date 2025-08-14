@@ -31,10 +31,11 @@ export class WorkflowQueries {
         created_at: string;
         updated_at: string;
         state: any;
+        is_vetted?: boolean;
       };
       const { data, error } = await this.supabase
         .from("workflow_sessions")
-        .select("session_id, created_at, updated_at, state")
+        .select("session_id, created_at, updated_at, state, is_vetted")
         .eq("state->seo->>slug", slug)
         .single<Row>();
 
@@ -49,6 +50,7 @@ export class WorkflowQueries {
       const nodes = state.workflow?.nodes as any[] | undefined;
       const settings = state.workflow?.settings as any;
       const userPrompt = state.userPrompt as string;
+      const configAnalysis = state.configAnalysis as any;
 
       if (!seo) {
         console.error("Workflow found but no SEO metadata:", slug);
@@ -62,9 +64,11 @@ export class WorkflowQueries {
           settings: settings || {},
         },
         seo: seo,
+        configAnalysis: configAnalysis,
         userPrompt: userPrompt || "",
         createdAt: data.created_at,
         updatedAt: data.updated_at,
+        isVetted: data.is_vetted || false,
       };
     } catch (error) {
       console.error("Error finding workflow by slug:", error);

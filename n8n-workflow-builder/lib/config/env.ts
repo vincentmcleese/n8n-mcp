@@ -92,7 +92,9 @@ export function getEnv(): Env {
 export const isServer = typeof window === 'undefined';
 
 // Check if running as a script (tsx)
-const isScript = process.argv[1]?.includes('tsx') || process.argv[1]?.includes('.ts');
+// In middleware/edge runtime, process.argv may not be available
+const isScript = process.argv && process.argv[1] && 
+  (process.argv[1].includes('tsx') || process.argv[1].includes('.ts'));
 
 // Validate environment on server startup (but not in scripts)
 if (isServer && process.env.NODE_ENV !== 'test' && !isScript) {

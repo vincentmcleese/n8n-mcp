@@ -12,8 +12,8 @@ export class SessionRepo {
   /**
    * Initialize a new session
    */
-  async initialize(sessionId: string, prompt: string): Promise<void> {
-    await orchestratorHooks.initializeSession(sessionId, prompt);
+  async initialize(sessionId: string, prompt: string, userId?: string): Promise<void> {
+    await orchestratorHooks.initializeSession(sessionId, prompt, userId);
   }
 
   /**

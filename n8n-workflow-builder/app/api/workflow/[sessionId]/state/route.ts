@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { sessionManager } from "@/lib/services/session-manager";
 import { DiscoveredNode } from "@/types/workflow";
 import { isMockEnabled, mockStateResponse } from "@/lib/mocks/workflow";
+import { logger } from "@/lib/utils/logger";
 
 /**
  * GET /api/workflow/[sessionId]/state
@@ -68,7 +69,7 @@ export async function GET(
         : null,
     });
   } catch (error) {
-    console.error("Failed to get session state:", error);
+    logger.error("Failed to get session state:", error);
     return NextResponse.json(
       { error: "Failed to retrieve session state" },
       { status: 500 }

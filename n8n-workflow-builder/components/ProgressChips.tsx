@@ -3,7 +3,7 @@ import React from "react";
 import { Progress } from "@/components/ui/progress";
 import { Check } from "lucide-react";
 
-type Step = "discovering" | "configuring" | "polishing";
+type Step = "discovering" | "configuring" | "building" | "polishing";
 
 export function ProgressChips({
   current,
@@ -15,6 +15,7 @@ export function ProgressChips({
   const steps: { key: Step; label: string }[] = [
     { key: "discovering", label: "Discovering" },
     { key: "configuring", label: "Configuring" },
+    { key: "building", label: "Building" },
     { key: "polishing", label: "Polishing" },
   ];
 

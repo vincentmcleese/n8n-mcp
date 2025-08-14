@@ -51,15 +51,15 @@ export class DiscoveryRunner
       input: DiscoveryInput,
       context: PhaseContext
     ): Promise<DiscoveryOutput> => {
-      const { sessionId, prompt } = input;
+      const { sessionId, prompt, userId } = input;
       const { operationLogger } = context;
 
       this.deps.loggers.orchestrator.info(
         "Starting OPTIMIZED discovery phase with task-based flow"
       );
 
-      // Initialize Supabase session if enabled
-      await this.deps.sessionRepo.initialize(sessionId, prompt);
+      // Initialize Supabase session if enabled (pass userId for ownership)
+      await this.deps.sessionRepo.initialize(sessionId, prompt, userId);
 
       // Try to load existing session from Supabase
       const existingSession = await this.deps.sessionRepo.load(sessionId);

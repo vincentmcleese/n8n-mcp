@@ -27,7 +27,7 @@ export class WorkflowOrchestratorHooks {
   /**
    * Initialize session (create in Supabase if enabled)
    */
-  async initializeSession(sessionId: string, prompt: string): Promise<void> {
+  async initializeSession(sessionId: string, prompt: string, userId?: string): Promise<void> {
     if (!this.useSupabase) return;
 
     try {
@@ -40,8 +40,8 @@ export class WorkflowOrchestratorHooks {
         return;
       }
 
-      await sessionManager.createSession(sessionId, prompt);
-      this.logger.debug(`Initialized Supabase session: ${sessionId}`);
+      await sessionManager.createSession(sessionId, prompt, userId);
+      this.logger.debug(`Initialized Supabase session: ${sessionId} for user: ${userId || 'anonymous'}`);
     } catch (error: any) {
       // Check if it's a duplicate key error
       if (error?.message?.includes("duplicate key")) {

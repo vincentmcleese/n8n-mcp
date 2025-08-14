@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sessionManager } from "@/lib/services/session-manager";
 import { isMockEnabled, mockExportWorkflow } from "@/lib/mocks/workflow";
+import { logger } from "@/lib/utils/logger";
 
 /**
  * GET /api/workflow/[sessionId]/export
@@ -38,10 +39,15 @@ export async function GET(
       );
     }
 
-    // Return the workflow data directly from state
-    return NextResponse.json(session.state.workflow);
+    // Return the workflow data with configuration analysis
+    return NextResponse.json({
+      workflow: session.state.workflow,
+      configAnalysis: session.state.configAnalysis,
+      isReady: session.state.configAnalysis?.isComplete || false,
+      seo: session.state.seo // Include SEO if available
+    });
   } catch (error) {
-    console.error("Failed to export workflow:", error);
+    logger.error("Failed to export workflow:", error);
     return NextResponse.json(
       { error: "Failed to export workflow" },
       { status: 500 }

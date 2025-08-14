@@ -4,7 +4,7 @@
 @tailwind utilities;
 @layer base {
   :root {
-    --emerald: #1bc88c;
+    --emerald: 27 200 140; /* RGB values for #1bc88c */
     /* Emerald scale as space-separated RGB for alpha-aware Tailwind */
     --emerald-50: 236 253 245;
     --emerald-100: 209 250 229;
@@ -18,7 +18,7 @@
     --emerald-900: 6 78 59;
     --emerald-950: 2 44 34;
 
-    --primary: var(--emerald);
+    --primary: rgb(var(--emerald));
     --primary-foreground: #ffffff;
     --secondary: #f1f5f9;
     --secondary-foreground: #0f172a;
@@ -37,7 +37,7 @@
     --popover-foreground: #0f172a;
     --border: #e2e8f0;
     --input: #e2e8f0;
-    --ring: var(--emerald);
+    --ring: rgb(var(--emerald));
 
     --glass-light: rgba(255, 255, 255, 0.25);
     --glass-medium: rgba(255, 255, 255, 0.15);

@@ -1,6 +1,6 @@
 // types/workflow.ts
 
-import type { WorkflowSEOMetadata } from './seo';
+import type { WorkflowSEOMetadata } from "./seo";
 import type {
   DiscoverNodeOperation,
   SelectNodeOperation,
@@ -34,6 +34,9 @@ export interface WorkflowNode {
   parameters: Record<string, any>; // Flexible for MCP integration
   category?: string; // Node category: trigger, input, transform, output
   onError?: string; // Error handling strategy
+  // Optional fields referenced by analyzers and UI
+  notes?: string;
+  credentials?: Record<string, { id?: string; name?: string } | undefined>;
 }
 
 /**
@@ -99,6 +102,7 @@ export interface WorkflowSession {
     clarificationHistory: ClarificationResponse[];
     nodeEssentials?: Map<string, any>; // Cache of node essentials by nodeType
     seo?: WorkflowSEOMetadata; // SEO metadata generated after discovery
+    configAnalysis?: WorkflowConfigAnalysis; // Configuration analysis generated during building
     tokenUsage?: {
       byPhase: Record<string, number>;
       byCalls: Array<{
@@ -193,8 +197,8 @@ export type SessionOperation =
     }
   | { type: "setPhase"; phase: WorkflowPhase }
   | { type: "completePhase"; phase: WorkflowPhase }
-  | { 
-      type: "setBuildPhases"; 
+  | {
+      type: "setBuildPhases";
       phases: Array<{
         type: string;
         description: string;
@@ -205,6 +209,10 @@ export type SessionOperation =
   | {
       type: "setSEOMetadata";
       seo: WorkflowSEOMetadata;
+    }
+  | {
+      type: "setConfigAnalysis";
+      analysis: WorkflowConfigAnalysis;
     };
 
 /**
@@ -402,6 +410,63 @@ export interface PhaseStatusResponse {
   canProgress: boolean;
   autoTransition: boolean;
   reason?: string;
+}
+
+/**
+ * Configuration analysis for workflow nodes
+ */
+export interface WorkflowConfigAnalysis {
+  timestamp: string;
+  isComplete: boolean;
+  totalNodes: number;
+  configuredNodes: number;
+  missingCredentials: string[];
+  nodes: NodeConfigStatus[];
+}
+
+/**
+ * Configuration status for individual nodes
+ */
+export interface NodeConfigStatus {
+  id: string;
+  name: string;
+  type: string;
+  purpose: string;
+  status: "configured" | "needs_credentials" | "needs_decisions" | "partial";
+  configured: ConfiguredField[];
+  needsCredentials: CredentialRequirement[];
+  needsDecisions: DecisionRequirement[];
+  isReady: boolean;
+}
+
+/**
+ * A configured field in a node
+ */
+export interface ConfiguredField {
+  field: string;
+  value: any;
+  description?: string;
+}
+
+/**
+ * A credential requirement for a node
+ */
+export interface CredentialRequirement {
+  field: string;
+  credentialType: string;
+  variable: string;
+  description: string;
+  isAlternative?: boolean; // True when this is one of multiple credential options
+}
+
+/**
+ * A decision requirement for a node
+ */
+export interface DecisionRequirement {
+  field: string;
+  decision: string;
+  options?: string[];
+  description: string;
 }
 
 /**

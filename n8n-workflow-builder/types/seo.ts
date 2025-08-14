@@ -58,7 +58,9 @@ export interface WorkflowBySlugResponse {
     settings?: any;
   };
   seo: WorkflowSEOMetadata;
+  configAnalysis?: any; // Will be WorkflowConfigAnalysis type when imported
   userPrompt?: string;
   createdAt: string;
   updatedAt: string;
+  isVetted?: boolean;
 }

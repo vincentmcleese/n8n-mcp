@@ -2,8 +2,9 @@
 
 "use client";
 
-import { WorkflowNode, WorkflowConnection } from '@/types/workflow';
-import { NodeIcon } from './NodeIcon';
+import { WorkflowNode, WorkflowConnection } from "@/types/workflow";
+import { NodeIcon } from "./NodeIcon";
+import { resolveIconName } from "@/lib/icon-aliases";
 
 interface WorkflowViewerProps {
   workflow: {
@@ -48,11 +49,13 @@ export function WorkflowViewer({ workflow }: WorkflowViewerProps) {
           ))}
         </div>
       ))}
-      
+
       {/* Connection Summary */}
       {workflow.connections && Object.keys(workflow.connections).length > 0 && (
         <div className="mt-6 pt-6 border-t border-neutral-200">
-          <h3 className="text-sm font-medium text-neutral-700 mb-2">Connections</h3>
+          <h3 className="text-sm font-medium text-neutral-700 mb-2">
+            Connections
+          </h3>
           <div className="text-sm text-neutral-600">
             {Object.entries(workflow.connections).map(([source, targets]) => (
               <div key={source} className="mb-1">
@@ -72,12 +75,11 @@ export function WorkflowViewer({ workflow }: WorkflowViewerProps) {
 function WorkflowNodeCard({ node }: { node: WorkflowNode }) {
   // Extract icon name from node type
   const getIconName = (nodeType: string) => {
-    return nodeType
-      .replace('n8n-nodes-base.', '')
-      .replace(/([A-Z])/g, '-$1')
-      .toLowerCase()
-      .replace(/^-/, '')
-      .split('.')[0];
+    const base = nodeType
+      .replace("n8n-nodes-base.", "")
+      .replace("nodes-base.", "")
+      .split(".")[0];
+    return resolveIconName(base);
   };
 
   const iconName = getIconName(node.type);
@@ -89,11 +91,9 @@ function WorkflowNodeCard({ node }: { node: WorkflowNode }) {
           <NodeIcon name={iconName} className="w-8 h-8" />
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-neutral-900 truncate">
-            {node.name}
-          </h4>
+          <h4 className="font-medium text-neutral-900 truncate">{node.name}</h4>
           <p className="text-sm text-neutral-500 truncate">
-            {node.type.replace('n8n-nodes-base.', '')}
+            {node.type.replace("n8n-nodes-base.", "")}
           </p>
           {node.category && (
             <span className="inline-block mt-1 px-2 py-0.5 bg-neutral-100 text-neutral-600 text-xs rounded">
@@ -102,13 +102,14 @@ function WorkflowNodeCard({ node }: { node: WorkflowNode }) {
           )}
         </div>
       </div>
-      
+
       {/* Show key parameters */}
       {node.parameters && Object.keys(node.parameters).length > 0 && (
         <div className="mt-3 pt-3 border-t border-neutral-100">
           <div className="text-xs text-neutral-500">
-            {Object.keys(node.parameters).slice(0, 3).join(', ')}
-            {Object.keys(node.parameters).length > 3 && ` +${Object.keys(node.parameters).length - 3} more`}
+            {Object.keys(node.parameters).slice(0, 3).join(", ")}
+            {Object.keys(node.parameters).length > 3 &&
+              ` +${Object.keys(node.parameters).length - 3} more`}
           </div>
         </div>
       )}

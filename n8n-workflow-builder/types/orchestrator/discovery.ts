@@ -13,6 +13,7 @@ import type { PhaseResult } from './base';
 export interface DiscoveryInput {
   sessionId: string;
   prompt: string;
+  userId?: string; // Optional user ID for workflow ownership
 }
 
 /**

@@ -26,6 +26,7 @@ const config: Config = {
           foreground: "hsl(var(--popover-foreground))",
         },
         emerald: {
+          DEFAULT: "rgb(var(--emerald) / <alpha-value>)",
           50: "rgb(var(--emerald-50) / <alpha-value>)",
           100: "rgb(var(--emerald-100) / <alpha-value>)",
           200: "rgb(var(--emerald-200) / <alpha-value>)",
